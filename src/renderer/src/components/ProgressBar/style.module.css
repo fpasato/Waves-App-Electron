@@ -1,15 +1,17 @@
-.wavebars {
-  height: 50px;
-  background-color: #00651d;
 
-}
 
 .progressBar {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+
+}
+
+.wavebars {
+  height: 50px;
+  background-color: #00651d;
 
 }
 

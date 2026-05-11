@@ -1,12 +1,15 @@
 .playerControls{
-    width: 100%;
+    width: auto;
+    min-width: 150px;
+    
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    padding: 1rem;
+    margin-right: 3rem;
 
-    background-color: #171a17;
+
+    background-color: transparent;
 
 }
 
