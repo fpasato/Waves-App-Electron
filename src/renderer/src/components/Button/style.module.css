@@ -1,0 +1,21 @@
+.buttonpattern {
+
+    background-color: var(--mid);
+    color: var(--text);
+    
+    border: 1px solid transparent;
+    border-radius: 0.3rem;
+    border-bottom: 1px solid var(--accent);
+    box-shadow: 0 0 5px var(--shadow);
+    
+    padding: 0.5rem;
+    cursor: pointer;
+
+
+    &:hover {
+        box-shadow: 0 0 5px var(--accent);
+        transform: translateY(-2px) translateX(6px);
+        border-color: var(--accent);
+    }
+
+}
