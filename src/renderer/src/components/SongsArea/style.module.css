@@ -1,0 +1,10 @@
+
+
+.songsArea {
+
+    width: 100%;
+    height: 70vh;
+
+    background-color: var(--background);
+    color: var(--text);
+}

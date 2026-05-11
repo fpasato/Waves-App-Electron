@@ -1,0 +1,25 @@
+.volume {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    width: 100px;
+    
+    padding: 0.8rem;
+    background-color: transparent;
+    color: var(--text);
+  
+    cursor: pointer;
+    
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background-color: #004d15;
+    }
+
+    & svg{
+      width: 100%;
+      height: 100%;
+    }
+    
+}

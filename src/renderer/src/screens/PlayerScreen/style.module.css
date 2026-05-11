@@ -1,0 +1,68 @@
+.playerScreen {
+  display: grid;
+  grid-template-columns: 0.5fr 1.4fr 0.5fr;
+  height: 77vh;
+  width: 100%;
+}
+
+.playerArea {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 10px;
+
+  background: linear-gradient(
+    to top,
+    var(--background) 50%,
+    var(--accent) 95%
+  );
+}
+
+.musicInfo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+
+  padding: 10px;
+  margin: 10px;
+
+  width: 100%;
+  max-width: 400px;
+
+  background-color: transparent;
+
+  /* glass */
+  background: linear-gradient(to bottom, #00000079, #ffffff11);
+  backdrop-filter: blur(20px);
+  border-radius: 0.8rem;
+
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+
+  .cover {
+    width: 100px;
+    height: 100px;
+    background-color: #00651d;
+  }
+
+  .musicDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    padding-left: 10px;
+
+    color: var(--text);
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    p {
+      font-size: 0.8rem;
+      color: #666;
+    }
+  }
+}

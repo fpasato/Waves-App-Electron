@@ -1,0 +1,42 @@
+.playerControls{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+
+    background-color: #171a17;
+
+}
+
+.button{
+    background-color: var(--accent);
+    color: var(--text);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    filter: drop-shadow(0 0 5px rgba(116, 116, 116, 0.687));
+
+    &:hover{
+        filter: brightness(1.2) drop-shadow(0 0 5px var(--accent));
+        transform: translateX(1px) translateY(-1px);
+    }
+    &:active{
+        transform: scale(0.95);
+    }
+}
+
+.subButton{
+    font-size: 1.2rem;
+}
+
+.ppButton{
+    font-size: 1.5rem;
+}

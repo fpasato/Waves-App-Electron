@@ -1,0 +1,19 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    .dark {
+        --background: #121212;
+        --text: #ffffff; 
+        --accent: #1DB954;
+    }
+
+    .light {
+        --background: #ffffff;
+        --text: #121212; 
+        --accent: #1DB954;
+    }
+}
