@@ -43,7 +43,7 @@ export function useAudio() {
     const onEnded = () => nextSong();
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
-  }, []);
+  }, [nextSong]);
 
   // =========================
   // TIME UPDATE
@@ -57,7 +57,7 @@ export function useAudio() {
     };
     audio.addEventListener("timeupdate", onTimeUpdate);
     return () => audio.removeEventListener("timeupdate", onTimeUpdate);
-  }, []);
+  }, [setProgress, setCurrentTime, setDuration]);
 
   // =========================
   // VOLUME
@@ -70,7 +70,7 @@ export function useAudio() {
   // TROCAR MÚSICA
   // =========================
   useEffect(() => {
-    if (!currentSong) {
+    if (!currentSong || !currentSong.src) {
       audio.pause();
       audio.src = "";
       currentSrcRef.current = null;
@@ -79,19 +79,21 @@ export function useAudio() {
 
     if (currentSrcRef.current === currentSong.src) {
       if (isPlaying) audio.play().catch(console.error);
+      else audio.pause();
       return;
     }
 
     currentSrcRef.current = currentSong.src;
     audio.src = currentSong.src;
     audio.load();
-    audio.addEventListener("loadeddata", async () => {
+    const onLoaded = async () => {
       if (audioContextRef.current?.state === "suspended") {
         await audioContextRef.current.resume();
       }
-      audio.play().catch(console.error);
-    }, { once: true });
-  }, [currentSong]);
+      if (isPlaying) audio.play().catch(console.error);
+    };
+    audio.addEventListener("loadeddata", onLoaded, { once: true });
+  }, [currentSong, isPlaying]);
 
   // =========================
   // PLAY / PAUSE

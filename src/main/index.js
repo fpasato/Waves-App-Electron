@@ -1,7 +1,16 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+} from "electron";
 import { join } from "path";
 import { readdirSync, statSync } from "fs";
+import { pathToFileURL } from "node:url";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { initDatabase, closeDatabase } from "./database.js";
+import { registerDatabaseHandlers } from "./databaseHandlers.js";
 
 const AUDIO_EXTENSIONS = [".mp3", ".wav", ".flac", ".ogg", ".m4a"];
 
@@ -19,9 +28,11 @@ function scanFolder(folderPath) {
         if (AUDIO_EXTENSIONS.includes(ext)) {
           results.push({
             id: fullPath,
+            path: fullPath,
             title: entry.replace(/\.[^/.]+$/, ""),
             artist: "Desconhecido",
-            src: `file:///${fullPath.replace(/\\/g, "/")}`,
+            duration: 0,
+            src: pathToFileURL(fullPath).href,
             cover: null,
           });
         }
@@ -83,11 +94,17 @@ app.whenReady().then(() => {
     return scanFolder(folderPath);
   });
 
+  initDatabase();
+  registerDatabaseHandlers();
   createWindow();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on("before-quit", () => {
+  closeDatabase();
 });
 
 app.on("window-all-closed", () => {

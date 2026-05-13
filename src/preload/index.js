@@ -1,27 +1,71 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from "electron";
+import { electronAPI } from "@electron-toolkit/preload";
 
-// Custom APIs for renderer
-const api = {}
+const api = {
+  db: {
+    directories: {
+      add: (dirPath) => ipcRenderer.invoke("db:directories:add", dirPath),
+      remove: (id) => ipcRenderer.invoke("db:directories:remove", id),
+      list: () => ipcRenderer.invoke("db:directories:list"),
+    },
+    songs: {
+      upsertMany: (songs) => ipcRenderer.invoke("db:songs:upsertMany", songs),
+      getAll: () => ipcRenderer.invoke("db:songs:getAll"),
+      getByDirectory: (dirId) =>
+        ipcRenderer.invoke("db:songs:getByDirectory", dirId),
+      recordPlay: (songId) => ipcRenderer.invoke("db:songs:recordPlay", songId),
+    },
+    favorites: {
+      add: (songId) => ipcRenderer.invoke("db:favorites:add", songId),
+      remove: (songId) => ipcRenderer.invoke("db:favorites:remove", songId),
+      isFavorite: (songId) =>
+        ipcRenderer.invoke("db:favorites:isFavorite", songId),
+      list: () => ipcRenderer.invoke("db:favorites:list"),
+    },
+    recents: {
+      add: (songId) => ipcRenderer.invoke("db:recents:add", songId),
+      list: (limit) => ipcRenderer.invoke("db:recents:list", limit),
+      clear: () => ipcRenderer.invoke("db:recents:clear"),
+    },
+    playlists: {
+      create: (name, cover) =>
+        ipcRenderer.invoke("db:playlists:create", name, cover),
+      rename: (id, name) => ipcRenderer.invoke("db:playlists:rename", id, name),
+      remove: (id) => ipcRenderer.invoke("db:playlists:remove", id),
+      list: () => ipcRenderer.invoke("db:playlists:list"),
+      getSongs: (playlistId) =>
+        ipcRenderer.invoke("db:playlists:getSongs", playlistId),
+      addSong: (playlistId, songId) =>
+        ipcRenderer.invoke("db:playlists:addSong", playlistId, songId),
+      removeSong: (playlistId, songId) =>
+        ipcRenderer.invoke("db:playlists:removeSong", playlistId, songId),
+      reorder: (playlistId, songIds) =>
+        ipcRenderer.invoke("db:playlists:reorder", playlistId, songIds),
+    },
+  },
+  music: {
+    selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
+    scanFolder: (folderPath) =>
+      ipcRenderer.invoke("music:scanFolder", folderPath),
+  },
+};
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+const musicAPI = {
+  openMusic: () => ipcRenderer.invoke("dialog:openMusic"),
+  selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
+  scanFolder: (path) => ipcRenderer.invoke("music:scanFolder", path),
+};
+
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld("electron", electronAPI);
+    contextBridge.exposeInMainWorld("api", api);
+    contextBridge.exposeInMainWorld("musicAPI", musicAPI);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
-  window.electron = electronAPI
-  window.api = api
+  window.electron = electronAPI;
+  window.api = api;
+  window.musicAPI = musicAPI;
 }
-
-
-contextBridge.exposeInMainWorld('musicAPI', {
-  openMusic: () => ipcRenderer.invoke('dialog:openMusic'),
-  selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
-  scanFolder: (path) => ipcRenderer.invoke('music:scanFolder', path),
-})

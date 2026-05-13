@@ -5,7 +5,7 @@ import { randomCover } from "../../utils/randomCover";
 import styles from "./style.module.css";
 
 export function LibraryScreen({ setScreen }) {
-  const { library, setQueue, setSong, addToQueue } = usePlayerStore();
+  const { library, playSong, addToQueue } = usePlayerStore();
 
   return (
     <div className={styles.libraryContainer}>
@@ -20,7 +20,14 @@ export function LibraryScreen({ setScreen }) {
             </h2>
           </div>
           <div className={styles.libraryItemActions}>
-            <Button title="Tocar Todas" />
+            <Button
+              title="Tocar Todas"
+              onClick={() => {
+                if (library.length === 0) return;
+                playSong(library[0], library);
+                setScreen("player");
+              }}
+            />
             <Button
               title="Voltar"
               className={styles.itemActionBack}
@@ -34,7 +41,7 @@ export function LibraryScreen({ setScreen }) {
             library.map((song) => (
               <div className={styles.libraryItem} key={song.id}>
                 <div className={styles.libraryItemInfo}>
-                  <img src={randomCover(song.name)} alt={song.name} />
+                  <img src={randomCover(song.title)} alt={song.title} />
                   <div className={styles.libraryItemInfoText}>
                     <h3>{song.title}</h3>
                     <p>{song.artist}</p>
@@ -45,8 +52,8 @@ export function LibraryScreen({ setScreen }) {
                   <Button
                     title="Tocar"
                     onClick={() => {
-                      setQueue([song]);
-                      setSong(song);
+                      addToQueue(song);
+                      playSong(song, [song]);
                       setScreen("player");
                     }}
                   />

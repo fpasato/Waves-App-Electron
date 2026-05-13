@@ -1,10 +1,7 @@
 import { create } from "zustand";
-import { useRef } from "react";
+import { refreshLibraryFromDisk, reloadLibraryFromDb } from "../lib/syncLibrary";
 
 export const usePlayerStore = create((set, get) => ({
-  // =========================
-  // STATE
-  // =========================
   currentSong: null,
   isPlaying: false,
   volume: 1,
@@ -18,16 +15,49 @@ export const usePlayerStore = create((set, get) => ({
   repeat: false,
   shuffleQueue: [],
 
-  // =========================
-  // SONG CONTROL
-  // =========================
+  setLibrary: (library) => set({ library }),
+
+  /** Re-escaneia pastas na DB e atualiza `library`. */
+  syncLibraryWithDatabase: async () => {
+    const songs = await refreshLibraryFromDisk();
+    set({ library: songs });
+    return songs;
+  },
+
+  /** Só `SELECT * FROM songs` (rápido). */
+  reloadLibraryFromDatabase: async () => {
+    const songs = await reloadLibraryFromDb();
+    set({ library: songs });
+    return songs;
+  },
+
+  /** Toca uma música e opcionalmente define a fila (ex.: `library` vinda da DB). */
+  playSong: (song, queueArg) => {
+    const finalQueue = queueArg?.length ? queueArg : [song];
+    const index = finalQueue.findIndex((s) => s.id === song.id);
+    const queueIndex = index >= 0 ? index : 0;
+    const current = finalQueue[queueIndex];
+    set({
+      queue: finalQueue,
+      queueIndex,
+      currentSong: current,
+      isPlaying: true,
+      shuffleQueue: [],
+      shuffle: false,
+    });
+  },
+
   setSong: (song) => {
-    const { queue } = get();
+    const { queue, playSong } = get();
     const index = queue.findIndex((s) => s.id === song.id);
+    if (index < 0) {
+      playSong(song, [...queue, song]);
+      return;
+    }
     set({
       currentSong: song,
       isPlaying: true,
-      queueIndex: index >= 0 ? index : 0,
+      queueIndex: index,
     });
   },
 
@@ -42,7 +72,6 @@ export const usePlayerStore = create((set, get) => ({
 
       if (nextShufflePos >= shuffleQueue.length) {
         if (repeat) {
-          // reembaralha e começa do índice 0 da nova ordem
           const allIndices = queue.map((_, i) => i);
           const reshuffled = allIndices.sort(() => Math.random() - 0.5);
           return set({
@@ -121,9 +150,6 @@ export const usePlayerStore = create((set, get) => ({
       duration: 0,
     }),
 
-  // =========================
-  // PLAYBACK
-  // =========================
   togglePlay: () => {
     const { currentSong, queue, queueIndex, isPlaying } = get();
     if (!currentSong && queue.length > 0)
@@ -145,22 +171,16 @@ export const usePlayerStore = create((set, get) => ({
 
   toggleRepeat: () => set((state) => ({ repeat: !state.repeat })),
 
-  // =========================
-  // TIME / PROGRESS
-  // =========================
   setProgress: (value) => set({ progress: value }),
   setCurrentTime: (value) => set({ currentTime: value }),
   setDuration: (value) => set({ duration: value }),
 
-  // =========================
-  // LIBRARY
-  // =========================
-  setLibrary: (library) => set({ library }),
-
-  // =========================
-  // QUEUE
-  // =========================
-  setQueue: (queue) => set({ queue }),
+  setQueue: (queue) =>
+    set({
+      queue: queue ?? [],
+      queueIndex: 0,
+      currentSong: queue?.[0] ?? null,
+    }),
 
   addToQueue: (song) => {
     const { queue, shuffle, shuffleQueue, queueIndex } = get();
@@ -182,11 +202,52 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   removeFromQueue: (index) =>
-    set((state) => ({ queue: state.queue.filter((_, i) => i !== index) })),
-  clearQueue: () => set({ queue: [], queueIndex: 0 }),
+    set((state) => {
+      if (index < 0 || index >= state.queue.length) return state;
+      const queue = state.queue.filter((_, i) => i !== index);
+      let queueIndex = state.queueIndex;
+      if (index < state.queueIndex) queueIndex -= 1;
+      else if (index === state.queueIndex)
+        queueIndex = Math.min(queueIndex, queue.length - 1);
+      queueIndex = Math.max(0, queueIndex);
 
-  // =========================
-  // VOLUME
-  // =========================
+      if (queue.length === 0) {
+        return {
+          queue: [],
+          queueIndex: 0,
+          currentSong: null,
+          isPlaying: false,
+          progress: 0,
+          currentTime: 0,
+          duration: 0,
+          shuffleQueue: [],
+          shuffle: false,
+        };
+      }
+
+      let shuffleQueue = state.shuffleQueue;
+      if (state.shuffle && shuffleQueue.length) {
+        shuffleQueue = shuffleQueue
+          .filter((i) => i !== index)
+          .map((i) => (i > index ? i - 1 : i));
+      }
+
+      const currentSong = queue[queueIndex] ?? queue[0];
+      return { queue, queueIndex, currentSong, shuffleQueue };
+    }),
+
+  clearQueue: () =>
+    set({
+      queue: [],
+      queueIndex: 0,
+      currentSong: null,
+      isPlaying: false,
+      progress: 0,
+      currentTime: 0,
+      duration: 0,
+      shuffle: false,
+      shuffleQueue: [],
+    }),
+
   setVolume: (value) => set({ volume: value }),
 }));
