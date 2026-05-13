@@ -354,11 +354,8 @@ export function PlayerProvider({ children }) {
 
   const audioRef = useRef(null);
   const currentSrcRef = useRef(null);
-
-  // evita recarregar mesma música
-  const loadedSrcRef = useRef(null);
-  // PlayerContext.jsx
-  const loadingRef = useRef(false);
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
 
   return (
     <PlayerContext.Provider
@@ -366,9 +363,9 @@ export function PlayerProvider({ children }) {
         state,
         dispatch,
         audioRef,
-        loadedSrcRef,
-        loadingRef,
         currentSrcRef,
+        analyserRef,
+        audioContextRef,
       }}
     >
       {children}
