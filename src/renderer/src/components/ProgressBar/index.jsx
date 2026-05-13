@@ -5,47 +5,49 @@ import { useRef, useState, useEffect } from "react";
 import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function ProgressBar() {
-  const { audioRef, analyserRef, crossfadeAudioRef } = usePlayer();
+  const { audioRef, crossfadeAudioRef, analyserRef, activeAudioRef } = usePlayer();
   const { progress } = usePlayerStore();
 
-  const [time, setTime] = useState({ current: 0, duration: 0 });  const barRef = useRef(null);
+  const [time, setTime] = useState({ current: 0, duration: 0 });
+  const barRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
   useAnalyser();
 
+  // ── TIMEUPDATE — lê sempre o elemento ativo ───────────────────────────────
+  useEffect(() => {
+    const onTime = () => {
+      const active = activeAudioRef.current;
+      if (!active) return;
+      const dur = active.duration || 0;
+      const ct  = active.currentTime || 0;
+      if (!isNaN(dur) && !isNaN(ct)) {
+        setTime({ current: ct, duration: dur });
+      }
+    };
 
-useEffect(() => {
-  const audio = audioRef.current;
-  const secondary = crossfadeAudioRef?.current;
+    const a = audioRef.current;
+    const b = crossfadeAudioRef.current;
 
-  const onTime = () => {
-    const primary = audio;
-    const cross = secondary;
+    a?.addEventListener("timeupdate", onTime);
+    b?.addEventListener("timeupdate", onTime);
 
-    const isCrossfading = cross?.src && !primary.paused;
+    return () => {
+      a?.removeEventListener("timeupdate", onTime);
+      b?.removeEventListener("timeupdate", onTime);
+    };
+  }, []);
 
-    const active =
-      isCrossfading ? cross : primary;
+  // ── SEEK — usa o elemento ativo ───────────────────────────────────────────
+  function seek(percent) {
+    const active = activeAudioRef.current;
+    if (!active?.duration) return;
+    active.currentTime = (percent / 100) * active.duration;
+  }
 
-    const dur = active?.duration || 0;
-    const ct = active?.currentTime || 0;
-
-    setTime({ current: ct, duration: dur });
-  };
-
-  audio?.addEventListener("timeupdate", onTime);
-  secondary?.addEventListener?.("timeupdate", onTime);
-
-  return () => {
-    audio?.removeEventListener("timeupdate", onTime);
-    secondary?.removeEventListener?.("timeupdate", onTime);
-  };
-}, []);
-  // =========================
-  // CANVAS DRAW
-  // =========================
+  // ── CANVAS DRAW ───────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -112,12 +114,6 @@ useEffect(() => {
       resizeObserver.disconnect();
     };
   }, []);
-
-  function seek(percent) {
-    const audio = audioRef.current;
-    if (!audio?.duration) return;
-    audio.currentTime = (percent / 100) * audio.duration;
-  }
 
   function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";

@@ -307,6 +307,6 @@ export const usePlayerStore = create((set, get) => ({
       shuffle: false,
       shuffleQueue: [],
     }),
-
+    
   setVolume: (value) => set({ volume: value }),
 }));

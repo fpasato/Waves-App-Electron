@@ -9,6 +9,9 @@ export function PlayerProvider({ children }) {
   const currentSrcRef = useRef(null);
   const analyserRef = useRef(null);
   const audioContextRef = useRef(null);
+  const activeAudioRef = useRef(null);
+  const fadingRef = useRef(false); 
+  const crossfadeDoneRef = useRef(false);
 
   return (
     <PlayerContext.Provider
@@ -18,6 +21,9 @@ export function PlayerProvider({ children }) {
         currentSrcRef,
         analyserRef,
         audioContextRef,
+        activeAudioRef,
+        fadingRef, 
+        crossfadeDoneRef,
       }}
     >
       {children}
