@@ -2,6 +2,10 @@ import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 
 const api = {
+  settings: {
+    get: (key) => ipcRenderer.invoke("settings:get", key),
+    set: (key, value) => ipcRenderer.invoke("settings:set", key, value),
+  },
   db: {
     directories: {
       add: (dirPath) => ipcRenderer.invoke("db:directories:add", dirPath),

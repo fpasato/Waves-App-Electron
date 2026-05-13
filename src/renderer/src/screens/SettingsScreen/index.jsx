@@ -4,6 +4,7 @@ import styles from "./style.module.css";
 import { usePlayerStore } from "../../store/playerStore";
 import { useDirectories, useSongs } from "../../hooks/useDatabase";
 import { mapTracksForDb } from "../../lib/syncLibrary";
+import { PlaybackSettings } from "../../components/PlaybackSettings";
 
 export function SettingsScreen({ setScreen }) {
   const { reloadLibraryFromDatabase } = usePlayerStore();
@@ -124,12 +125,7 @@ export function SettingsScreen({ setScreen }) {
             </div>
           )}
 
-          {tab === "playback" && (
-            <div className={styles.section}>
-              <h2>Playback</h2>
-              <p>Em breve.</p>
-            </div>
-          )}
+          {tab === "playback" && <PlaybackSettings />}
         </div>
       </div>
     </div>

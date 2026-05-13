@@ -20,6 +20,7 @@ function PlayerApp() {
       .catch((err) => {
         if (!cancelled) console.error('Biblioteca ao iniciar:', err)
       })
+    usePlayerStore.getState().loadPlaybackSettings().catch(() => {})
     return () => {
       cancelled = true
     }

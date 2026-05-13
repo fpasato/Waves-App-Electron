@@ -9,6 +9,27 @@ function withAudioSrc(row) {
 
 export function registerDatabaseHandlers() {
   // =========================
+  // APP SETTINGS (key-value)
+  // =========================
+
+  ipcMain.handle("settings:get", (_, key) => {
+    const row = getDatabase()
+      .prepare("SELECT value FROM app_settings WHERE key = ?")
+      .get(key);
+    return row?.value ?? null;
+  });
+
+  ipcMain.handle("settings:set", (_, key, value) => {
+    getDatabase()
+      .prepare(`
+        INSERT INTO app_settings (key, value) VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `)
+      .run(key, String(value));
+    return true;
+  });
+
+  // =========================
   // SONGS
   // =========================
 

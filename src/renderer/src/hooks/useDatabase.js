@@ -1,3 +1,10 @@
+export function useSettings() {
+  return {
+    get: (key) => window.api.settings.get(key),
+    set: (key, value) => window.api.settings.set(key, value),
+  };
+}
+
 export function useDirectories() {
   return {
     addDirectory: (path) =>

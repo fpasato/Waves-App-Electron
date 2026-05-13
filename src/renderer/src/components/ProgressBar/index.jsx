@@ -5,16 +5,44 @@ import { useRef, useState, useEffect } from "react";
 import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function ProgressBar() {
-  const { audioRef, analyserRef } = usePlayer();
-  const { progress, currentTime, duration } = usePlayerStore();
+  const { audioRef, analyserRef, crossfadeAudioRef } = usePlayer();
+  const { progress } = usePlayerStore();
 
-  const barRef = useRef(null);
+  const [time, setTime] = useState({ current: 0, duration: 0 });  const barRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
   useAnalyser();
 
+
+useEffect(() => {
+  const audio = audioRef.current;
+  const secondary = crossfadeAudioRef?.current;
+
+  const onTime = () => {
+    const primary = audio;
+    const cross = secondary;
+
+    const isCrossfading = cross?.src && !primary.paused;
+
+    const active =
+      isCrossfading ? cross : primary;
+
+    const dur = active?.duration || 0;
+    const ct = active?.currentTime || 0;
+
+    setTime({ current: ct, duration: dur });
+  };
+
+  audio?.addEventListener("timeupdate", onTime);
+  secondary?.addEventListener?.("timeupdate", onTime);
+
+  return () => {
+    audio?.removeEventListener("timeupdate", onTime);
+    secondary?.removeEventListener?.("timeupdate", onTime);
+  };
+}, []);
   // =========================
   // CANVAS DRAW
   // =========================
@@ -136,7 +164,7 @@ export function ProgressBar() {
       </div>
 
       <div className={styles.time}>
-        {formatTime(currentTime)} / {formatTime(duration)}
+        {formatTime(time.current)} / {formatTime(time.duration)}
       </div>
     </div>
   );

@@ -5,12 +5,21 @@ const PlayerContext = createContext(null);
 
 export function PlayerProvider({ children }) {
   const audioRef = useRef(null);
+  const crossfadeAudioRef = useRef(null);
   const currentSrcRef = useRef(null);
   const analyserRef = useRef(null);
   const audioContextRef = useRef(null);
 
   return (
-    <PlayerContext.Provider value={{ audioRef, currentSrcRef, analyserRef, audioContextRef }}>
+    <PlayerContext.Provider
+      value={{
+        audioRef,
+        crossfadeAudioRef,
+        currentSrcRef,
+        analyserRef,
+        audioContextRef,
+      }}
+    >
       {children}
     </PlayerContext.Provider>
   );

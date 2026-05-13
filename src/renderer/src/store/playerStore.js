@@ -15,6 +15,34 @@ export const usePlayerStore = create((set, get) => ({
   repeat: false,
   shuffleQueue: [],
 
+  fadeEnabled: false,
+  fadeDuration: 3,
+
+  setFadeEnabled: (fadeEnabled) => set({ fadeEnabled }),
+
+  setFadeDuration: (value) =>
+    set({
+      fadeDuration: Math.min(
+        15,
+        Math.max(1, Math.floor(Number(value)) || 3),
+      ),
+    }),
+
+  loadPlaybackSettings: async () => {
+    if (typeof window === "undefined" || !window.api?.settings) return;
+    try {
+      const en = await window.api.settings.get("fadeEnabled");
+      const du = await window.api.settings.get("fadeDuration");
+      const parsed = parseInt(du ?? "3", 10);
+      set({
+        fadeEnabled: en === "true",
+        fadeDuration: Math.min(15, Math.max(1, Number.isFinite(parsed) ? parsed : 3)),
+      });
+    } catch {
+      /* defaults */
+    }
+  },
+
   setLibrary: (library) => set({ library }),
 
   /** Re-escaneia pastas na DB e atualiza `library`. */
@@ -59,6 +87,37 @@ export const usePlayerStore = create((set, get) => ({
       isPlaying: true,
       queueIndex: index,
     });
+  },
+
+  /** Próxima faixa na fila (sem alterar estado) — usado no crossfade. */
+  peekNextSong: () => {
+    const { queue, queueIndex, shuffle, repeat, shuffleQueue } = get();
+    if (queue.length === 0) return null;
+
+    if (shuffle) {
+      const currentShufflePos = shuffleQueue.indexOf(queueIndex);
+      const nextShufflePos = currentShufflePos + 1;
+
+      if (nextShufflePos >= shuffleQueue.length) {
+        if (repeat) {
+          const allIndices = queue.map((_, i) => i);
+          const reshuffled = allIndices.sort(() => Math.random() - 0.5);
+          return queue[reshuffled[0]] ?? null;
+        }
+        return null;
+      }
+
+      const nextIndex = shuffleQueue[nextShufflePos];
+      return queue[nextIndex] ?? null;
+    }
+
+    const nextIndex = queueIndex + 1;
+    if (nextIndex >= queue.length) {
+      if (repeat) return queue[0] ?? null;
+      return null;
+    }
+
+    return queue[nextIndex] ?? null;
   },
 
   nextSong: () => {
