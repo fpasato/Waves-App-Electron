@@ -30,7 +30,7 @@ export function SongsArea() {
       </div>
       <div className={styles.clearButton}>
         <Button
-          tittle="Limpar Fila e Parar Música"
+          title="Limpar Fila e Parar Música"
           onClick={() => {
             dispatch({ type: 'CLEAR_QUEUE' });
             dispatch({ type: 'STOP' });

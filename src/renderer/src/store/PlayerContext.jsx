@@ -23,6 +23,7 @@ const initialState = {
 
   shuffle: false,
   repeat: false,
+  shuffleQueue: [],
 };
 
 // =========================
@@ -56,6 +57,9 @@ function playerReducer(state, action) {
         state.queue.length,
       );
 
+      // =========================
+      // FILA VAZIA
+      // =========================
       if (state.queue.length === 0) {
         return {
           ...state,
@@ -68,23 +72,59 @@ function playerReducer(state, action) {
       // SHUFFLE
       // =========================
       if (state.shuffle) {
-        const randomIndex = Math.floor(Math.random() * state.queue.length);
+        const currentShufflePos = state.shuffleQueue.indexOf(state.queueIndex);
+
+        const nextShufflePos = currentShufflePos + 1;
+
+        // =========================
+        // FIM DO SHUFFLE
+        // =========================
+        if (nextShufflePos >= state.shuffleQueue.length) {
+          // repeat ligado
+          if (state.repeat) {
+            const reshuffled = [...state.shuffleQueue].sort(
+              () => Math.random() - 0.5,
+            );
+
+            const firstIndex = reshuffled[0];
+
+            return {
+              ...state,
+              queueIndex: firstIndex,
+              currentSong: state.queue[firstIndex],
+              shuffleQueue: reshuffled,
+              isPlaying: true,
+            };
+          }
+
+          return {
+            ...state,
+            currentSong: null,
+            isPlaying: false,
+            progress: 0,
+            currentTime: 0,
+          };
+        }
+
+        const nextIndex = state.shuffleQueue[nextShufflePos];
 
         return {
           ...state,
-          queueIndex: randomIndex,
-          currentSong: state.queue[randomIndex],
+          queueIndex: nextIndex,
+          currentSong: state.queue[nextIndex],
           isPlaying: true,
         };
       }
 
+      // =========================
+      // NORMAL
+      // =========================
       const nextIndex = state.queueIndex + 1;
 
       // =========================
       // FIM DA FILA
       // =========================
       if (nextIndex >= state.queue.length) {
-        // LOOP PLAYLIST
         if (state.repeat) {
           return {
             ...state,
@@ -94,7 +134,6 @@ function playerReducer(state, action) {
           };
         }
 
-        // FINALIZA PLAYER
         return {
           ...state,
           currentSong: null,
@@ -114,7 +153,6 @@ function playerReducer(state, action) {
         isPlaying: true,
       };
     }
-
     case "PREVIOUS_SONG": {
       if (state.queue.length === 0) {
         return state;
@@ -167,11 +205,35 @@ function playerReducer(state, action) {
         isPlaying: action.payload, // action.payload é undefined!
       };
 
-    case "TOGGLE_SHUFFLE":
+    case "TOGGLE_SHUFFLE": {
+      // =========================
+      // ATIVANDO SHUFFLE
+      // =========================
+      if (!state.shuffle) {
+        const indices = state.queue
+          .map((_, i) => i)
+          .filter((i) => i !== state.queueIndex);
+
+        const shuffled = indices.sort(() => Math.random() - 0.5);
+
+        return {
+          ...state,
+          shuffle: true,
+
+          // música atual sempre primeiro
+          shuffleQueue: [state.queueIndex, ...shuffled],
+        };
+      }
+
+      // =========================
+      // DESATIVANDO SHUFFLE
+      // =========================
       return {
         ...state,
-        shuffle: !state.shuffle,
+        shuffle: false,
+        shuffleQueue: [],
       };
+    }
 
     case "TOGGLE_REPEAT":
       return {
@@ -221,7 +283,7 @@ function playerReducer(state, action) {
         queue: action.payload,
       };
 
-    case "ADD_TO_QUEUE":
+    case "ADD_TO_QUEUE": {
       console.log(
         "ADD_TO_QUEUE | queueIndex atual:",
         state.queueIndex,
@@ -229,10 +291,37 @@ function playerReducer(state, action) {
         state.queue.length,
       );
 
+      const newQueue = [...state.queue, action.payload];
+
+      const newIndex = newQueue.length - 1;
+
+      // =========================
+      // SHUFFLE ATIVO
+      // =========================
+      if (state.shuffle) {
+        const currentPos = state.shuffleQueue.indexOf(state.queueIndex);
+
+        const insertPos =
+          Math.floor(Math.random() * (state.shuffleQueue.length - currentPos)) +
+          currentPos +
+          1;
+
+        const newShuffleQueue = [...state.shuffleQueue];
+
+        newShuffleQueue.splice(insertPos, 0, newIndex);
+
+        return {
+          ...state,
+          queue: newQueue,
+          shuffleQueue: newShuffleQueue,
+        };
+      }
+
       return {
         ...state,
-        queue: [...state.queue, action.payload],
+        queue: newQueue,
       };
+    }
 
     case "REMOVE_FROM_QUEUE":
       return {

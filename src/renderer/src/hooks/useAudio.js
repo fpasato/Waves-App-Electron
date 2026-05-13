@@ -43,6 +43,7 @@ export function useAudio() {
   // TROCAR MÚSICA
   // =========================
   useEffect(() => {
+    console.log(state.currentSong?.title);
     if (!state.currentSong) {
       audio.pause();
       audio.src = "";
