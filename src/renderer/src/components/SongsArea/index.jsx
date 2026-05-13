@@ -1,12 +1,10 @@
 import styles from './style.module.css';
-
 import { randomCover } from '../../utils/randomCover';
 import { Button } from '../Button';
-import { usePlayer } from '../../store/PlayerContext';
+import { usePlayerStore } from '../../store/playerStore';
 
 export function SongsArea() {
-  const { state, dispatch } = usePlayer();
-  const queue = state.queue ?? [];
+  const { queue, clearQueue, stop } = usePlayerStore();
 
   if (queue.length === 0) {
     return (
@@ -32,8 +30,8 @@ export function SongsArea() {
         <Button
           title="Limpar Fila e Parar Música"
           onClick={() => {
-            dispatch({ type: 'CLEAR_QUEUE' });
-            dispatch({ type: 'STOP' });
+            clearQueue();
+            stop();
           }}
         />
       </div>

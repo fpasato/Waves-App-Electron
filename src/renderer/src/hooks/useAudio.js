@@ -1,8 +1,18 @@
 import { useEffect } from "react";
 import { usePlayer } from "../store/PlayerContext";
+import { usePlayerStore } from "../store/playerStore";
 
 export function useAudio() {
-  const { state, dispatch, audioRef, currentSrcRef } = usePlayer();
+  const { audioRef, currentSrcRef, audioContextRef } = usePlayer();
+  const {
+    currentSong,
+    isPlaying,
+    volume,
+    setProgress,
+    setCurrentTime,
+    setDuration,
+    nextSong,
+  } = usePlayerStore();
 
   if (!audioRef.current) {
     audioRef.current = new Audio();
@@ -10,10 +20,27 @@ export function useAudio() {
   const audio = audioRef.current;
 
   // =========================
+  // RESUME AUDIO CONTEXT
+  // =========================
+  useEffect(() => {
+    const resume = () => {
+      if (audioContextRef.current?.state === "suspended") {
+        audioContextRef.current.resume();
+      }
+    };
+    document.addEventListener("click", resume);
+    document.addEventListener("keydown", resume);
+    return () => {
+      document.removeEventListener("click", resume);
+      document.removeEventListener("keydown", resume);
+    };
+  }, []);
+
+  // =========================
   // SONG ENDED
   // =========================
   useEffect(() => {
-    const onEnded = () => dispatch({ type: "NEXT_SONG" });
+    const onEnded = () => nextSong();
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
   }, []);
@@ -24,9 +51,9 @@ export function useAudio() {
   useEffect(() => {
     const onTimeUpdate = () => {
       const progress = (audio.currentTime / audio.duration) * 100 || 0;
-      dispatch({ type: "SET_PROGRESS", payload: progress });
-      dispatch({ type: "SET_CURRENT_TIME", payload: audio.currentTime });
-      dispatch({ type: "SET_DURATION", payload: audio.duration || 0 });
+      setProgress(progress);
+      setCurrentTime(audio.currentTime);
+      setDuration(audio.duration || 0);
     };
     audio.addEventListener("timeupdate", onTimeUpdate);
     return () => audio.removeEventListener("timeupdate", onTimeUpdate);
@@ -36,47 +63,49 @@ export function useAudio() {
   // VOLUME
   // =========================
   useEffect(() => {
-    audio.volume = state.volume;
-  }, [state.volume]);
+    audio.volume = volume;
+  }, [volume]);
 
   // =========================
   // TROCAR MÚSICA
   // =========================
   useEffect(() => {
-    console.log(state.currentSong?.title);
-    if (!state.currentSong) {
+    if (!currentSong) {
       audio.pause();
       audio.src = "";
       currentSrcRef.current = null;
       return;
     }
 
-    if (currentSrcRef.current === state.currentSong.src) {
-      if (state.isPlaying) audio.play().catch(console.error);
+    if (currentSrcRef.current === currentSong.src) {
+      if (isPlaying) audio.play().catch(console.error);
       return;
     }
 
-    currentSrcRef.current = state.currentSong.src;
-    audio.src = state.currentSong.src;
+    currentSrcRef.current = currentSong.src;
+    audio.src = currentSong.src;
     audio.load();
-    audio.addEventListener("loadeddata", () => {
+    audio.addEventListener("loadeddata", async () => {
+      if (audioContextRef.current?.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
       audio.play().catch(console.error);
     }, { once: true });
-  }, [state.currentSong]);
+  }, [currentSong]);
 
   // =========================
   // PLAY / PAUSE
   // =========================
   useEffect(() => {
-    if (!state.currentSong) return;
+    if (!currentSong) return;
     if (audio.readyState < 2) return;
 
-    if (state.isPlaying) {
+    if (isPlaying) {
       audio.play().catch(console.error);
     } else {
       audio.pause();
     }
-  }, [state.isPlaying]);
+  }, [isPlaying]);
 
   // =========================
   // SEEK

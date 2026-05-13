@@ -1,16 +1,19 @@
 import styles from "./style.module.css";
 import { usePlayer } from "../../store/PlayerContext";
+import { usePlayerStore } from "../../store/playerStore";
 import { useRef, useState, useEffect } from "react";
 import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function ProgressBar() {
-  const { state, audioRef } = usePlayer();
-  const { analyserRef } = useAnalyser();
+  const { audioRef, analyserRef } = usePlayer();
+  const { progress, currentTime, duration } = usePlayerStore();
 
   const barRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const [dragging, setDragging] = useState(false);
+
+  useAnalyser();
 
   // =========================
   // CANVAS DRAW
@@ -42,7 +45,6 @@ export function ProgressBar() {
 
     const draw = () => {
       const analyser = analyserRef.current;
-      console.log("analyser:", analyser);
       const w = canvas.width;
       const h = canvas.height;
 
@@ -67,14 +69,8 @@ export function ProgressBar() {
         const idx = mapIndex(isLeft ? i : i - half, isLeft);
         const raw = dataArray ? dataArray[idx] : 0;
         const targetHeight = Math.max(4, (raw / 255) * h);
-        smoothedHeights[i] =
-          smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
-        ctx.fillRect(
-          i * barWidth,
-          h - smoothedHeights[i],
-          barWidth - 1,
-          smoothedHeights[i],
-        );
+        smoothedHeights[i] = smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
+        ctx.fillRect(i * barWidth, h - smoothedHeights[i], barWidth - 1, smoothedHeights[i]);
       }
 
       ctx.shadowBlur = 0;
@@ -135,15 +131,12 @@ export function ProgressBar() {
       <canvas ref={canvasRef} className={styles.wavebars} />
 
       <div ref={barRef} className={styles.bar} onMouseDown={handleMouseDown}>
-        <div
-          className={styles.progress}
-          style={{ width: `${state.progress}%` }}
-        />
-        <div className={styles.thumb} style={{ left: `${state.progress}%` }} />
+        <div className={styles.progress} style={{ width: `${progress}%` }} />
+        <div className={styles.thumb} style={{ left: `${progress}%` }} />
       </div>
 
       <div className={styles.time}>
-        {formatTime(state.currentTime)} / {formatTime(state.duration)}
+        {formatTime(currentTime)} / {formatTime(duration)}
       </div>
     </div>
   );

@@ -4,40 +4,33 @@ import { FaPlay, FaPause, FaRandom } from "react-icons/fa";
 import { GiPreviousButton, GiNextButton } from "react-icons/gi";
 import { RiLoopLeftLine } from "react-icons/ri";
 
-import { usePlayer } from "../../store/PlayerContext";
+import { usePlayerStore } from "../../store/playerStore";
 
 export function PlayerControls() {
-  const { state, dispatch } = usePlayer();
+  const { isPlaying, repeat, shuffle, toggleRepeat, togglePlay, toggleShuffle, nextSong, previousSong } = usePlayerStore();
 
   return (
     <div className={styles.playerControls}>
       <button
         className={styles.button}
-        onClick={() => dispatch({ type: 'TOGGLE_REPEAT' })}
-        style={{ opacity: state.repeat ? 1 : 0.4 }}
+        onClick={toggleRepeat}
+        style={{ opacity: repeat ? 1 : 0.4 }}
       >
         <RiLoopLeftLine />
       </button>
-      <button className={`${styles.button} ${styles.subButton}`}
-      onClick={() => dispatch({ type: 'PREVIOUS_SONG' })}
-      >
+      <button className={`${styles.button} ${styles.subButton}`} onClick={previousSong}>
         <GiPreviousButton />
       </button>
-      <button
-        className={`${styles.button} ${styles.ppButton}`}
-        onClick={() => dispatch({ type: 'TOGGLE_PLAY' })}
-      >
-        {state.isPlaying ? <FaPause /> : <FaPlay />}
+      <button className={`${styles.button} ${styles.ppButton}`} onClick={togglePlay}>
+        {isPlaying ? <FaPause /> : <FaPlay />}
       </button>
-      <button className={`${styles.button} ${styles.subButton}`}
-      onClick={() => dispatch({ type: 'NEXT_SONG' })}
-      >
+      <button className={`${styles.button} ${styles.subButton}`} onClick={nextSong}>
         <GiNextButton />
       </button>
       <button
         className={styles.button}
-        onClick={() => dispatch({ type: 'TOGGLE_SHUFFLE' })}
-        style={{ opacity: state.shuffle ? 1 : 0.4 }}
+        onClick={toggleShuffle}
+        style={{ opacity: shuffle ? 1 : 0.4 }}
       >
         <FaRandom />
       </button>

@@ -1,13 +1,11 @@
-import { usePlayer } from "../../store/PlayerContext";
+import { usePlayerStore } from "../../store/playerStore";
 import { Header } from "../../Components/Header";
 import { Button } from "../../Components/Button";
-
 import { randomCover } from "../../utils/randomCover";
-
 import styles from "./style.module.css";
 
 export function LibraryScreen({ setScreen }) {
-  const { state, dispatch } = usePlayer();
+  const { library, setQueue, setSong, addToQueue } = usePlayerStore();
 
   return (
     <div className={styles.libraryContainer}>
@@ -15,16 +13,16 @@ export function LibraryScreen({ setScreen }) {
       <div className={styles.libraryContentContainer}>
         <div className={styles.libraryHeader}>
           <div className={styles.libraryinfo}>
-            <h2>Total de Músicas: {state.library.length}</h2>
+            <h2>Total de Músicas: {library.length}</h2>
             <h2>
               Duração total:{" "}
-              {state.library.reduce((acc, song) => acc + song.duration, 0)}
+              {library.reduce((acc, song) => acc + song.duration, 0)}
             </h2>
           </div>
           <div className={styles.libraryItemActions}>
             <Button title="Tocar Todas" />
             <Button
-              title={"Voltar"}
+              title="Voltar"
               className={styles.itemActionBack}
               onClick={() => setScreen("player")}
             />
@@ -32,12 +30,11 @@ export function LibraryScreen({ setScreen }) {
         </div>
 
         <div className={styles.libraryContent}>
-          {state.library.length > 0 ? (
-            state.library.map((song) => (
+          {library.length > 0 ? (
+            library.map((song) => (
               <div className={styles.libraryItem} key={song.id}>
                 <div className={styles.libraryItemInfo}>
                   <img src={randomCover(song.name)} alt={song.name} />
-
                   <div className={styles.libraryItemInfoText}>
                     <h3>{song.title}</h3>
                     <p>{song.artist}</p>
@@ -48,16 +45,14 @@ export function LibraryScreen({ setScreen }) {
                   <Button
                     title="Tocar"
                     onClick={() => {
-                      dispatch({ type: "SET_QUEUE", payload: [song] });
-                      dispatch({ type: "SET_SONG", payload: song });
+                      setQueue([song]);
+                      setSong(song);
                       setScreen("player");
                     }}
                   />
                   <Button
                     title="Adicionar à fila"
-                    onClick={() => {
-                      dispatch({ type: "ADD_TO_QUEUE", payload: song });
-                    }}
+                    onClick={() => addToQueue(song)}
                   />
                 </div>
               </div>

@@ -5,6 +5,22 @@ export function useAnalyser() {
   const { audioRef, analyserRef, audioContextRef } = usePlayer();
 
   useEffect(() => {
+    const resume = () => {
+      if (audioContextRef.current?.state === "suspended") {
+        audioContextRef.current.resume();
+      }
+    };
+
+    document.addEventListener("click", resume);
+    document.addEventListener("keydown", resume);
+
+    return () => {
+      document.removeEventListener("click", resume);
+      document.removeEventListener("keydown", resume);
+    };
+  }, []);
+  
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 

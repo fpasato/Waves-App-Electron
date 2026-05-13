@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Header } from '../../Components/Header'
 import styles from './style.module.css'
-import { usePlayer } from '../../store/PlayerContext'
+import { usePlayerStore } from '../../store/playerStore'
 
 export function SettingsScreen({ setScreen }) {
-  const { dispatch } = usePlayer()
+  const { setLibrary } = usePlayerStore()
   const [tab, setTab] = useState('directories')
   const [directories, setDirectories] = useState([])
   const [status, setStatus] = useState('')
@@ -19,7 +19,7 @@ export function SettingsScreen({ setScreen }) {
 
     setStatus('⏳ Escaneando...')
     const tracks = await window.musicAPI.scanFolder(folder)
-    dispatch({ type: 'SET_LIBRARY', payload: tracks })
+    setLibrary(tracks)
     setDirectories(prev => [...prev, folder])
     setStatus(`✅ ${tracks.length} músicas encontradas`)
   }
