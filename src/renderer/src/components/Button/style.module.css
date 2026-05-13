@@ -11,7 +11,8 @@
     padding: 0.5rem;
     cursor: pointer;
 
-
+    transition: all 0.2s ease-in-out;
+    
     &:hover {
         box-shadow: 0 0 5px var(--accent);
         transform: translateY(-2px) translateX(6px);

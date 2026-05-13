@@ -1,9 +1,12 @@
 import styles from './style.module.css'
 
-export function Button({tittle, onClick}) {
-    return (
-       <button className={styles.buttonpattern} onClick={onClick}>
-            {tittle}
-        </button>
-    )
+export function Button({ title, onClick, className = '' }) {
+  return (
+    <button
+      className={`${styles.buttonpattern} ${className}`}
+      onClick={onClick}
+    >
+      {title}
+    </button>
+  )
 }

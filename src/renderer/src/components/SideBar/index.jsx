@@ -1,15 +1,16 @@
 import styles from './style.module.css'
 import { Button } from '../../components/Button'
+import { randomCover } from '../../utils/randomCover'
 
-export function SideBar() {
+export function SideBar({ setScreen }) {
     return (
         <div className={styles.sidebar}>
             
             <div className={styles.options}>
-                <Button tittle="Configurações" onClick={() => console.log('Configurações clicked')} />
-                <Button tittle="Biblioteca" onClick={() => console.log('Biblioteca clicked')} />
-                <Button tittle="Favoritos" onClick={() => console.log('Favoritos clicked')} />
-                <Button tittle="Recentes" onClick={() => console.log('Recentes clicked')} />
+                <Button title="Configurações" onClick={() => setScreen('settings')} />
+                <Button title="Biblioteca" onClick={() => setScreen('library')} />
+                <Button title="Favoritos" onClick={() => console.log('Favoritos clicked')} />
+                <Button title="Recentes" onClick={() => console.log('Recentes clicked')} />
             </div>            
 
 
@@ -21,7 +22,7 @@ export function SideBar() {
                 <div className={styles.playlistsList}>
                     
                     <div className={styles.playlistItem}>
-                        <img src="" alt="" />
+                        <img src={randomCover()} alt="" />
                         <h3>Playlist name</h3>
                     </div>
                 </div>
