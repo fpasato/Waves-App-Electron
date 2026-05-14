@@ -5,7 +5,8 @@ import { useRef, useState, useEffect } from "react";
 import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function ProgressBar() {
-  const { audioRef, crossfadeAudioRef, analyserRef, activeAudioRef } = usePlayer();
+  const { audioRef, crossfadeAudioRef, analyserRef, activeAudioRef } =
+    usePlayer();
   const { progress } = usePlayerStore();
 
   const [time, setTime] = useState({ current: 0, duration: 0 });
@@ -22,7 +23,7 @@ export function ProgressBar() {
       const active = activeAudioRef.current;
       if (!active) return;
       const dur = active.duration || 0;
-      const ct  = active.currentTime || 0;
+      const ct = active.currentTime || 0;
       if (!isNaN(dur) && !isNaN(ct)) {
         setTime({ current: ct, duration: dur });
       }
@@ -78,6 +79,8 @@ export function ProgressBar() {
       const w = canvas.width;
       const h = canvas.height;
 
+      const accent =
+        getComputedStyle(document.body).getPropertyValue("--accent").trim()
       ctx.clearRect(0, 0, w, h);
 
       let dataArray = null;
@@ -87,11 +90,11 @@ export function ProgressBar() {
       }
 
       const grad = ctx.createLinearGradient(0, h, 0, 0);
-      grad.addColorStop(0, "#7c3aed");
-      grad.addColorStop(1, "#a855f7");
+      grad.addColorStop(0, accent);
+      grad.addColorStop(1, accent);
       ctx.fillStyle = grad;
       ctx.shadowBlur = 22;
-      ctx.shadowColor = "rgba(168, 85, 247, 0.9)";
+      ctx.shadowColor = accent;
 
       const barWidth = w / totalBars;
       for (let i = 0; i < totalBars; i++) {
@@ -99,8 +102,14 @@ export function ProgressBar() {
         const idx = mapIndex(isLeft ? i : i - half, isLeft);
         const raw = dataArray ? dataArray[idx] : 0;
         const targetHeight = Math.max(4, (raw / 255) * h);
-        smoothedHeights[i] = smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
-        ctx.fillRect(i * barWidth, h - smoothedHeights[i], barWidth - 1, smoothedHeights[i]);
+        smoothedHeights[i] =
+          smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
+        ctx.fillRect(
+          i * barWidth,
+          h - smoothedHeights[i],
+          barWidth - 1,
+          smoothedHeights[i],
+        );
       }
 
       ctx.shadowBlur = 0;
