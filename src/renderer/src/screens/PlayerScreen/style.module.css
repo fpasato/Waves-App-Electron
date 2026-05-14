@@ -27,8 +27,10 @@
   align-items: center;
   gap: 16px;
   padding: 12px 24px;
-}
 
+  position: relative;
+  overflow: visible;
+}
 .musicInfo {
   display: flex;
   align-items: center;

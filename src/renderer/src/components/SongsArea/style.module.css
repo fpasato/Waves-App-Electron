@@ -46,11 +46,11 @@
 
 
     & h2 {
-        font-size: clamp(0.8rem, 1.8vw, 1.2rem);
+        font-size: clamp(0.8rem, 1vw, 1.2rem);
     }
 
     & p {
-        font-size: clamp(0.7rem, 1.5vw, 1.2rem);
+        font-size: clamp(0.6rem, 1vw, 1.2rem);
     }
 
 }

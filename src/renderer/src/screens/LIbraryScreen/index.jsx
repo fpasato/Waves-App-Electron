@@ -17,6 +17,7 @@ export function LibraryScreen({ setScreen }) {
             <h2>
               Duração total:{" "}
               {library.reduce((acc, song) => acc + song.duration, 0)}
+              {console.log(library[0])}
             </h2>
           </div>
           <div className={styles.libraryItemActions}>
@@ -36,10 +37,10 @@ export function LibraryScreen({ setScreen }) {
           </div>
         </div>
 
-        <div className={styles.libraryContent}>
+        <ul className={styles.libraryContent}>
           {library.length > 0 ? (
             library.map((song) => (
-              <div className={styles.libraryItem} key={song.id}>
+              <li className={styles.libraryItem} key={song.id}>
                 <div className={styles.libraryItemInfo}>
                   <img src={randomCover(song.title)} alt={song.title} />
                   <div className={styles.libraryItemInfoText}>
@@ -62,14 +63,14 @@ export function LibraryScreen({ setScreen }) {
                     onClick={() => addToQueue(song)}
                   />
                 </div>
-              </div>
+              </li>
             ))
           ) : (
             <div className={styles.libraryItem}>
               <p>Nenhuma música encontrada</p>
             </div>
           )}
-        </div>
+        </ul>
       </div>
     </div>
   );

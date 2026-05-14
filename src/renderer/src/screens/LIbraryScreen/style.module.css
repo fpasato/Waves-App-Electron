@@ -16,6 +16,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   width: 90%;
   padding: 1rem;
   background-color: var(--background);
@@ -24,37 +25,70 @@
   margin-bottom: 1rem;
 }
 
+.libraryinfo{
+  display: flex;
+  flex-direction: row;
+  gap: 0.3rem;
+
+  font-size: clamp(0.8rem, 1vw, 1.2rem);
+}
+
 .libraryContentContainer{
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+
   width: 90%;
+  height: 820px;
+
+
   gap: 0.6rem;
   padding: 1rem;
+
   border-radius: 0.4rem;
   border: 1px solid var(--accent);
 
   background-color: var(--mid);
+
+  min-height: 0;
+  
+  overflow: hidden;
 }
 
 .libraryContent{
+  padding-right: 0.5rem;
+
   background-color: var(--background);
+
   display: flex;
   flex-direction: column;
   align-items: center;
+
   width: 90%;
+  flex: 1;
+
   gap: 0.6rem;
 
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  min-height: 0;
+
+  scroll-behavior: smooth;
+
+  box-shadow: 0 0 30px #000000;
 }
-
-
 .libraryItem{
   background-color:var(--mid);
   color: var(--text);
   border-radius: 0.4rem;
-  border:1px solid var(--accent);
-  padding: 1rem;
+  padding: 0.6rem;
   width: 100%;
+  
+  border: 1px solid var(--accent);
+  border-top:10px solid var(--accent);
+
 
   display: flex;
   flex-direction: row;
@@ -62,8 +96,8 @@
   gap: 0.6rem;
 
   & img {
-    width: clamp(40px, 10vw, 100px);
-    height: clamp(40px, 10vw, 100px);
+    width: clamp(40px, 5vw, 100px);
+    height: clamp(40px, 5vw, 100px);
   }
 }
 
@@ -78,6 +112,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+
+  font-size: clamp(0.8rem, 1vw, 1.2rem);
 }
 
 .libraryItemActions{
@@ -88,7 +124,7 @@
 
   & button {
     padding: clamp(0.5rem, 1vw, 1.8rem);
-    font-size: clamp(0.8rem, 1vw, 2rem);
+    font-size: clamp(0.8rem, 1vw, 1.8rem);
   }
 }
 
