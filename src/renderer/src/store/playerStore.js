@@ -473,6 +473,7 @@ export const usePlayerStore = create((set, get) => ({
       queue: queue ?? [],
       queueIndex: 0,
       currentSong: queue?.[0] ?? null,
+      isPlaying: true, // ← adiciona
       shuffle: false,
       shuffleQueue: [],
       shufflePos: 0,

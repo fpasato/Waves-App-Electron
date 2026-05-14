@@ -6,8 +6,7 @@ import styles from "./style.module.css";
 import { min } from "three/tsl";
 
 export function LibraryScreen({ setScreen }) {
-  const { library, playSong, addToQueue } = usePlayerStore();
-
+  const { library, playSong, addToQueue, setQueue } = usePlayerStore();
   const totalSeconds = library.reduce(
     (acc, song) => acc + (song.duration || 0),
     0,
@@ -47,7 +46,7 @@ export function LibraryScreen({ setScreen }) {
               title="Tocar Todas"
               onClick={() => {
                 if (library.length === 0) return;
-                playSong(library[0], library);
+                setQueue(library);
                 setScreen("player");
               }}
             />
