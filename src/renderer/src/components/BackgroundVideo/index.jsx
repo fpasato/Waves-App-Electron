@@ -1,11 +1,12 @@
+// BackgroundVideo/index.jsx
+import { memo } from "react";
+import { ParticlesEffect } from "../ParticlesEffect";
+import styles from "./style.module.css";
 
-import styles from './style.module.css'
-
-export function BackgroundVideo({ src }) {
-  if (!src) return <div className={styles.backgroundVideo} />
+export const BackgroundVideo = memo(function BackgroundVideo() {
   return (
     <div className={styles.backgroundVideo}>
-      <video src={src} autoPlay loop muted />
+      <ParticlesEffect />
     </div>
-  )
-}
+  );
+});

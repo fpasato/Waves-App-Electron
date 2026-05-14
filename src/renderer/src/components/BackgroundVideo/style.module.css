@@ -1,17 +1,25 @@
 .backgroundVideo {
-    width: 100%;
-    height: 100%;
-
-    overflow: hidden;
-
-    background-color: rgb(55, 101, 101);
-
-    width: 100%;
-    height: 100%;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    to bottom,
+    #1a0533 0%,
+    #0d0018 70%,
+    #000000 100%
+  );
 }
 
-.backgroundVideo video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particles canvas {
+  display: block;
 }

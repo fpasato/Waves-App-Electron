@@ -2,55 +2,41 @@ import { useEffect } from "react";
 import { usePlayer } from "../store/PlayerContext";
 
 export function useAnalyser() {
-  const { audioRef, analyserRef, audioContextRef } = usePlayer();
+  const { audioRef, crossfadeAudioRef, analyserRef, audioContextRef } = usePlayer();
 
+  // resume no clique/tecla (mantém igual)
   useEffect(() => {
-    const resume = () => {
-      if (audioContextRef.current?.state === "suspended") {
-        audioContextRef.current.resume();
-      }
-    };
+    const resume = () => audioContextRef.current?.state === "suspended"
+      && audioContextRef.current.resume();
 
     document.addEventListener("click", resume);
     document.addEventListener("keydown", resume);
-
     return () => {
       document.removeEventListener("click", resume);
       document.removeEventListener("keydown", resume);
     };
   }, []);
-  
+
+  // setup roda UMA vez no mount — ambos os elementos já existem no Context
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    if (analyserRef.current) return; // já configurado
 
-    const setup = async () => {
-      if (audioContextRef.current) {
-        // resume se estiver suspenso
-        if (audioContextRef.current.state === "suspended") {
-          await audioContextRef.current.resume();
-        }
-        return;
-      }
+    const ctx      = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
 
-      const ctx = new AudioContext();
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
+    const srcA = ctx.createMediaElementSource(audioRef.current);
+    const srcB = ctx.createMediaElementSource(crossfadeAudioRef.current);
 
-      const source = ctx.createMediaElementSource(audio);
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
+    srcA.connect(analyser);
+    srcB.connect(analyser);
+    analyser.connect(ctx.destination);
 
-      audioContextRef.current = ctx;
-      analyserRef.current = analyser;
+    audioContextRef.current = ctx;
+    analyserRef.current     = analyser;
 
-      if (ctx.state === "suspended") {
-        await ctx.resume();
-      }
-    };
-
-    audio.addEventListener("play", setup);
-    return () => audio.removeEventListener("play", setup);
+    // AudioContext começa suspended em browsers modernos;
+    // o listener de click/keydown acima vai retomá-lo
   }, []);
 
   return { analyserRef };

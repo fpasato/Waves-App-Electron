@@ -10,9 +10,13 @@ import { VolumeControls } from "../../Components/VolumeControls";
 
 import { randomCover } from "../../utils/randomCover";
 import { usePlayerStore } from "../../store/playerStore";
+import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function PlayerScreen({ setScreen }) {
+  useAnalyser();
   const { currentSong } = usePlayerStore();
+  console.log("🖥️ [PlayerScreen] re-renderizou, currentSong:", currentSong?.title);
+
 
   return (
     <div className={styles.playerScreen}>

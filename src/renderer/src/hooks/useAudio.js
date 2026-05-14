@@ -16,22 +16,12 @@ export function useAudio() {
   const { currentSong, isPlaying, volume, nextSong } = usePlayerStore();
 
   // ── INIT ─────────────────────────────────────────────
-  if (!audioRef.current) {
-    audioRef.current = new Audio();
-    console.log("🎧 [INIT] playerA created");
-  }
-
-  if (!crossfadeAudioRef.current) {
-    crossfadeAudioRef.current = new Audio();
-    console.log("🎧 [INIT] playerB created");
-  }
 
   const playerA = audioRef.current;
   const playerB = crossfadeAudioRef.current;
 
   if (!activeAudioRef.current) {
     activeAudioRef.current = playerA;
-    console.log("🎧 [INIT] activeAudio = playerA");
   }
 
   function getActive() {
