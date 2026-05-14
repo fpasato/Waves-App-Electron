@@ -1,20 +1,26 @@
-import {
-  app,
-  shell,
-  BrowserWindow,
-  ipcMain,
-  dialog,
-} from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
 import { join } from "path";
 import { readdirSync, statSync } from "fs";
 import { pathToFileURL } from "node:url";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { initDatabase, closeDatabase } from "./database.js";
 import { registerDatabaseHandlers } from "./databaseHandlers.js";
+import * as mm from "music-metadata"; // importação ES modules
 
 const AUDIO_EXTENSIONS = [".mp3", ".wav", ".flac", ".ogg", ".m4a"];
 
-function scanFolder(folderPath) {
+// Função assíncrona para ler duração de um arquivo
+async function getAudioDuration(filePath) {
+  try {
+    const metadata = await mm.parseFile(filePath);
+    return metadata.format.duration || 0; // duração em segundos
+  } catch (err) {
+    console.error(`Erro ao ler metadados de ${filePath}:`, err);
+    return 0;
+  }
+}
+
+async function scanFolder(folderPath) {
   const results = [];
   try {
     const entries = readdirSync(folderPath);
@@ -22,16 +28,26 @@ function scanFolder(folderPath) {
       const fullPath = join(folderPath, entry);
       const stat = statSync(fullPath);
       if (stat.isDirectory()) {
-        results.push(...scanFolder(fullPath));
+        results.push(...(await scanFolder(fullPath)));
       } else {
         const ext = entry.slice(entry.lastIndexOf(".")).toLowerCase();
         if (AUDIO_EXTENSIONS.includes(ext)) {
+          const duration = await getAudioDuration(fullPath);
+          // Opcional: tente extrair artista do metadata
+          let artist = "Desconhecido";
+          try {
+            const metadata = await mm.parseFile(fullPath, { skipCovers: true });
+            if (metadata.common.artist) artist = metadata.common.artist;
+          } catch (e) {
+            /* ignora */
+          }
+
           results.push({
-            id: fullPath,
+            id: fullPath, // ainda é a string do caminho; idealmente o banco gerará um id numérico
             path: fullPath,
             title: entry.replace(/\.[^/.]+$/, ""),
-            artist: "Desconhecido",
-            duration: 0,
+            artist: artist,
+            duration: duration,
             src: pathToFileURL(fullPath).href,
             cover: null,
           });

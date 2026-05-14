@@ -21,10 +21,12 @@ export function registerDatabaseHandlers() {
 
   ipcMain.handle("settings:set", (_, key, value) => {
     getDatabase()
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO app_settings (key, value) VALUES (?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value
-      `)
+      `,
+      )
       .run(key, String(value));
     return true;
   });
@@ -96,12 +98,14 @@ export function registerDatabaseHandlers() {
 
   ipcMain.handle("db:songs:recordPlay", (_, songId) => {
     getDatabase()
-      .prepare(`
+      .prepare(
+        `
         UPDATE songs
         SET play_count = COALESCE(play_count, 0) + 1,
             last_played = datetime('now')
         WHERE id = ?
-      `)
+      `,
+      )
       .run(songId);
     return true;
   });
@@ -112,23 +116,27 @@ export function registerDatabaseHandlers() {
 
   ipcMain.handle("db:recents:add", (_, songId) => {
     getDatabase()
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO recents (song_id, played_at)
         VALUES (?, datetime('now'))
-      `)
+      `,
+      )
       .run(songId);
     return true;
   });
 
   ipcMain.handle("db:recents:list", (_, limit = 30) => {
     return getDatabase()
-      .prepare(`
+      .prepare(
+        `
         SELECT songs.*, recents.played_at AS played_at
         FROM recents
         JOIN songs ON songs.id = recents.song_id
         ORDER BY recents.played_at DESC
         LIMIT ?
-      `)
+      `,
+      )
       .all(limit);
   });
 
@@ -144,36 +152,63 @@ export function registerDatabaseHandlers() {
   ipcMain.handle("db:directories:add", (_, dirPath) => {
     const db = getDatabase();
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT OR IGNORE INTO directories (path)
       VALUES (?)
-    `).run(dirPath);
+    `,
+    ).run(dirPath);
 
-    return db
-      .prepare("SELECT * FROM directories WHERE path = ?")
-      .get(dirPath);
+    return db.prepare("SELECT * FROM directories WHERE path = ?").get(dirPath);
   });
 
+
+  ipcMain.handle("db:songs:refreshDuration", async () => {
+    const db = getDatabase();
+    const songs = db.prepare("SELECT id, path FROM songs").all();
+    const mm = await import("music-metadata");
+    for (const song of songs) {
+      try {
+        const metadata = await mm.parseFile(song.path);
+        const duration = metadata.format.duration || 0;
+        db.prepare("UPDATE songs SET duration = ? WHERE id = ?").run(
+          duration,
+          song.id,
+        );
+      } catch (err) {
+        console.error(`Falha ao atualizar ${song.path}:`, err);
+      }
+    }
+    return true;
+  });
+
+  
   ipcMain.handle("db:directories:remove", (_, id) => {
     const db = getDatabase();
 
     // Tabelas antigas (CREATE IF NOT EXISTS) podem não ter ON DELETE CASCADE;
     // apagar na ordem certa evita SQLITE_CONSTRAINT_FOREIGNKEY.
     const removeDir = db.transaction(() => {
-      db.prepare(`
+      db.prepare(
+        `
         DELETE FROM playlist_songs
         WHERE song_id IN (SELECT id FROM songs WHERE directory_id = ?)
-      `).run(id);
+      `,
+      ).run(id);
 
-      db.prepare(`
+      db.prepare(
+        `
         DELETE FROM favorites
         WHERE song_id IN (SELECT id FROM songs WHERE directory_id = ?)
-      `).run(id);
+      `,
+      ).run(id);
 
-      db.prepare(`
+      db.prepare(
+        `
         DELETE FROM recents
         WHERE song_id IN (SELECT id FROM songs WHERE directory_id = ?)
-      `).run(id);
+      `,
+      ).run(id);
 
       db.prepare("DELETE FROM songs WHERE directory_id = ?").run(id);
       db.prepare("DELETE FROM directories WHERE id = ?").run(id);
@@ -203,20 +238,20 @@ export function registerDatabaseHandlers() {
   });
 
   ipcMain.handle("db:favorites:remove", (_, id) => {
-    getDatabase()
-      .prepare("DELETE FROM favorites WHERE song_id = ?")
-      .run(id);
+    getDatabase().prepare("DELETE FROM favorites WHERE song_id = ?").run(id);
 
     return true;
   });
 
   ipcMain.handle("db:favorites:list", () => {
     return getDatabase()
-      .prepare(`
+      .prepare(
+        `
         SELECT songs.*
         FROM favorites
         JOIN songs ON songs.id = favorites.song_id
-      `)
+      `,
+      )
       .all();
   });
 
@@ -236,7 +271,9 @@ export function registerDatabaseHandlers() {
     const info = db
       .prepare("INSERT INTO playlists (name, cover) VALUES (?, ?)")
       .run(name, cover);
-    return db.prepare("SELECT * FROM playlists WHERE id = ?").get(info.lastInsertRowid);
+    return db
+      .prepare("SELECT * FROM playlists WHERE id = ?")
+      .get(info.lastInsertRowid);
   });
 
   ipcMain.handle("db:playlists:rename", (_, id, name) => {

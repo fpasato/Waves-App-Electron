@@ -3,9 +3,29 @@ import { Header } from "../../Components/Header";
 import { Button } from "../../Components/Button";
 import { randomCover } from "../../utils/randomCover";
 import styles from "./style.module.css";
+import { min } from "three/tsl";
 
 export function LibraryScreen({ setScreen }) {
   const { library, playSong, addToQueue } = usePlayerStore();
+
+  const totalSeconds = library.reduce(
+    (acc, song) => acc + (song.duration || 0),
+    0,
+  );
+
+  // Função para formatar segundos em MM:SS
+  const formatDuration = (seconds) => {
+    if (!seconds || isNaN(seconds) || seconds <= 0) return "0:00";
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}min`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className={styles.libraryContainer}>
@@ -13,12 +33,14 @@ export function LibraryScreen({ setScreen }) {
       <div className={styles.libraryContentContainer}>
         <div className={styles.libraryHeader}>
           <div className={styles.libraryinfo}>
-            <h2>Total de Músicas: {library.length}</h2>
-            <h2>
-              Duração total:{" "}
-              {library.reduce((acc, song) => acc + song.duration, 0)}
-              {console.log(library[0])}
-            </h2>
+            <div className={styles.libraryinfoItem}>
+              <h2>Total de Músicas: </h2>
+              <p>{library.length}</p>
+            </div>
+            <div className={styles.libraryinfoItem}>
+              <h2>Duração total: </h2>
+              <p>{formatDuration(totalSeconds)}</p>
+            </div>
           </div>
           <div className={styles.libraryItemActions}>
             <Button

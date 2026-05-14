@@ -47,7 +47,7 @@ export function ProgressBar() {
 
     const ctx = canvas.getContext("2d");
 
-    const totalBars = 80;
+    const totalBars = 150;
     const half = totalBars / 2;
     const maxIndex = 70;
 
@@ -76,9 +76,12 @@ export function ProgressBar() {
 
     const draw = () => {
       const analyser = analyserRef.current;
-
       const w = canvas.width;
       const h = canvas.height;
+      if (w < 10 || h < 10) {
+        animationRef.current = requestAnimationFrame(draw);
+        return;
+      }
 
       const accent = getComputedStyle(document.body)
         .getPropertyValue("--accent")
@@ -87,47 +90,47 @@ export function ProgressBar() {
       ctx.clearRect(0, 0, w, h);
 
       let dataArray = null;
-
       if (analyser) {
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-
         analyser.getByteFrequencyData(dataArray);
       }
 
       const grad = ctx.createLinearGradient(0, h, 0, 0);
-
       grad.addColorStop(0, accent);
       grad.addColorStop(1, accent);
 
       ctx.fillStyle = grad;
-
-      ctx.shadowBlur = 22;
       ctx.shadowColor = accent;
+      ctx.shadowBlur = Math.max(15, Math.min(40, w * 0.05)); // mínimo 15
 
       const barWidth = w / totalBars;
 
       for (let i = 0; i < totalBars; i++) {
         const isLeft = i < half;
-
         const idx = mapIndex(isLeft ? i : i - half, isLeft);
-
         const raw = dataArray ? dataArray[idx] : 0;
-
-        const targetHeight = Math.max(4, (raw / 255) * h);
+        const maxBarHeight = h * 0.75;
+        const targetHeight = Math.max(4, (raw / 255) * maxBarHeight);
 
         smoothedHeights[i] =
           smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
 
+        // Define a largura real da barra como 75% do espaço disponível (25% vira espaço em branco)
+        // O Math.max(1, ...) garante que a barra nunca suma completamente
+        const actualBarWidth = Math.max(1, barWidth * 0.75);
+
+        // Centraliza a barra dentro do seu próprio "slot"
+        const xPos = i * barWidth + (barWidth - actualBarWidth) / 2;
+
         ctx.fillRect(
-          i * barWidth,
+          xPos,
           h - smoothedHeights[i],
-          barWidth - 1,
+          actualBarWidth,
           smoothedHeights[i],
         );
       }
 
       ctx.shadowBlur = 0;
-
       animationRef.current = requestAnimationFrame(draw);
     };
 

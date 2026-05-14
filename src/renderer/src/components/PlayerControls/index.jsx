@@ -7,7 +7,16 @@ import { RiLoopLeftLine } from "react-icons/ri";
 import { usePlayerStore } from "../../store/playerStore";
 
 export function PlayerControls() {
-  const { isPlaying, repeat, shuffle, toggleRepeat, togglePlay, toggleShuffle, nextSong, previousSong } = usePlayerStore();
+  const {
+    isPlaying,
+    repeat,
+    shuffle,
+    toggleRepeat,
+    togglePlay,
+    toggleShuffle,
+    nextSong,
+    previousSong,
+  } = usePlayerStore();
 
   return (
     <div className={styles.playerControls}>
