@@ -1,22 +1,30 @@
+// PlayerContext.jsx
 import { createContext, useContext, useRef } from "react";
 
 const PlayerContext = createContext(null);
 
 export function PlayerProvider({ children }) {
-  const audioRef          = useRef(new Audio());   // ← cria aqui
-  const crossfadeAudioRef = useRef(new Audio());   // ← e aqui
-  const currentSrcRef     = useRef(null);
-  const analyserRef       = useRef(null);
-  const audioContextRef   = useRef(null);
-  const activeAudioRef    = useRef(null);
-  const fadingRef         = useRef(false);
-  const crossfadeDoneRef  = useRef(false);
+  const audioRef = useRef(new Audio());
+  const crossfadeAudioRef = useRef(new Audio());
+  const currentSrcRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const activeAudioRef = useRef(null);
+  const fadingRef = useRef(false);
+  const crossfadeDoneRef = useRef(false);
+  const seekRef = useRef(null);   // ← adicionado
 
   return (
     <PlayerContext.Provider value={{
-      audioRef, crossfadeAudioRef, currentSrcRef,
-      analyserRef, audioContextRef, activeAudioRef,
-      fadingRef, crossfadeDoneRef,
+      audioRef,
+      crossfadeAudioRef,
+      currentSrcRef,
+      analyserRef,
+      audioContextRef,
+      activeAudioRef,
+      fadingRef,
+      crossfadeDoneRef,
+      seekRef,
     }}>
       {children}
     </PlayerContext.Provider>

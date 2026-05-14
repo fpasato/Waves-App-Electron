@@ -6,51 +6,37 @@ import { usePlayer } from "../../store/PlayerContext";
 const accent = getComputedStyle(document.body)
   .getPropertyValue("--accent")
   .trim();
+
 // ==================== TEXTURA DE BRILHO (GLOW) ====================
 const createGlowTexture = () => {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
   canvas.height = 128;
-
   const ctx = canvas.getContext("2d");
-
   const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-
-  // núcleo ultra brilhante
   gradient.addColorStop(0, "rgba(255,255,255,1)");
-
-  // glow branco intenso
   gradient.addColorStop(0.15, "rgba(255,255,255,0.95)");
-
-  // halo azul frio
   gradient.addColorStop(0.35, "rgba(220,235,255,0.85)");
-
-  // borda etérea
   gradient.addColorStop(0.6, "rgba(140,180,255,0.25)");
-
-  // fade transparente
   gradient.addColorStop(1, "rgba(255,255,255,0)");
-
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
-
   const texture = new THREE.CanvasTexture(canvas);
-
   return texture;
 };
+
 const GLOW_TEXTURE = createGlowTexture();
 
 // ==================== COMPONENTE PRINCIPAL ====================
 export function ParticlesEffect() {
   const containerRef = useRef(null);
   const { analyserRef } = usePlayer();
-
-  // Refs para o overlay 2D
   const overlayCanvasRef = useRef(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !analyserRef?.current) return;
+    // 🔥 NÃO bloqueia mais a criação da cena se analyser for nulo
+    if (!container) return;
 
     // ----- 1. SETUP THREE.JS (partículas 3D de fundo) -----
     const scene = new THREE.Scene();
@@ -65,11 +51,11 @@ export function ParticlesEffect() {
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0); // fundo transparente
+    renderer.setClearColor(0x000000, 0);
     container.innerHTML = "";
     container.appendChild(renderer.domElement);
 
-    // Partículas (2000 pontos flutuantes)
+    // Partículas (4000 pontos)
     const COUNT = 4000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(COUNT * 3);
@@ -95,17 +81,18 @@ export function ParticlesEffect() {
     const particles = new THREE.Points(geometry, particleMaterial);
     scene.add(particles);
 
-    // ----- 2. LÓGICA DE ÁUDIO (grave suavizado) -----
+    // ----- 2. LÓGICA DE ÁUDIO – AGORA PROTEGIDA -----
     const analyser = analyserRef.current;
-    analyser.smoothingTimeConstant = 0.8;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    let dataArray = null;
+    if (analyser) {
+      analyser.smoothingTimeConstant = 0.8;
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+    }
     let smoothedBass = 0;
 
     // ----- 3. OVERLAY 2D (círculo + barras radiais) -----
     const overlayCanvas = overlayCanvasRef.current;
     const ctx = overlayCanvas.getContext("2d");
-
-    // Configuração do overlay: posicionamento absoluto sobre o Three.js
     overlayCanvas.style.position = "absolute";
     overlayCanvas.style.top = "0";
     overlayCanvas.style.left = "0";
@@ -115,150 +102,113 @@ export function ParticlesEffect() {
     container.style.position = "relative";
     container.appendChild(overlayCanvas);
 
-    // Número de barras ao redor do círculo
     const BAR_COUNT = 200;
     let smoothedHeights = new Array(BAR_COUNT).fill(0);
     const smoothing = 0.5;
     const maxFreqIndex = 80;
 
-    // Função para redimensionar o canvas de overlay
     const resizeOverlay = () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
-
-      // evita resize desnecessário
-      if (overlayCanvas.width !== w) {
-        overlayCanvas.width = w;
-      }
-
-      if (overlayCanvas.height !== h) {
-        overlayCanvas.height = h;
-      }
-
-      // reaplica configs do contexto após resize
+      if (overlayCanvas.width !== w) overlayCanvas.width = w;
+      if (overlayCanvas.height !== h) overlayCanvas.height = h;
       ctx.imageSmoothingEnabled = true;
     };
     const resizeObserver = new ResizeObserver(resizeOverlay);
     resizeObserver.observe(container);
 
-    // ----- 4. LOOP DE ANIMAÇÃO COMBINADO (Three.js + Canvas 2D) -----
+    // ----- 4. LOOP DE ANIMAÇÃO (seguro) -----
     let threeAnimationId;
 
     const animate = () => {
       threeAnimationId = requestAnimationFrame(animate);
 
-      // --- Atualiza o grave suavizado ---
-      analyser.getByteFrequencyData(dataArray);
+      // --- Atualiza o grave suavizado (se houver analyser) ---
       let bass = 0;
-      for (let i = 0; i < 40; i++) bass += dataArray[i];
-      bass = bass / 40 / 255;
+      if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        for (let i = 0; i < 40; i++) bass += dataArray[i];
+        bass = bass / 40 / 255;
+      }
       smoothedBass = smoothedBass * 0.82 + bass * 0.18;
       const force = smoothedBass * 5;
       const time = performance.now() * 0.001;
 
-      // --- Atualiza as partículas 3D ---
+      // --- Atualiza as partículas 3D (sempre rodam, mas com força do áudio) ---
       const posAttr = geometry.attributes.position.array;
       for (let i = 0; i < COUNT; i++) {
         const i3 = i * 3;
-        // Movimento em Z
         posAttr[i3 + 2] += 0.02 + force * 0.07;
         if (posAttr[i3 + 2] > 5) posAttr[i3 + 2] = -100;
-        // Oscilação lateral
         posAttr[i3] = basePositions[i3] + Math.sin(time + i * 0.06) * force;
-        posAttr[i3 + 1] =
-          basePositions[i3 + 1] + Math.cos(time + i * 0.06) * force;
+        posAttr[i3 + 1] = basePositions[i3 + 1] + Math.cos(time + i * 0.06) * force;
       }
       geometry.attributes.position.needsUpdate = true;
 
-      // Reações visuais das partículas
       particleMaterial.size = 0.15 + smoothedBass * 0.2;
       particleMaterial.opacity = 0.5 + smoothedBass * 1.5;
       camera.position.z = 5 - smoothedBass * 0.7;
 
       renderer.render(scene, camera);
 
-      // --- Desenha o overlay 2D (círculo + barras radiais) ---
+      // --- Desenha o overlay 2D (sempre desenha, mas com dados do áudio ou zero) ---
       const w = overlayCanvas.width;
       const h = overlayCanvas.height;
       const centerX = w / 2;
       const centerY = h / 2;
-      const maxRadius = Math.min(w, h) * 0.1;
       const circleBaseRadius = Math.min(w, h) * 0.17;
 
       ctx.clearRect(0, 0, w, h);
 
-      // 1. Círculo central (reage ao grave)
+      // Círculo com pulso (usa smoothedBass, que pode ser 0 se não houver áudio)
       const circleScale = 1 + smoothedBass * 0.3;
       const circleRadius = circleBaseRadius * circleScale;
 
-      ctx.beginPath();
-      ctx.fill();
-      // Borda interna brilhante
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, circleRadius * 0.8, 0, Math.PI * 2);
+      // Anéis decorativos (sempre desenha)
       for (let j = 0; j < 4; j++) {
         ctx.beginPath();
-
         const points = 120;
-
         for (let i = 0; i <= points; i++) {
           const a = (i / points) * Math.PI * 2;
-
-          const noise =
-            Math.sin(a * 6 + time * 1.5 + j) * 8 +
-            Math.cos(a * 4 - time * 1.2 + j) * 6;
-
-          const radius =
-            circleRadius * (0.55 + j * 0.12) + noise + smoothedBass * 18;
-
+          const noise = Math.sin(a * 6 + time * 1.5 + j) * 8 +
+                        Math.cos(a * 4 - time * 1.2 + j) * 6;
+          const radius = circleRadius * (0.55 + j * 0.12) + noise + smoothedBass * 18;
           const x = centerX + Math.cos(a) * radius;
           const y = centerY + Math.sin(a) * radius;
-
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
-
         ctx.closePath();
-
         ctx.strokeStyle = `rgba(255,255,255,${0.15 - j * 0.03})`;
-
         ctx.lineWidth = 3 + smoothedBass * 4;
-
         ctx.shadowBlur = 30 + smoothedBass * 40;
         ctx.shadowColor = "rgba(180,220,255,0.8)";
-
         ctx.stroke();
       }
 
-      const coreGradient = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        0,
-        centerX,
-        centerY,
-        circleRadius,
-      );
-
+      // Gradiente do núcleo
+      const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, circleRadius);
       coreGradient.addColorStop(0, "rgba(255,255,255,1)");
       coreGradient.addColorStop(0.1, "rgba(255,255,255,0.95)");
       coreGradient.addColorStop(0.25, "rgba(180,220,255,0.9)");
       coreGradient.addColorStop(0.5, "rgba(100,140,255,0.3)");
       coreGradient.addColorStop(1, "rgba(0,0,0,0)");
-
       ctx.beginPath();
       ctx.arc(centerX, centerY, circleRadius * 0.7, 0, Math.PI * 2);
-
       ctx.fillStyle = coreGradient;
       ctx.fill();
-      // 2. Barras radiais
+
+      // Barras radiais (protegidas: se não houver dataArray, usa smoothedHeights zerados)
       ctx.shadowBlur = 12;
       ctx.shadowColor = '#ffffffff';
       for (let i = 0; i < BAR_COUNT; i++) {
-        const freqIndex = Math.floor((i / BAR_COUNT) * maxFreqIndex);
-        const rawValue = dataArray[freqIndex] || 0;
-        const targetHeight = (rawValue / 255) * 40;
-        smoothedHeights[i] =
-          smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
+        let targetHeight = 0;
+        if (dataArray) {
+          const freqIndex = Math.floor((i / BAR_COUNT) * maxFreqIndex);
+          const rawValue = dataArray[freqIndex] || 0;
+          targetHeight = (rawValue / 255) * 40;
+        }
+        smoothedHeights[i] = smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
         const barHeight = Math.max(4, smoothedHeights[i]);
 
         const angle = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
@@ -272,19 +222,18 @@ export function ParticlesEffect() {
 
         ctx.beginPath();
         ctx.lineWidth = Math.max(2, (w / BAR_COUNT) * 0.8);
-        ctx.lineCap = "round";
+        ctx.lineCap = "butt";
         ctx.strokeStyle = '#ffffff';
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
       }
-
       ctx.shadowBlur = 0;
     };
 
     animate();
 
-    // ----- 5. CLEANUP -----
+    // ----- 5. RESIZE E CLEANUP -----
     const handleResize = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
@@ -302,10 +251,9 @@ export function ParticlesEffect() {
       geometry.dispose();
       particleMaterial.dispose();
       renderer.dispose();
-      if (overlayCanvas.parentNode)
-        overlayCanvas.parentNode.removeChild(overlayCanvas);
+      if (overlayCanvas.parentNode) overlayCanvas.parentNode.removeChild(overlayCanvas);
     };
-  }, [analyserRef]);
+  }, [analyserRef]); // dependência mantida, mas a cena é criada mesmo sem analyser
 
   return (
     <div className={styles.particlesEffectContainer} ref={containerRef}>
