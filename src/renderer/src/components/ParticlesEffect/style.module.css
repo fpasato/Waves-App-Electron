@@ -6,7 +6,9 @@
   overflow: hidden;
   pointer-events: none;
 
-  background-color: rgba(0, 0, 0, 0.688);
+  background-image: url("../../assets/images/bg-scene.png");
+  background-size: cover;
+  background-position: center;
 }
 .particlesEffectContainer canvas {
   display: block;

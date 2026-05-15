@@ -45,8 +45,10 @@ export const usePlayerStore = create((set, get) => ({
     set({ fadeEnabled });
   },
   setFadeDuration: (value) => {
-    const newVal = Math.min(15, Math.max(1, Math.floor(Number(value)) || 3));
+    const newVal = Math.min(15, Math.max(1, Number(value) || 3));
+
     logWithTime(`⚙️ setFadeDuration: ${value} -> ${newVal}`);
+
     set({ fadeDuration: newVal });
   },
 

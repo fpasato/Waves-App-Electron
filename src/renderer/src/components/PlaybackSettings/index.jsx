@@ -2,14 +2,11 @@ import { useState } from "react";
 import styles from "./style.module.css";
 import { usePlayerStore } from "../../store/playerStore";
 import { useSettings } from "../../hooks/useDatabase";
+import { Button } from "../../components/Button";
 
 export function PlaybackSettings() {
-  const {
-    fadeEnabled,
-    setFadeEnabled,
-    fadeDuration,
-    setFadeDuration,
-  } = usePlayerStore();
+  const { fadeEnabled, setFadeEnabled, fadeDuration, setFadeDuration } =
+    usePlayerStore();
 
   const { set: setSetting } = useSettings();
   const [saved, setSaved] = useState(false);
@@ -28,22 +25,25 @@ export function PlaybackSettings() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>Playback</h2>
-        <p>Transição entre músicas (gravado na base de dados).</p>
+        <h2>Crossfade</h2>
+        <p>Transição entre músicas.</p>
       </div>
 
       <div className={styles.option}>
         <label className={styles.toggleLabel}>
           <span>Fade entre músicas</span>
+
           <input
             type="checkbox"
             checked={fadeEnabled}
             onChange={(e) => setFadeEnabled(e.target.checked)}
           />
         </label>
+
         <p className={styles.description}>
-          Nos últimos segundos da faixa atual, a seguinte entra em paralelo: fade
-          out na atual e fade in na próxima (duração configurável).
+          A próxima música começa antes da atual terminar{" "}
+          <br />
+          criando uma transição suave entre as faixas.
         </p>
       </div>
 
@@ -51,27 +51,57 @@ export function PlaybackSettings() {
         className={`${styles.option} ${!fadeEnabled ? styles.disabled : ""}`}
       >
         <label>
-          Duração do fade: <strong>{fadeDuration}s</strong>
+          Duração do fade: <strong>{fadeDuration.toFixed(1)}s</strong>
         </label>
-        <input
-          type="range"
-          min="1"
-          max="15"
-          step="1"
-          value={fadeDuration}
-          disabled={!fadeEnabled}
-          onChange={(e) => setFadeDuration(Number(e.target.value))}
-          className={styles.slider}
-        />
-        <div className={styles.sliderLabels}>
-          <span>1s</span>
-          <span>15s</span>
+
+        <div className={styles.sliderWrapper}>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            step="0.1"
+            value={fadeDuration}
+            disabled={!fadeEnabled}
+            onChange={(e) => setFadeDuration(Number(e.target.value))}
+            className={styles.slider}
+          />
+
+          <div className={styles.rangeMeter}>
+            <div className={styles.fast}></div>
+            <div className={styles.ideal}></div>
+            <div className={styles.long}></div>
+          </div>
+
+          <div className={styles.ticks}>
+            {Array.from({ length: 10 }, (_, i) => (
+              <span key={i}>{i + 1}s</span>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.rangeLabels}>
+          <div>
+            <span>Rápido</span>
+            <small>1s - 3s</small>
+          </div>
+
+          <div>
+            <span>Ideal</span>
+            <small>3s - 6s</small>
+          </div>
+
+          <div>
+            <span>Longo</span>
+            <small>6s - 10s</small>
+          </div>
         </div>
       </div>
 
-      <button type="button" className={styles.saveButton} onClick={handleSave}>
-        {saved ? "Salvo!" : "Salvar"}
-      </button>
+      <Button
+        title={saved ? "Salvo!" : "Salvar"}
+        onClick={handleSave}
+        className={styles.saveButton}
+      />
     </div>
   );
 }

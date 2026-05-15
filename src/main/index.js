@@ -108,59 +108,63 @@ async function scanFolder(folderPath) {
   const results = [];
   try {
     const entries = readdirSync(folderPath);
+
     for (const entry of entries) {
       const fullPath = join(folderPath, entry);
       const stat = statSync(fullPath);
+
+      // ignora subpastas
       if (stat.isDirectory()) {
-        results.push(...(await scanFolder(fullPath)));
-      } else {
-        const ext = entry.slice(entry.lastIndexOf(".")).toLowerCase();
-        if (AUDIO_EXTENSIONS.includes(ext)) {
-          try {
-            const metadata = await mm.parseFile(fullPath, {
-              skipCovers: true,
-              native: true,
-            });
-            const duration = metadata.format.duration || 0;
-            const common = metadata.common;
+        continue;
+      }
 
-            let artista = "Desconhecido";
-            let titulo = entry.replace(/\.[^/.]+$/, "");
+      const ext = entry.slice(entry.lastIndexOf(".")).toLowerCase();
 
-            if (common.artist) {
-              artista = Array.isArray(common.artist)
-                ? common.artist[0]
-                : common.artist;
-            }
-            if (common.title) {
-              titulo = common.title;
-            }
+      if (AUDIO_EXTENSIONS.includes(ext)) {
+        try {
+          const metadata = await mm.parseFile(fullPath, {
+            skipCovers: true,
+            native: true,
+          });
 
-            // Fallback: extrai do nome do arquivo
-            if (artista === "Desconhecido" || !common.title) {
-              const { artist: parsedArtist, title: parsedTitle } =
-                parseArtistTitleFromFilename(entry);
-              if (parsedArtist !== "Desconhecido") artista = parsedArtist;
-              if (parsedTitle) titulo = parsedTitle;
-            }
+          const duration = metadata.format.duration || 0;
+          const common = metadata.common;
 
-            results.push({
-              id: fullPath,
-              path: fullPath,
-              title: titulo,
-              artist: artista,
-              duration: duration,
-              src: pathToFileURL(fullPath).href,
-              cover: null,
-            });
+          let artista = "Desconhecido";
+          let titulo = entry.replace(/\.[^/.]+$/, "");
 
-            console.log(`✅ Extraído: "${artista}" - "${titulo}" de ${entry}`);
-          } catch (err) {
-            console.error(`Erro ao processar ${fullPath}:`, err);
+          if (common.artist) {
+            artista = Array.isArray(common.artist)
+              ? common.artist[0]
+              : common.artist;
           }
-        } // fim do if (AUDIO_EXTENSIONS)
-      } // fim do else (não é diretório)
-    } // fim do for
+
+          if (common.title) {
+            titulo = common.title;
+          }
+
+          if (artista === "Desconhecido" || !common.title) {
+            const { artist: parsedArtist, title: parsedTitle } =
+              parseArtistTitleFromFilename(entry);
+
+            if (parsedArtist !== "Desconhecido") artista = parsedArtist;
+            if (parsedTitle) titulo = parsedTitle;
+          }
+
+          results.push({
+            id: fullPath,
+            path: fullPath,
+            title: titulo,
+            artist: artista,
+            duration,
+            src: pathToFileURL(fullPath).href,
+            cover: null,
+          });
+        } catch (err) {
+          console.error(`Erro ao processar ${fullPath}:`, err);
+        }
+      }
+    }
   } catch (e) {
     console.error("Erro ao escanear pasta:", e);
   }
