@@ -34,7 +34,8 @@ export const usePlayerStore = create((set, get) => ({
   shuffle: false,
   repeat: false,
   shuffleQueue: [],
-  shufflePos: 0, // posição atual dentro da shuffleQueue
+  shufflePos: 0,
+  restartSignal: 0,
 
   fadeEnabled: false,
   fadeDuration: 3,
@@ -251,12 +252,14 @@ export const usePlayerStore = create((set, get) => ({
       logWithTime(
         `⏩ nextSong (shuffle): shufflePos atual=${shufflePos}, nextPos=${nextPos}, shuffleQueue.length=${shuffleQueue.length}`,
       );
+
       if (nextPos >= shuffleQueue.length) {
+        // Fim da fila aleatória
         if (repeat) {
           const allIndices = queue.map((_, i) => i);
           let newShuffle = shuffleArray(allIndices);
 
-          // Evita que a nova shuffleQueue comece com a mesma música que acabou de tocar
+          // Evita repetir a mesma música imediatamente
           if (newShuffle[0] === queueIndex && newShuffle.length > 1) {
             const swapWith =
               1 + Math.floor(Math.random() * (newShuffle.length - 1));
@@ -270,24 +273,33 @@ export const usePlayerStore = create((set, get) => ({
           logWithTime(
             `⏩ nextSong (shuffle+repeat): nova shuffleQueue = ${JSON.stringify(newShuffle)}, primeiro índice=${firstIndex} (${queue[firstIndex]?.title})`,
           );
-          return set({
+
+          return set((state) => ({
             shuffleQueue: newShuffle,
             shufflePos: 0,
             queueIndex: firstIndex,
             currentSong: queue[firstIndex],
             isPlaying: true,
+            restartSignal:
+              queue.length === 1
+                ? state.restartSignal + 1
+                : state.restartSignal,
+          }));
+        } else {
+          // Sem repeat: para ao final
+          logWithTime(
+            `⏩ nextSong (shuffle, sem repeat): fim da shuffleQueue -> parando`,
+          );
+          return set({
+            currentSong: null,
+            isPlaying: false,
+            progress: 0,
+            currentTime: 0,
           });
         }
-        logWithTime(
-          `⏩ nextSong (shuffle, sem repeat): fim da shuffleQueue -> parando`,
-        );
-        return set({
-          currentSong: null,
-          isPlaying: false,
-          progress: 0,
-          currentTime: 0,
-        });
       }
+
+      // Não chegou ao fim: avança para a próxima posição
       const nextIndex = shuffleQueue[nextPos];
       logWithTime(
         `⏩ nextSong (shuffle): avançando para shufflePos=${nextPos}, queueIndex=${nextIndex} (${queue[nextIndex]?.title})`,
@@ -305,16 +317,20 @@ export const usePlayerStore = create((set, get) => ({
     logWithTime(
       `⏩ nextSong (normal): queueIndex atual=${queueIndex}, próximo índice=${nextIndex}`,
     );
+
     if (nextIndex >= queue.length) {
       if (repeat) {
         logWithTime(
           `⏩ nextSong (normal+repeat): fim da fila, volta para índice 0 (${queue[0]?.title})`,
         );
-        return set({
+        // ← CORREÇÃO AQUI: usar set((state) => ...) e adicionar restartSignal
+        return set((state) => ({
           queueIndex: 0,
           currentSong: queue[0],
           isPlaying: true,
-        });
+          restartSignal:
+            queue.length === 1 ? state.restartSignal + 1 : state.restartSignal,
+        }));
       }
       logWithTime(`⏩ nextSong (normal, sem repeat): fim da fila -> parando`);
       return set({
@@ -324,6 +340,7 @@ export const usePlayerStore = create((set, get) => ({
         currentTime: 0,
       });
     }
+
     logWithTime(
       `⏩ nextSong (normal): nova música: ${queue[nextIndex]?.title}`,
     );
@@ -333,7 +350,6 @@ export const usePlayerStore = create((set, get) => ({
       isPlaying: true,
     });
   },
-
   // ---------- previousSong (usa shufflePos) ----------
   previousSong: () => {
     logWithTime(`⏪ previousSong chamado`);

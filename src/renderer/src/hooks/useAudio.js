@@ -21,7 +21,7 @@ export function useAudio() {
     seekRef,
   } = usePlayer();
 
-  const { currentSong, isPlaying, volume, nextSong } = usePlayerStore();
+  const { currentSong, isPlaying, volume, nextSong, restartSignal } = usePlayerStore();
 
   const playerA = audioRef.current;
   const playerB = crossfadeAudioRef.current;
@@ -365,10 +365,15 @@ export function useAudio() {
     }
 
     if (currentSong.src === currentSrcRef.current) {
+      // ← CORREÇÃO: reinicia do zero em vez de só chamar play()
       logWithTime(
-        `🎧 [LOAD] mesma música já carregada (src match) | src=${currentSong.src}`,
+        `🎧 [LOAD] mesma src mas restartSignal=${restartSignal} – reiniciando`,
       );
-      if (isPlaying) getActive().play().catch(console.error);
+      abortCrossfade();
+      const active = getActive();
+      active.currentTime = 0;
+      active.volume = usePlayerStore.getState().volume;
+      if (isPlaying) active.play().catch(console.error);
       return;
     }
 
@@ -407,7 +412,7 @@ export function useAudio() {
     );
 
     resetElement(getInactive(), "inactive (load)");
-  }, [currentSong?.id, currentSong?.src]);
+  }, [currentSong?.id, currentSong?.src, restartSignal]);
 
   // ---------- PLAY / PAUSE ----------
   useEffect(() => {
