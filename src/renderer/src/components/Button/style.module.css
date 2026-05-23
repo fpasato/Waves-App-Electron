@@ -1,22 +1,40 @@
 .buttonpattern {
-
+    position: relative;
     background-color: var(--mid);
     color: var(--text);
-    
-    border: 1px solid transparent;
-    border-radius: 0.3rem;
-    border-bottom: 1px solid var(--accent);
-    box-shadow: 0 0 5px var(--shadow);
-    
+
+    border: none;
+    border-radius: 0.6rem;
+
     padding: 0.5rem;
     cursor: pointer;
 
-    transition: all 0.2s ease-in-out;
-    
-    &:hover {
-        box-shadow: 0 0 5px var(--accent);
-        transform: translateY(-2px) translateX(6px);
-        border-color: var(--accent);
-    }
+    overflow: hidden;
+}
 
+/* base: só linha embaixo */
+.buttonpattern::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 2px;
+
+    background: var(--accent);
+
+    transform: scaleX(1);
+    transform-origin: left;
+
+    transition: transform 0.2s ease;
+}
+
+/* hover: “sobe” virando contorno */
+.buttonpattern:hover::after {
+    transform: scaleX(1);
+    height: 100%;
+
+    border-radius: 0.6rem;
+    opacity: 0.12;
 }

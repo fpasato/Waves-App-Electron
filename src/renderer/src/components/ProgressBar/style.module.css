@@ -1,5 +1,3 @@
-
-
 .progressBar {
   width: 100%;
   max-width: 800px;
@@ -12,34 +10,27 @@
 .wavebars {
   width: 100%;
   height: 60px;
-  min-width: 100px;
-
   display: block;
 
   border-radius: 999px;
 
-  --fade-size: clamp(10px, 4vw, 50px);
-
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black var(--fade-size),
-    black calc(100% - var(--fade-size)),
-    transparent 100%
-  );
-
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black var(--fade-size),
-    black calc(100% - var(--fade-size)),
-    transparent 100%
-  );
+  --fade-size: clamp(30px, 6vw, 80px);
+  -webkit-mask-image: linear-gradient(to right,
+      transparent 0,
+      black var(--fade-size),
+      black calc(100% - var(--fade-size)),
+      transparent 100%);
+  mask-image: linear-gradient(to right,
+      transparent 0,
+      black var(--fade-size),
+      black calc(100% - var(--fade-size)),
+      transparent 100%);
 }
+
 .bar {
   width: 100%;
   height: 6px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   position: relative;
   cursor: pointer;
@@ -69,5 +60,6 @@
 
 .wavebars {
   width: 100%;
-  height: 60px; /* ajusta conforme seu layout */
+  height: 60px;
+  /* ajusta conforme seu layout */
 }

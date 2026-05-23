@@ -47,7 +47,7 @@ export function ProgressBar() {
 
     const ctx = canvas.getContext("2d");
 
-    const totalBars = 150;
+    const totalBars = 100;
     const half = totalBars / 2;
     const maxIndex = 70;
 
@@ -101,7 +101,7 @@ export function ProgressBar() {
 
       ctx.fillStyle = grad;
       ctx.shadowColor = accent;
-      ctx.shadowBlur = Math.max(15, Math.min(40, w * 0.05)); // mínimo 15
+      ctx.shadowBlur = Math.max(8, Math.min(18, w * 0.02)); // mínimo 15
 
       const barWidth = w / totalBars;
 
@@ -109,26 +109,24 @@ export function ProgressBar() {
         const isLeft = i < half;
         const idx = mapIndex(isLeft ? i : i - half, isLeft);
         const raw = dataArray ? dataArray[idx] : 0;
-        const maxBarHeight = h * 0.75;
+        const maxBarHeight = h * 0.72;
         const targetHeight = Math.max(4, (raw / 255) * maxBarHeight);
 
         smoothedHeights[i] =
           smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
 
-        // Define a largura real da barra como 75% do espaço disponível (25% vira espaço em branco)
-        // O Math.max(1, ...) garante que a barra nunca suma completamente
         const actualBarWidth = Math.max(1, barWidth * 0.75);
-
-        // Centraliza a barra dentro do seu próprio "slot"
         const xPos = i * barWidth + (barWidth - actualBarWidth) / 2;
 
-        ctx.fillRect(
-          xPos,
-          h - smoothedHeights[i],
-          actualBarWidth,
-          smoothedHeights[i],
-        );
-      }
+        const radius = actualBarWidth / 2;
+        const x = xPos;
+        const y = h - smoothedHeights[i];
+        const bh = smoothedHeights[i];
+
+        ctx.beginPath();
+        ctx.roundRect(x, y, actualBarWidth, bh, [radius, radius, 2, 2]);
+        ctx.fill();
+      } // ← fechamento do for que estava faltando
 
       ctx.shadowBlur = 0;
       animationRef.current = requestAnimationFrame(draw);

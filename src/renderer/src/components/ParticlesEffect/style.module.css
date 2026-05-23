@@ -5,8 +5,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-
-  background-image: url("../../assets/images/bg-scene.png");
+  background-image: url('../../assets/images/bg-scene.jpg');
   background-size: cover;
   background-position: center;
 }

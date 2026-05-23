@@ -9,7 +9,7 @@ export function SideBar({ setScreen }) {
             <div className={styles.options}>
                 <Button title="Configurações" onClick={() => setScreen('settings')} />
                 <Button title="Biblioteca" onClick={() => setScreen('library')} />
-                <Button title="Favoritos" onClick={() => console.log('Favoritos clicked')} />
+                <Button title="Pesquisar" onClick={() => console.log('Pesquisar clicked')} />
                 <Button title="Recentes" onClick={() => console.log('Recentes clicked')} />
             </div>            
 

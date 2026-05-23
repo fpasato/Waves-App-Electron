@@ -5,8 +5,10 @@ import { PlayerScreen } from './screens/PlayerScreen'
 import { PlayerProvider } from './store/PlayerContext'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { LibraryScreen } from './screens/LibraryScreen'
+import { SearchScreen } from './screens/SearchScreen'
 import { useAudio } from './hooks/useAudio'
 import { usePlayerStore } from './store/playerStore'
+
 
 function PlayerApp() {
   const [screen, setScreen] = useState('player')
@@ -33,6 +35,7 @@ function PlayerApp() {
       {screen === "player" && <PlayerScreen setScreen={setScreen} />}
       {screen === "settings" && <SettingsScreen setScreen={setScreen} />}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
+      {screen === "search" && <SearchScreen setScreen={setScreen} />}
     </div>
   )
 }
