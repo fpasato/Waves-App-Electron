@@ -6,8 +6,6 @@ import styles from "./style.module.css";
 import { TbPlaylistAdd } from "react-icons/tb";
 import { FaDownload } from "react-icons/fa";
 
-const DEFAULT_QUERY = "hits brasil 2025";
-
 export function SearchScreen({ setScreen }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -15,7 +13,7 @@ export function SearchScreen({ setScreen }) {
   const [loading, setLoading] = useState(false);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [view, setView] = useState("featured");
   const [loadingId, setLoadingId] = useState(null);
   const inputRef = useRef(null);
 
@@ -24,60 +22,98 @@ export function SearchScreen({ setScreen }) {
   useEffect(() => {
     async function loadFeatured() {
       try {
-        const items = await window.api.youtube.search(DEFAULT_QUERY);
-        setFeatured(items);
+        const profile = await window.profile?.getUserProfile?.();
+        console.log("PROFILE NO FRONTEND:", profile);
+        console.log("searchHistory:", profile?.searchHistory);
+        console.log(
+          "queries que serão buscadas:",
+          profile?.searchHistory?.length > 0
+            ? profile.searchHistory.slice(0, 6)
+            : ["top hits 2025"],
+        );
+        console.log("PROFILE NO FRONTEND:", profile);
+        const history = profile?.searchHistory || [];
+        const DEFAULT_QUERIES = [
+          "pop hits 2025",
+          "rock classics",
+          "hip hop 2025",
+          "electronic music",
+          "indie 2025",
+          "jazz hits",
+        ];
+
+        const historySluice = history.slice(0, 6);
+
+        // Completa até 6 queries com fallbacks
+        const queries = [...historySluice, ...DEFAULT_QUERIES].slice(0, 6);
+
+        const allResults = await Promise.all(
+          queries.map((q) =>
+            window.api.youtube.search(q, true).then((r) => r.slice(0, 5)),
+          ),
+        );
+
+        // Achata e remove duplicatas por id
+        const seen = new Set();
+        const merged = allResults.flat().filter((item) => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        });
+
+        setFeatured(merged); // até 30 cards
       } catch (e) {
         console.error(e);
       } finally {
         setFeaturedLoading(false);
       }
     }
+
     loadFeatured();
   }, []);
 
-const handleDownload = async (item) => {
-  try {
-    setLoadingId(item.id);
+  const handleDownload = async (item) => {
+    try {
+      setLoadingId(item.id);
 
-    const result = await window.api.youtube.download({
-      videoId: item.id,
-      title: item.title,
-    });
+      const result = await window.api.youtube.download({
+        videoId: item.id,
+        title: item.title,
+      });
 
-    if (!result.success) throw new Error(result.error);
+      if (!result.success) throw new Error(result.error);
 
-    alert(`Download concluído: ${item.title}`);
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao baixar música.");
-  } finally {
-    setLoadingId(null);
-  }
-};
+      alert(`Download concluído: ${item.title}`);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao baixar música.");
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
   const handleSearch = async (e) => {
     e?.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
     setError(null);
-    setHasSearched(true);
+    setView("results"); // 👈
     try {
       const items = await window.api.youtube.search(query);
       setResults(items);
+      window.profile?.saveSearchHistory(query);
     } catch (err) {
       setError("Erro ao buscar. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
-
   const handleClear = () => {
     setQuery("");
-    setHasSearched(false);
+    setView("featured"); // 👈
     setResults([]);
     inputRef.current?.focus();
   };
-
   const handlePlaySong = async (item) => {
     setLoadingId(item.id);
     try {
@@ -121,14 +157,24 @@ const handleDownload = async (item) => {
     }
   };
 
-  const displayItems = hasSearched ? results : featured;
-  const isGridMode = !hasSearched;
+  const isGridMode = view === "featured";
 
   return (
     <div className={styles.searchScreen}>
       {/* Header */}
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => setScreen("player")}>
+        <button
+          className={styles.backBtn}
+          onClick={() => {
+            if (view === "results") {
+              setView("featured"); // 👈 volta pra featured, não pro player
+              setQuery("");
+              setResults([]);
+            } else {
+              setScreen("player"); // só sai da SearchScreen se estiver no featured
+            }
+          }}
+        >
           ←
         </button>
         <form className={styles.searchBar} onSubmit={handleSearch}>
@@ -230,7 +276,7 @@ const handleDownload = async (item) => {
       )}
 
       {/* List mode — resultados de busca */}
-      {hasSearched && (
+      {view === "results" && (
         <div className={styles.list}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
@@ -273,7 +319,7 @@ const handleDownload = async (item) => {
                     className={styles.addBtn}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToQueue(item); // ← era "futuramente: download"
+                      handleAddToQueue(item);
                     }}
                     title="Adicionar à fila"
                   >

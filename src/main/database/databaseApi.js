@@ -6,6 +6,11 @@ import path from "path";
 import fs from "fs";
 import ffmpegStatic from "ffmpeg-static";
 import { createRequire } from "module";
+import {
+  saveListeningEvent,
+  getUserProfile,
+  saveSearchHistory,
+} from "../services/userProfile.js";
 
 const require = createRequire(import.meta.url);
 const YTDlpWrapModule = require("yt-dlp-wrap");
@@ -360,8 +365,8 @@ export function registerDatabaseHandlers() {
   // YOUTUBE
   // =========================
 
-  ipcMain.handle("youtube:search", async (_, query) => {
-    return searchYoutube(query);
+  ipcMain.handle("youtube:search", async (_, query, rawQuery = false) => {
+    return searchYoutube(query, false, rawQuery);
   });
 
   ipcMain.handle("youtube:getAudioUrl", async (_, videoId) => {
@@ -400,5 +405,14 @@ export function registerDatabaseHandlers() {
       console.error("❌ download:audio erro:", err);
       return { success: false, error: err.message };
     }
+  });
+  ipcMain.handle("save-listening-event", (_, data) => {
+    saveListeningEvent(data);
+  });
+  ipcMain.handle("get-user-profile", () => {
+    return getUserProfile();
+  });
+  ipcMain.handle("save-search-history", (_, query) => {
+    saveSearchHistory(query);
   });
 }

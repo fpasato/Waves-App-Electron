@@ -45,18 +45,16 @@ export async function getAudioUrl(videoId) {
   }
 }
 
-export async function searchYoutube(query, forceRefresh = false) {
+export async function searchYoutube(query, forceRefresh = false, rawQuery = false) {
   const profile = getUserProfile();
   let finalQuery = query;
 
-  if (!query || query.trim() === "") {
-    if (profile.topArtists.length > 0) {
-      finalQuery = profile.topArtists[0];
-    } else {
-      finalQuery = "música";
+  if (!rawQuery) { // 👈 só manipula se não for rawQuery
+    if (!query || query.trim() === "") {
+      finalQuery = profile.topArtists[0] || "música";
+    } else if (query.split(" ").length <= 2 && profile.topArtists.length > 0) {
+      finalQuery = `${query} ${profile.topArtists[0]}`;
     }
-  } else if (query.split(" ").length <= 2 && profile.topArtists.length > 0) {
-    finalQuery = `${query} ${profile.topArtists[0]}`;
   }
 
   const cacheKey = finalQuery;
@@ -78,13 +76,29 @@ export async function searchYoutube(query, forceRefresh = false) {
       items = [...items, ...third.items];
     }
 
-    let result = items.slice(0, 30).map((item) => ({
-      id: item.id,
-      title: item.title,
-      thumbnail: item.thumbnail?.thumbnails?.[0]?.url || "",
-      channel: item.channelTitle,
-      duration: item.length?.simpleText || "Unknown",
-    }));
+    let result = items.slice(0, 30).map((item) => {
+      // Tenta extrair do título ("Michael Jackson - Smooth Criminal")
+      const titleParts = (item.title || "").split(" - ");
+      const artistFromTitle =
+        titleParts.length > 1 ? titleParts[0].trim() : null;
+
+      // Fallback em cascata: título > channelTitle > channel > "Desconhecido"
+      const channel =
+        artistFromTitle ||
+        item.channelTitle ||
+        item.channel ||
+        item.shortBylineText ||
+        item.title || // 👈 usa o próprio título se não tem artista
+        "Desconhecido";
+
+      return {
+        id: item.id,
+        title: item.title,
+        thumbnail: item.thumbnail?.thumbnails?.[0]?.url || "",
+        channel,
+        duration: item.length?.simpleText || "Unknown",
+      };
+    });
 
     // Reordena com segurança: se não existir artists, usa objeto vazio
     const artistsMap = profile.artists || {};

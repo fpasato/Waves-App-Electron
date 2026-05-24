@@ -15,7 +15,7 @@
 .dark {
   --background: #000000;
   --text: #ffffff;
-  --mid: #141414;
+  --mid: #2d2d2d32;
   --accent: #004cffed;
   --shadow: rgba(255, 255, 255, 0.346);
 }

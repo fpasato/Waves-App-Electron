@@ -7,7 +7,7 @@ const profilePath = path.join(
   "AppData",
   "Roaming",
   "meu-projeto",
-  "profile.json"
+  "profile.json",
 );
 
 function loadProfile() {
@@ -18,46 +18,54 @@ function loadProfile() {
       return {
         artists: parsed.artists || {},
         history: parsed.history || [],
+        searchHistory: parsed.searchHistory || [],
       };
     }
   } catch (e) {
     console.error("Erro ao carregar perfil:", e);
   }
-  return { artists: {}, history: [] };
+  return { artists: {}, history: [], searchHistory: [] };
 }
 
 function saveProfile(profile) {
   try {
     fs.writeFileSync(profilePath, JSON.stringify(profile, null, 2));
-    console.log("✅ Perfil salvo em:", profilePath);
   } catch (e) {
     console.error("❌ Erro ao salvar perfil:", e);
   }
 }
 
-// Inicialização segura
 let profile;
 try {
   profile = loadProfile();
 } catch {
-  profile = { artists: {}, history: [] };
+  profile = { artists: {}, history: [], searchHistory: [] };
 }
-if (!profile || typeof profile !== "object") {
-  profile = { artists: {}, history: [] };
-}
+if (!profile || typeof profile !== "object") profile = { artists: {}, history: [], searchHistory: [] };
 if (!profile.artists) profile.artists = {};
 if (!profile.history) profile.history = [];
+if (!profile.searchHistory) profile.searchHistory = [];
 
-// 🔥 GARANTE que o arquivo exista no disco imediatamente
-if (!fs.existsSync(profilePath)) {
-  saveProfile(profile); // cria profile.json com estrutura vazia
-}
+if (!fs.existsSync(profilePath)) saveProfile(profile);
 
 export function saveListeningEvent({ id, title, channel }) {
   if (!channel) return;
+
   profile.artists[channel] = (profile.artists[channel] || 0) + 1;
   profile.history.unshift({ id, title, channel, timestamp: Date.now() });
   if (profile.history.length > 50) profile.history.pop();
+
+  saveProfile(profile);
+}
+
+export function saveSearchHistory(query) {
+  if (!query?.trim()) return;
+
+  profile.searchHistory = profile.searchHistory
+    .filter((q) => q.toLowerCase() !== query.toLowerCase());
+  profile.searchHistory.unshift(query.trim());
+  if (profile.searchHistory.length > 20) profile.searchHistory.pop();
+
   saveProfile(profile);
 }
 
@@ -65,7 +73,8 @@ export function getUserProfile() {
   return {
     topArtists: getTopArtists(5),
     recentVideos: profile.history.slice(0, 10),
-    artists: { ...profile.artists },   // <-- agora sempre presente
+    searchHistory: profile.searchHistory.slice(0, 6),
+    artists: { ...profile.artists },
   };
 }
 

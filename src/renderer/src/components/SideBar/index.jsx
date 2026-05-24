@@ -12,20 +12,49 @@ export function SideBar({ setScreen }) {
     <div className={styles.sidebar}>
       <div className={styles.options}>
         <Button
-          title={<IoOptionsSharp />}
+          title={
+            <>
+              <IoOptionsSharp /> Configurações
+            </>
+          }
           onClick={() => setScreen("settings")}
         />
+
         <Button
-          title={<IoLibrarySharp />}
+          title={
+            <>
+              <IoLibrarySharp /> Biblioteca
+            </>
+          }
           onClick={() => setScreen("library")}
         />
-        <Button title={<FaSearch />} onClick={() => setScreen("search")} />
+
         <Button
-          title={<FaHistory />}
+          title={
+            <>
+              <FaSearch /> Pesquisar
+            </>
+          }
+          onClick={() => setScreen("search")}
+        />
+
+        <Button
+          title={
+            <>
+              <FaHistory /> Recentes
+            </>
+          }
           onClick={() => console.log("Recentes clicked")}
         />
 
-        <Button title={<FaRadio />} onClick={() => console.log("Radio clicked")} />
+        <Button
+          title={
+            <>
+              <FaRadio /> Rádio
+            </>
+          }
+          onClick={() => console.log("Radio clicked")}
+        />
       </div>
 
       <PlaylistScreen />

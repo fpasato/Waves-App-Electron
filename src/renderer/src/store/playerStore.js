@@ -131,9 +131,11 @@ export const usePlayerStore = create((set, get) => ({
       shuffleQueue,
       shufflePos,
     });
-    logWithTime(
-      `▶️ playSong estado final: queueIndex=${queueIndex}, currentSong=${current.title}, shuffle=${shuffle}, shufflePos=${shufflePos}`,
-    );
+    window.profile?.saveListeningEvent({
+      id: current.id,
+      title: current.title,
+      channel: current.artist, 
+    });
   },
 
   setSong: (song) => {

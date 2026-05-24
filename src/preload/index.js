@@ -55,18 +55,26 @@ const api = {
   },
 
   youtube: {
-    search: (query) => ipcRenderer.invoke("youtube:search", query),
+    search: (query, rawQuery = false) =>
+      ipcRenderer.invoke("youtube:search", query, rawQuery),
     getAudioUrl: (videoId) =>
       ipcRenderer.invoke("youtube:getAudioUrl", videoId),
     download: (payload) => ipcRenderer.invoke("download:audio", payload),
   },
 };
 
-//  variavel pra
 const musicAPI = {
   openMusic: () => ipcRenderer.invoke("dialog:openMusic"),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   scanFolder: (path) => ipcRenderer.invoke("music:scanFolder", path),
+};
+
+const profileAPI = {
+  saveListeningEvent: (data) =>
+    ipcRenderer.invoke("save-listening-event", data),
+  getUserProfile: () => ipcRenderer.invoke("get-user-profile"),
+  saveSearchHistory: (query) =>
+    ipcRenderer.invoke("save-search-history", query), // 👈
 };
 
 if (process.contextIsolated) {
@@ -74,7 +82,13 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("musicAPI", musicAPI);
-    contextBridge.exposeInMainWorld("youtubeAPI", youtubeAPI);
+    contextBridge.exposeInMainWorld("profile", {
+      saveListeningEvent: (data) =>
+        ipcRenderer.invoke("save-listening-event", data),
+      getUserProfile: () => ipcRenderer.invoke("get-user-profile"),
+      saveSearchHistory: (query) =>
+        ipcRenderer.invoke("save-search-history", query),
+    });
   } catch (error) {
     console.error(error);
   }
@@ -82,4 +96,5 @@ if (process.contextIsolated) {
   window.electron = electronAPI;
   window.api = api;
   window.musicAPI = musicAPI;
+  window.profile = profileAPI;
 }
