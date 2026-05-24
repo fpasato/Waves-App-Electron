@@ -43,3 +43,8 @@
 .ppButton{
     font-size: 1.5rem;
 }
+
+.outButton{
+    font-size: 1.2rem;
+    background-color: transparent;
+}

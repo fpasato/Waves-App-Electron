@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { usePlayer } from "../store/PlayerContext";
 
 export function useAnalyser() {
-  const { audioRef, crossfadeAudioRef, analyserRef, audioContextRef } = usePlayer();
+  const { audioRef, crossfadeAudioRef, analyserRef, audioContextRef } =
+    usePlayer();
 
   // resume no clique/tecla (mantém igual)
   useEffect(() => {
-    const resume = () => audioContextRef.current?.state === "suspended"
-      && audioContextRef.current.resume();
+    const resume = () =>
+      audioContextRef.current?.state === "suspended" &&
+      audioContextRef.current.resume();
 
     document.addEventListener("click", resume);
     document.addEventListener("keydown", resume);
@@ -19,9 +21,9 @@ export function useAnalyser() {
 
   // setup roda UMA vez no mount — ambos os elementos já existem no Context
   useEffect(() => {
-    if (analyserRef.current) return; // já configurado
+    if (analyserRef.current) return;
 
-    const ctx      = new AudioContext();
+    const ctx = new AudioContext();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
 
@@ -33,10 +35,7 @@ export function useAnalyser() {
     analyser.connect(ctx.destination);
 
     audioContextRef.current = ctx;
-    analyserRef.current     = analyser;
-
-    // AudioContext começa suspended em browsers modernos;
-    // o listener de click/keydown acima vai retomá-lo
+    analyserRef.current = analyser;
   }, []);
 
   return { analyserRef };

@@ -3,8 +3,9 @@ import { FaVolumeHigh } from "react-icons/fa6";
 import { FaVolumeMute } from "react-icons/fa";
 import { usePlayerStore } from "../../store/playerStore";
 import { useState } from "react";
+import { memo } from "react";
 
-export function VolumeControls() {
+export const VolumeControls = memo(function VolumeControls() {
   const volume = usePlayerStore((state) => state.volume);
   const setVolume = usePlayerStore((state) => state.setVolume);
   
@@ -52,4 +53,4 @@ export function VolumeControls() {
       </div>
     </div>
   );
-}
+});

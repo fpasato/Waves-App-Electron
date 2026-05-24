@@ -12,8 +12,9 @@ export function PlayerProvider({ children }) {
   const activeAudioRef = useRef(null);
   const fadingRef = useRef(false);
   const crossfadeDoneRef = useRef(false);
-  const seekRef = useRef(null);   // ← adicionado
-
+  const seekRef = useRef(null);  
+  audioRef.current.crossOrigin = "anonymous";
+  crossfadeAudioRef.current.crossOrigin = "anonymous";
   return (
     <PlayerContext.Provider value={{
       audioRef,

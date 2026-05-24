@@ -437,30 +437,33 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   // ---------- toggleShuffle ----------
-  toggleShuffle: () => {
-    logWithTime(`🔀 toggleShuffle`);
-    const { shuffle, queue, queueIndex } = get();
-    if (!shuffle) {
-      const allIndices = queue.map((_, i) => i);
-      const shuffled = shuffleArray(allIndices);
-      const newShuffleQueue = shuffled.filter((i) => i !== queueIndex);
-      newShuffleQueue.unshift(queueIndex);
-      logWithTime(
-        `🔀 toggleShuffle: ativando shuffle. nova shuffleQueue = ${JSON.stringify(newShuffleQueue)}`,
-      );
-      set({
-        shuffle: true,
-        shuffleQueue: newShuffleQueue,
-        shufflePos: 0,
-      });
-    } else {
-      logWithTime(`🔀 toggleShuffle: desativando shuffle`);
-      set({
-        shuffle: false,
-        shuffleQueue: [],
-        shufflePos: 0,
-      });
-    }
+  shuffleRemaining: () => {
+    logWithTime(`🔀 shuffleRemaining`);
+    const { queue, queueIndex } = get();
+    if (queue.length === 0) return;
+
+    // Pega os índices das músicas que ainda NÃO tocaram (depois da atual)
+    const remaining = queue.map((_, i) => i).filter((i) => i > queueIndex);
+
+    // Embaralha só os que faltam
+    const shuffled = shuffleArray(remaining);
+
+    // Reconstrói a fila: já tocadas + atual + embaralhadas
+    const past = queue.slice(0, queueIndex);
+    const current = queue[queueIndex];
+    const newQueue = [...past, current, ...shuffled.map((i) => queue[i])];
+
+    logWithTime(
+      `🔀 shuffleRemaining: ${remaining.length} músicas embaralhadas a partir de queueIndex=${queueIndex}`,
+    );
+
+    set({
+      queue: newQueue,
+      // queueIndex não muda — a música atual continua no mesmo lugar
+      shuffle: false,
+      shuffleQueue: [],
+      shufflePos: 0,
+    });
   },
 
   toggleRepeat: () => {

@@ -1,20 +1,59 @@
 .playerScreen {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
   width: 100vw;
+  height: 100vh;
+
   overflow: hidden;
-  background-color: var(--background);
+  background: #050510;
+}
+/* camada blur neural */
+.playerScreen::before {
+  content: "";
+
+  position: absolute;
+  inset: -20%;
+
+  z-index: 0;
+
+  filter: blur(120px);
+
+  opacity: 0.8;
+
+  background:
+    radial-gradient(circle at 20% 30%, #6a00ff 0%, transparent 35%),
+    radial-gradient(circle at 80% 20%, #0024c7 0%, transparent 30%),
+    radial-gradient(circle at 60% 80%, #8f00ff 0%, transparent 40%),
+    radial-gradient(circle at 30% 70%, #0035c6 0%, transparent 35%);
+
+  animation: neuralMove 18s ease-in-out infinite alternate;
+}
+/* deixa conteúdo acima */
+.playerScreen>* {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes neuralMove {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  100% {
+    transform: scale(1.2) rotate(8deg);
+  }
 }
 
 .content {
   display: grid;
-  grid-template-columns: 0.3fr 1fr 0.3fr;
+  grid-template-columns: clamp(200px, 20vw, 300px) 1fr clamp(200px, 20vw, 400px);
   align-items: stretch;
-  /* ← adiciona */
   overflow: hidden;
   height: 100%;
   min-height: 0;
+  position: relative;
 }
 
 .playerArea {
@@ -25,26 +64,40 @@
 
   position: relative;
   overflow: visible;
+  background: rgba(0, 0, 0, 0.919);
 
-  background-image: linear-gradient(to bottom, #000000a8, #08070797);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
 }
 
 .musicInfo {
   display: flex;
   align-items: center;
   gap: 12px;
+
   min-width: 200px;
-
-  padding: 0.6rem;
-  border-radius: 0.5rem;
-
-  background: linear-gradient(to bottom, #a8a8a825, #00000081);
-  color: var(--text);
-
   width: 100%;
   max-width: 400px;
 
+  padding: 0.6rem;
+  border-radius: 0.5rem;
   margin-right: 3rem;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  color: var(--text);
 }
 
 .cover {

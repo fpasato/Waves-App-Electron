@@ -1,12 +1,12 @@
 import styles from "./style.module.css";
 
-import { Header } from "../../Components/Header";
-import { SideBar } from "../../Components/Sidebar";
-import { SongsArea } from "../../Components/SongsArea";
-import { BackgroundVideo } from "../../Components/BackgroundVideo";
-import { PlayerControls } from "../../Components/PlayerControls";
-import { ProgressBar } from "../../Components/ProgressBar";
-import { VolumeControls } from "../../Components/VolumeControls";
+import { Header } from "../../components/Header";
+import { SideBar } from "../../components/SideBar";
+import { SongsArea } from "../../components/SongsArea";
+import { BackgroundVideo } from "../../components/BackgroundVideo";
+import { PlayerControls } from "../../components/PlayerControls";
+import { ProgressBar } from "../../components/ProgressBar";
+import { VolumeControls } from "../../components/VolumeControls";
 
 import { randomCover } from "../../utils/randomCover";
 import { usePlayerStore } from "../../store/playerStore";
@@ -14,9 +14,11 @@ import { useAnalyser } from "../../hooks/useAnalyser";
 
 export function PlayerScreen({ setScreen }) {
   useAnalyser();
-  const { currentSong } = usePlayerStore();
-  console.log("🖥️ [PlayerScreen] re-renderizou, currentSong:", currentSong?.title);
-
+  const currentSong = usePlayerStore((state) => state.currentSong);
+  console.log(
+    "🖥️ [PlayerScreen] re-renderizou, currentSong:",
+    currentSong?.title,
+  );
 
   return (
     <div className={styles.playerScreen}>

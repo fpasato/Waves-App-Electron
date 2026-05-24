@@ -21,7 +21,11 @@ export function useAudio() {
     seekRef,
   } = usePlayer();
 
-  const { currentSong, isPlaying, volume, nextSong, restartSignal } = usePlayerStore();
+  const currentSong = usePlayerStore((state) => state.currentSong);
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
+  const volume = usePlayerStore((state) => state.volume);
+  const nextSong = usePlayerStore((state) => state.nextSong);
+  const restartSignal = usePlayerStore((state) => state.restartSignal);
 
   const playerA = audioRef.current;
   const playerB = crossfadeAudioRef.current;
@@ -482,9 +486,10 @@ export function useAudio() {
   }
 
   // ---------- EXPORTA A FUNÇÃO SEEK VIA REF DO CONTEXTO ----------
-  seekRef.current = seek;
-  logWithTime(`🔗 [HOOK] seekRef.current atribuído`);
-
+  useEffect(() => {
+    seekRef.current = seek;
+    logWithTime(`🔗 [HOOK] seekRef.current atribuído`);
+  }, []);
   // Retorna vazio, pois o seek já está disponível em seekRef
   return {};
 }

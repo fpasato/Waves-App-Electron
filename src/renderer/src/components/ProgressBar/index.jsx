@@ -2,13 +2,12 @@ import styles from "./style.module.css";
 import { usePlayer } from "../../store/PlayerContext";
 import { usePlayerStore } from "../../store/playerStore";
 import { useRef, useState, useEffect } from "react";
-import { useAnalyser } from "../../hooks/useAnalyser";
-// ⚠️ NÃO importe useAudio
+import { memo } from "react";
 
-export function ProgressBar() {
+export const ProgressBar = memo(function ProgressBar() {
   const { audioRef, crossfadeAudioRef, analyserRef, activeAudioRef, seekRef } =
     usePlayer(); // ← seekRef
-  const { progress } = usePlayerStore();
+  const progress = usePlayerStore((state) => state.progress);
 
   const [time, setTime] = useState({ current: 0, duration: 0 });
   const barRef = useRef(null);
@@ -16,8 +15,6 @@ export function ProgressBar() {
   const animationRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [dragPercent, setDragPercent] = useState(null);
-
-  useAnalyser();
 
   // ── TIMEUPDATE (sem alterações) ──
   useEffect(() => {
@@ -143,8 +140,19 @@ export function ProgressBar() {
 
   function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
+
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
+
+    // Se tiver hora → HH:MM:SS
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}`;
+    }
+
+    // Senão → MM:SS
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
@@ -203,4 +211,4 @@ export function ProgressBar() {
       </div>
     </div>
   );
-}
+});

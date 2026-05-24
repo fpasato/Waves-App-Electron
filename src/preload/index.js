@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
+import path from "path";
 
 const api = {
   settings: {
@@ -52,8 +53,16 @@ const api = {
     scanFolder: (folderPath) =>
       ipcRenderer.invoke("music:scanFolder", folderPath),
   },
+
+  youtube: {
+    search: (query) => ipcRenderer.invoke("youtube:search", query),
+    getAudioUrl: (videoId) =>
+      ipcRenderer.invoke("youtube:getAudioUrl", videoId),
+    download: (payload) => ipcRenderer.invoke("download:audio", payload),
+  },
 };
 
+//  variavel pra
 const musicAPI = {
   openMusic: () => ipcRenderer.invoke("dialog:openMusic"),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
@@ -65,6 +74,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("musicAPI", musicAPI);
+    contextBridge.exposeInMainWorld("youtubeAPI", youtubeAPI);
   } catch (error) {
     console.error(error);
   }

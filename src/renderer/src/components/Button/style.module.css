@@ -10,6 +10,11 @@
     cursor: pointer;
 
     overflow: hidden;
+
+    & svg {
+        width: 30px;
+        height: 30px;
+    }
 }
 
 /* base: só linha embaixo */
@@ -38,3 +43,4 @@
     border-radius: 0.6rem;
     opacity: 0.12;
 }
+
