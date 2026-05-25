@@ -6,6 +6,7 @@ import { PlayerProvider } from './store/PlayerContext'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { LibraryScreen } from './screens/LibraryScreen'
 import { SearchScreen } from './screens/SearchScreen'
+import { RadioScreen } from './screens/RadioScreen'
 import { useAudio } from './hooks/useAudio'
 import { usePlayerStore } from './store/playerStore'
 
@@ -36,6 +37,7 @@ function PlayerApp() {
       {screen === "settings" && <SettingsScreen setScreen={setScreen} />}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
       {screen === "search" && <SearchScreen setScreen={setScreen} />}
+      {screen === "radio" && <RadioScreen setScreen={setScreen} />}
     </div>
   )
 }

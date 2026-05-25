@@ -55,11 +55,20 @@ const api = {
   },
 
   youtube: {
-    search: (query, rawQuery = false) =>
-      ipcRenderer.invoke("youtube:search", query, rawQuery),
+    search: (query, forceRefresh, rawQuery) =>
+      ipcRenderer.invoke("youtube:search", query, forceRefresh, rawQuery),
+    getStream: (videoId, formatId) =>
+      ipcRenderer.invoke("youtube:getStream", videoId, formatId),
+    getFormats: (videoId) => ipcRenderer.invoke("youtube:getFormats", videoId),
     getAudioUrl: (videoId) =>
       ipcRenderer.invoke("youtube:getAudioUrl", videoId),
     download: (payload) => ipcRenderer.invoke("download:audio", payload),
+
+    getVideoFormats: (videoId) =>
+      ipcRenderer.invoke("youtube:getVideoFormats", videoId),
+    getVideoUrl: (videoId, formatId) =>
+      ipcRenderer.invoke("youtube:getVideoUrl", videoId, formatId),
+    downloadVideo: (payload) => ipcRenderer.invoke("download:video", payload),
   },
 };
 

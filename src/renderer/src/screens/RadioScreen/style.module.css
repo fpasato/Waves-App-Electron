@@ -1,0 +1,37 @@
+.radioScreen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #050510;
+  overflow: hidden;
+}
+
+/* fundo global da tela */
+.radioScreen::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+
+  filter: blur(120px);
+  opacity: 0.8;
+
+  background:
+    radial-gradient(circle at 20% 30%, #6a00ff 0%, transparent 35%),
+    radial-gradient(circle at 80% 20%, #0024c7 0%, transparent 30%),
+    radial-gradient(circle at 60% 80%, #8f00ff 0%, transparent 40%),
+    radial-gradient(circle at 30% 70%, #0035c6 0%, transparent 35%);
+}
+
+.radioContent {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  padding: 1rem;
+}

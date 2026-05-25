@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog, session } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { initDatabase, closeDatabase } from "./database/database.js";
@@ -11,11 +11,11 @@ const require = createRequire(import.meta.url);
 const YTDlpWrapModule = require("yt-dlp-wrap");
 const YTDlpWrap = YTDlpWrapModule.default || YTDlpWrapModule;
 
-
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 async function ensureYtDlp() {
   const dest = path.join(
     app.getPath("userData"),
-    process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp"
+    process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp",
   );
 
   // Se já existe, não baixa de novo
@@ -32,6 +32,8 @@ async function ensureYtDlp() {
     console.warn("yt-dlp erro:", e?.message ?? e);
   }
 }
+app.commandLine.appendSwitch("host-resolver-rules", "");
+app.commandLine.appendSwitch("ignore-certificate-errors");
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -45,6 +47,7 @@ function createWindow() {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       webSecurity: false,
+      webviewTag: false,
     },
   });
 
@@ -60,6 +63,64 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
+
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
+    { urls: ["*://*.googlevideo.com/*", "*://*.youtube.com/*"] },
+    (details, callback) => {
+      callback({
+        requestHeaders: {
+          ...details.requestHeaders,
+          Referer: "https://www.youtube.com/",
+          Origin: "https://www.youtube.com",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
+    },
+  );
+
+  mainWindow.webContents.session.webRequest.onBeforeRequest(
+    {
+      urls: [
+        "*://*.doubleclick.net/*",
+        "*://*.googlesyndication.com/*",
+        "*://*.googleadservices.com/*",
+        "*://*.google-analytics.com/*",
+        "*://*.googletagmanager.com/*",
+      ],
+    },
+    (details, callback) => {
+      callback({ cancel: true }); // bloqueia a requisição
+    },
+  );
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    { urls: ["<all_urls>"] },
+    (details, callback) => {
+      const headers = { ...details.responseHeaders };
+
+      const origin =
+        details.requestHeaders?.Origin ||
+        details.requestHeaders?.origin ||
+        "https://www.youtube.com";
+
+      delete headers["access-control-allow-origin"];
+      delete headers["Access-Control-Allow-Origin"];
+      delete headers["cross-origin-opener-policy"];
+      delete headers["Cross-Origin-Opener-Policy"]; // bloqueia postMessage
+      delete headers["cross-origin-embedder-policy"];
+      delete headers["Cross-Origin-Embedder-Policy"];
+
+      headers["Access-Control-Allow-Origin"] = [origin];
+      headers["Access-Control-Allow-Credentials"] = ["true"];
+      headers["Access-Control-Allow-Methods"] = ["GET, POST, OPTIONS"];
+      headers["Access-Control-Allow-Headers"] = ["*"];
+      headers["Content-Security-Policy"] = [
+        "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: file:;",
+      ];
+
+      callback({ responseHeaders: headers });
+    },
+  );
 }
 
 app.whenReady().then(async () => {

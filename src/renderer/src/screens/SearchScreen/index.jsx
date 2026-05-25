@@ -1,333 +1,177 @@
-import { useState, useEffect, useRef } from "react";
-import { usePlayerStore } from "../../store/playerStore";
-import { Button } from "../../components/Button";
+import { useRef, useState } from "react";
+import { useSearch } from "../../hooks/useSearch";
+import { useYoutubeActions } from "../../hooks/useYoutubeActions";
+import { SearchHeader } from "../../components/SearchComponents/SearchHeader";
+import { VideoPlayer } from "../../components/SearchComponents/VideoPlayer";
+import { VideoGrid } from "../../components/SearchComponents/VideoGrid";
+import { VideoList } from "../../components/SearchComponents/VideoList";
+import { QualityModal } from "../../components/SearchComponents/QualityModal";
 import styles from "./style.module.css";
 
-import { TbPlaylistAdd } from "react-icons/tb";
-import { FaDownload } from "react-icons/fa";
-
 export function SearchScreen({ setScreen }) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [featured, setFeatured] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [featuredLoading, setFeaturedLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [view, setView] = useState("featured");
-  const [loadingId, setLoadingId] = useState(null);
-  const inputRef = useRef(null);
+  const search = useSearch();
+  const youtubeActions = useYoutubeActions();
 
-  const playSong = usePlayerStore((state) => state.playSong);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState(null);
+  const [modalItem, setModalItem] = useState(null);
 
-  useEffect(() => {
-    async function loadFeatured() {
-      try {
-        const profile = await window.profile?.getUserProfile?.();
-        console.log("PROFILE NO FRONTEND:", profile);
-        console.log("searchHistory:", profile?.searchHistory);
-        console.log(
-          "queries que serão buscadas:",
-          profile?.searchHistory?.length > 0
-            ? profile.searchHistory.slice(0, 6)
-            : ["top hits 2025"],
-        );
-        console.log("PROFILE NO FRONTEND:", profile);
-        const history = profile?.searchHistory || [];
-        const DEFAULT_QUERIES = [
-          "pop hits 2025",
-          "rock classics",
-          "hip hop 2025",
-          "electronic music",
-          "indie 2025",
-          "jazz hits",
-        ];
+  const [history, setHistory] = useState(["home"]);
+  const currentPage = history[history.length - 1];
 
-        const historySluice = history.slice(0, 6);
+  const loadingRef = useRef(false);
 
-        // Completa até 6 queries com fallbacks
-        const queries = [...historySluice, ...DEFAULT_QUERIES].slice(0, 6);
-
-        const allResults = await Promise.all(
-          queries.map((q) =>
-            window.api.youtube.search(q, true).then((r) => r.slice(0, 5)),
-          ),
-        );
-
-        // Achata e remove duplicatas por id
-        const seen = new Set();
-        const merged = allResults.flat().filter((item) => {
-          if (seen.has(item.id)) return false;
-          seen.add(item.id);
-          return true;
-        });
-
-        setFeatured(merged); // até 30 cards
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setFeaturedLoading(false);
+  // "results" nunca é empilhado duas vezes seguidas — evita precisar
+  // clicar voltar N vezes depois de buscar várias vezes
+  const navigateToResults = () => {
+    setHistory((prev) => {
+      const top = prev[prev.length - 1];
+      if (top === "results") return prev;
+      // Se veio do player, limpa os players e vai pra results
+      if (top === "player") {
+        const withoutPlayers = prev.filter((p) => p !== "player");
+        return [...withoutPlayers, "results"];
       }
-    }
-
-    loadFeatured();
-  }, []);
-
-  const handleDownload = async (item) => {
-    try {
-      setLoadingId(item.id);
-
-      const result = await window.api.youtube.download({
-        videoId: item.id,
-        title: item.title,
-      });
-
-      if (!result.success) throw new Error(result.error);
-
-      alert(`Download concluído: ${item.title}`);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao baixar música.");
-    } finally {
-      setLoadingId(null);
-    }
+      return [...prev, "results"];
+    });
   };
 
-  const handleSearch = async (e) => {
-    e?.preventDefault();
-    if (!query.trim()) return;
-    setLoading(true);
-    setError(null);
-    setView("results"); // 👈
-    try {
-      const items = await window.api.youtube.search(query);
-      setResults(items);
-      window.profile?.saveSearchHistory(query);
-    } catch (err) {
-      setError("Erro ao buscar. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
+  const goBack = () => {
+    setHistory((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   };
+
+  const handleSearch = (query) => {
+    search.handleSearch(query);
+    navigateToResults();
+  };
+
   const handleClear = () => {
-    setQuery("");
-    setView("featured"); // 👈
-    setResults([]);
-    inputRef.current?.focus();
+    search.clearSearch();
+    setHistory(["home"]);
   };
-  const handlePlaySong = async (item) => {
-    setLoadingId(item.id);
+
+  const handleCardClick = async (item) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+
+    setVideoLoading(true);
+    setVideoError(null);
+    setActiveVideo({
+      ...item,
+      videoUrl: null,
+      audioUrl: null,
+      formats: [],
+    });
+
+    // Sempre empilha "player" — goBack volta vídeo a vídeo
+    setHistory((prev) => [...prev, "player"]);
+
     try {
-      const audioUrl = await window.api.youtube.getAudioUrl(item.id);
-      const song = {
-        id: item.id,
-        title: item.title,
-        artist: item.channel,
-        src: audioUrl,
-        duration: item.duration,
-        thumbnail: item.thumbnail,
-      };
-      playSong(song, [song]);
-      setScreen("player");
+      const [stream, formats] = await Promise.all([
+        window.api.youtube.getStream(item.id),
+        window.api.youtube.getFormats(item.id),
+      ]);
+      setActiveVideo({ ...item, ...stream, formats });
     } catch (err) {
-      console.error(err);
-      alert("Erro ao reproduzir. Tente outro vídeo.");
+      setVideoError("Erro ao carregar vídeo.");
+      // Remove o "player" empilhado se o carregamento falhou
+      setHistory((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
     } finally {
-      setLoadingId(null);
+      setVideoLoading(false);
+      loadingRef.current = false;
     }
   };
 
-  const addToQueue = usePlayerStore((state) => state.addToQueue);
-
-  const handleAddToQueue = async (item) => {
-    setLoadingId(item.id);
+  const handleQualityChange = async (formatId) => {
+    if (!activeVideo) return;
+    setVideoLoading(true);
     try {
-      const audioUrl = await window.api.youtube.getAudioUrl(item.id);
-      addToQueue({
-        id: item.id,
-        title: item.title,
-        artist: item.channel,
-        src: audioUrl,
-        duration: item.duration,
-        thumbnail: item.thumbnail,
-      });
-    } catch (err) {
-      alert("Erro ao adicionar à fila.");
+      const stream = await window.api.youtube.getStream(
+        activeVideo.id,
+        formatId,
+      );
+      setActiveVideo((prev) => ({ ...prev, ...stream }));
+    } catch {
+      setVideoError("Erro ao trocar qualidade.");
     } finally {
-      setLoadingId(null);
+      setVideoLoading(false);
     }
   };
+  const handleRefresh = () => {
+    if (currentPage === "player") {
+      // Recarrega o vídeo atual
+      if (activeVideo?.id) handleCardClick(activeVideo);
+    } else {
+      search.refresh();
+    }
+  };
+  const handlePlayerClose = () => {
+    setActiveVideo(null);
+    goBack();
+  };
 
-  const isGridMode = view === "featured";
+  const currentList =
+    search.view === "featured" ? search.featured : search.results;
 
   return (
     <div className={styles.searchScreen}>
-      {/* Header */}
-      <div className={styles.header}>
-        <button
-          className={styles.backBtn}
-          onClick={() => {
-            if (view === "results") {
-              setView("featured"); // 👈 volta pra featured, não pro player
-              setQuery("");
-              setResults([]);
-            } else {
-              setScreen("player"); // só sai da SearchScreen se estiver no featured
-            }
-          }}
-        >
-          ←
-        </button>
-        <form className={styles.searchBar} onSubmit={handleSearch}>
-          <div className={styles.inputWrap}>
-            <span className={styles.searchIcon}>🔍</span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar artista, música..."
-              className={styles.input}
-            />
-            {query && (
-              <button
-                type="button"
-                className={styles.clearBtn}
-                onClick={handleClear}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-          <button type="submit" className={styles.searchBtn} disabled={loading}>
-            {loading ? <span className={styles.spinner} /> : "Buscar"}
-          </button>
-        </form>
-      </div>
+      <SearchHeader
+        query={search.query}
+        setQuery={search.setQuery}
+        loading={search.loading}
+        view={search.view}
+        setView={search.setView}
+        onSearch={() => handleSearch(search.query)}
+        onClear={handleClear}
+        onBack={history.length > 1 ? goBack : null}
+        setScreen={setScreen}
+        onRefresh={handleRefresh}
+      />
 
-      {error && <div className={styles.error}>{error}</div>}
+      {search.error && <div className={styles.error}>{search.error}</div>}
+      {videoError && <div className={styles.error}>{videoError}</div>}
 
-      {/* Section title */}
-      <div className={styles.sectionTitle}>
-        {isGridMode ? (
-          featuredLoading ? (
-            <span className={styles.shimmerText}>Carregando destaques...</span>
-          ) : (
-            <span>🔥 Em alta agora</span>
-          )
-        ) : (
-          <span>
-            {results.length} resultado{results.length !== 1 ? "s" : ""} para "
-            {query}"
-          </span>
-        )}
-      </div>
-
-      {isGridMode && (
-        <div className={styles.grid}>
-          {featuredLoading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className={styles.skeletonCard} />
-              ))
-            : featured.map((item) => (
-                <div
-                  key={item.id}
-                  className={styles.gridCard}
-                  onClick={() => handlePlaySong(item)}
-                >
-                  <div className={styles.gridThumb}>
-                    <img
-                      src={item.thumbnail?.replace("http://", "https://")}
-                      alt={item.title}
-                    />
-                    <div className={styles.gridOverlay}>
-                      {loadingId === item.id ? (
-                        <span className={styles.spinnerLarge} />
-                      ) : (
-                        <span className={styles.playIcon}>▶</span>
-                      )}
-                    </div>
-                    <span className={styles.duration}>{item.duration}</span>
-                  </div>
-                  <div className={styles.gridInfo}>
-                    <p className={styles.gridTitle}>{item.title}</p>
-                    <p className={styles.gridChannel}>{item.channel}</p>
-                  </div>
-                  <div className={styles.gridActions}>
-                    <Button
-                      className={styles.addBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToQueue(item);
-                      }}
-                      title={<TbPlaylistAdd />}
-                    />
-                    <Button
-                      className={styles.addBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(item);
-                      }}
-                      title={<FaDownload />}
-                    />
-                  </div>
-                </div>
-              ))}
-        </div>
+      {currentPage === "player" && (
+        <VideoPlayer
+          activeVideo={activeVideo}
+          videoLoading={videoLoading}
+          suggestions={currentList}
+          onSuggestionClick={handleCardClick}
+          onQualityChange={handleQualityChange}
+          onClose={handlePlayerClose}
+          actions={youtubeActions}
+        />
       )}
 
-      {/* List mode — resultados de busca */}
-      {view === "results" && (
-        <div className={styles.list}>
-          {loading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className={styles.skeletonRow} />
-              ))
-            : results.map((item) => (
-                <div
-                  key={item.id}
-                  className={styles.listCard}
-                  onClick={() => handlePlaySong(item)}
-                >
-                  <div className={styles.listThumb}>
-                    <img
-                      src={item.thumbnail?.replace("http://", "https://")}
-                      alt={item.title}
-                    />
-                    {loadingId === item.id && (
-                      <div className={styles.listThumbOverlay}>
-                        <span className={styles.spinner} />
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.listInfo}>
-                    <p className={styles.listTitle}>{item.title}</p>
-                    <p className={styles.listChannel}>{item.channel}</p>
-                    <span className={styles.listDuration}>{item.duration}</span>
+      {currentPage === "home" && (
+        <VideoGrid
+          items={search.featured}
+          loading={search.featuredLoading}
+          loadingId={youtubeActions.loadingId}
+          onCardClick={handleCardClick}
+          onDownloadClick={(e, item) => {
+            e.stopPropagation();
+            setModalItem(item);
+          }}
+        />
+      )}
 
-                    <button
-                      className={styles.addBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(item);
-                      }}
-                      title="Download"
-                    >
-                      <FaDownload />
-                    </button>
-                  </div>
-                  <button
-                    className={styles.addBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToQueue(item);
-                    }}
-                    title="Adicionar à fila"
-                  >
-                    +
-                  </button>
-                </div>
-              ))}
-        </div>
+      {currentPage === "results" && (
+        <VideoList
+          items={search.results}
+          loading={search.loading}
+          loadingId={youtubeActions.loadingId}
+          onCardClick={handleCardClick}
+        />
+      )}
+
+      {modalItem && (
+        <QualityModal
+          item={modalItem}
+          onClose={() => setModalItem(null)}
+          actions={youtubeActions}
+        />
       )}
     </div>
   );

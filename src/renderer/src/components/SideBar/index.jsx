@@ -53,7 +53,7 @@ export function SideBar({ setScreen }) {
               <FaRadio /> Rádio
             </>
           }
-          onClick={() => console.log("Radio clicked")}
+          onClick={() => setScreen("radio")}
         />
       </div>
 
