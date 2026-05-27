@@ -131,11 +131,6 @@ export const usePlayerStore = create((set, get) => ({
       shuffleQueue,
       shufflePos,
     });
-    window.profile?.saveListeningEvent({
-      id: current.id,
-      title: current.title,
-      channel: current.artist, 
-    });
   },
 
   setSong: (song) => {

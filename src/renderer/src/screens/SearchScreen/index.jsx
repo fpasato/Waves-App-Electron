@@ -1,178 +1,341 @@
-import { useRef, useState } from "react";
-import { useSearch } from "../../hooks/useSearch";
-import { useYoutubeActions } from "../../hooks/useYoutubeActions";
-import { SearchHeader } from "../../components/SearchComponents/SearchHeader";
-import { VideoPlayer } from "../../components/SearchComponents/VideoPlayer";
-import { VideoGrid } from "../../components/SearchComponents/VideoGrid";
-import { VideoList } from "../../components/SearchComponents/VideoList";
-import { QualityModal } from "../../components/SearchComponents/QualityModal";
+import { useEffect } from "react";
 import styles from "./style.module.css";
+import { CUSTOM_CSS, SKIP_ADS_SCRIPT } from "./customCss";
+import {
+  useSearchHandlers,
+  DOWNLOAD_TYPES,
+} from "../../hooks/Usesearchhandlers";
 
-export function SearchScreen({ setScreen }) {
-  const search = useSearch();
-  const youtubeActions = useYoutubeActions();
+export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
+  const {
+    // refs
+    webviewRef,
+    inputRef,
+    // navegação
+    canGoBack,
+    canGoForward,
+    updateNavState,
+    handleGoBack,
+    handleGoForward,
+    handleReload,
+    // busca
+    query,
+    setQuery,
+    clearQuery,
+    handleSearch,
+    handleKeyDown,
+    // download
+    showDownloadModal,
+    videoFormats,
+    audioFormats,
+    selectedFormatId,
+    setSelectedFormatId,
+    downloadType,
+    handleChangeDownloadType,
+    fetchingFormats,
+    downloading,
+    openDownloadModal,
+    closeDownloadModal,
+    handleStartDownload,
+    // autenticação
+    isLoggedIn,
+    setIsLoggedIn,
+    showLoginModal,
+    handleLogin,
+    handleLoginDone,
+    handleLogout,
+  } = useSearchHandlers({ setSearchUrl, setScreen });
 
-  const [activeVideo, setActiveVideo] = useState(null);
-  const [videoLoading, setVideoLoading] = useState(false);
-  const [videoError, setVideoError] = useState(null);
-  const [modalItem, setModalItem] = useState(null);
+  useEffect(() => {
+    const wv = webviewRef.current;
+    if (!wv) return;
+    let destroyed = false;
 
-  const [history, setHistory] = useState(["home"]);
-  const currentPage = history[history.length - 1];
+    const handleDomReady = async () => {
+      if (destroyed || !wv.isConnected) return;
 
-  const loadingRef = useRef(false);
+      // Pequeno delay para o webview estabilizar
+      await new Promise((r) => setTimeout(r, 300));
+      if (destroyed || !wv.isConnected) return;
 
-  // "results" nunca é empilhado duas vezes seguidas — evita precisar
-  // clicar voltar N vezes depois de buscar várias vezes
-  const navigateToResults = () => {
-    setHistory((prev) => {
-      const top = prev[prev.length - 1];
-      if (top === "results") return prev;
-      // Se veio do player, limpa os players e vai pra results
-      if (top === "player") {
-        const withoutPlayers = prev.filter((p) => p !== "player");
-        return [...withoutPlayers, "results"];
+      try {
+        await wv.insertCSS(CUSTOM_CSS);
+      } catch (e) {}
+
+      try {
+        await wv.executeJavaScript(
+          `try { (${SKIP_ADS_SCRIPT})() } catch(e) {}`,
+        );
+      } catch (e) {}
+
+      // Login check com delay maior
+      setTimeout(async () => {
+        if (destroyed || !wv.isConnected) return;
+        try {
+          const logged = await wv.executeJavaScript(
+            `!!document.querySelector('button#avatar-btn')`,
+          );
+          if (!destroyed) setIsLoggedIn(logged);
+        } catch (e) {}
+      }, 2000);
+
+      if (!destroyed) updateNavState();
+    };
+
+    const handleNavigate = () => {
+      if (!destroyed) updateNavState();
+    };
+
+    wv.addEventListener("dom-ready", handleDomReady);
+    wv.addEventListener("did-navigate", handleNavigate);
+    wv.addEventListener("did-navigate-in-page", handleNavigate);
+
+    return () => {
+      destroyed = true;
+      // Remove listeners apenas se o webview ainda estiver no DOM
+      if (wv.isConnected) {
+        wv.removeEventListener("dom-ready", handleDomReady);
+        wv.removeEventListener("did-navigate", handleNavigate);
+        wv.removeEventListener("did-navigate-in-page", handleNavigate);
       }
-      return [...prev, "results"];
-    });
-  };
-
-  const goBack = () => {
-    setHistory((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-  };
-
-  const handleSearch = (query) => {
-    search.handleSearch(query);
-    navigateToResults();
-  };
-
-  const handleClear = () => {
-    search.clearSearch();
-    setHistory(["home"]);
-  };
-
-  const handleCardClick = async (item) => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-
-    setVideoLoading(true);
-    setVideoError(null);
-    setActiveVideo({
-      ...item,
-      videoUrl: null,
-      audioUrl: null,
-      formats: [],
-    });
-
-    // Sempre empilha "player" — goBack volta vídeo a vídeo
-    setHistory((prev) => [...prev, "player"]);
-
-    try {
-      const [stream, formats] = await Promise.all([
-        window.api.youtube.getStream(item.id),
-        window.api.youtube.getFormats(item.id),
-      ]);
-      setActiveVideo({ ...item, ...stream, formats });
-    } catch (err) {
-      setVideoError("Erro ao carregar vídeo.");
-      // Remove o "player" empilhado se o carregamento falhou
-      setHistory((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-    } finally {
-      setVideoLoading(false);
-      loadingRef.current = false;
-    }
-  };
-
-  const handleQualityChange = async (formatId) => {
-    if (!activeVideo) return;
-    setVideoLoading(true);
-    try {
-      const stream = await window.api.youtube.getStream(
-        activeVideo.id,
-        formatId,
-      );
-      setActiveVideo((prev) => ({ ...prev, ...stream }));
-    } catch {
-      setVideoError("Erro ao trocar qualidade.");
-    } finally {
-      setVideoLoading(false);
-    }
-  };
-  const handleRefresh = () => {
-    if (currentPage === "player") {
-      // Recarrega o vídeo atual
-      if (activeVideo?.id) handleCardClick(activeVideo);
-    } else {
-      search.refresh();
-    }
-  };
-  const handlePlayerClose = () => {
-    setActiveVideo(null);
-    goBack();
-  };
-
-  const currentList =
-    search.view === "featured" ? search.featured : search.results;
+    };
+  }, [updateNavState, setIsLoggedIn, webviewRef]);
 
   return (
     <div className={styles.searchScreen}>
-      <SearchHeader
-        query={search.query}
-        setQuery={search.setQuery}
-        loading={search.loading}
-        view={search.view}
-        setView={search.setView}
-        onSearch={() => handleSearch(search.query)}
-        onClear={handleClear}
-        onBack={history.length > 1 ? goBack : null}
-        setScreen={setScreen}
-        onRefresh={handleRefresh}
-      />
+      <div className={styles.searchHeader}>
+        {/* Navegação */}
+        <button
+          className={styles.backBtn}
+          onClick={() => setScreen("player")}
+          title="Home"
+        >
+          🏠
+        </button>
+        <button className={styles.navBtn} onClick={onClose} title="Fechar">
+          ✕
+        </button>
+        <button
+          className={styles.navBtn}
+          onClick={handleGoBack}
+          disabled={!canGoBack}
+          title="Voltar"
+        >
+          ←
+        </button>
+        <button
+          className={styles.navBtn}
+          onClick={handleGoForward}
+          disabled={!canGoForward}
+          title="Avançar"
+        >
+          →
+        </button>
+        <button
+          className={styles.navBtn}
+          onClick={handleReload}
+          title="Recarregar"
+        >
+          ⟳
+        </button>
 
-      {search.error && <div className={styles.error}>{search.error}</div>}
-      {videoError && <div className={styles.error}>{videoError}</div>}
+        {/* Busca */}
+        <div className={styles.searchInputWrapper}>
+          <input
+            ref={inputRef}
+            className={styles.searchInput}
+            type="text"
+            placeholder="Buscar no YouTube..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          {query && (
+            <button
+              className={styles.clearBtn}
+              onClick={clearQuery}
+              aria-label="Limpar"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <button
+          className={styles.searchBtn}
+          onClick={handleSearch}
+          disabled={!query.trim()}
+        >
+          🔍
+        </button>
 
-      {currentPage === "player" && (
-        <VideoPlayer
-          activeVideo={activeVideo}
-          videoLoading={videoLoading}
-          suggestions={currentList}
-          onSuggestionClick={handleCardClick}
-          onQualityChange={handleQualityChange}
-          onClose={handlePlayerClose}
-          actions={youtubeActions}
+        {/* Download */}
+        <button
+          className={styles.navBtn}
+          onClick={openDownloadModal}
+          title="Baixar vídeo"
+        >
+          ⬇️
+        </button>
+
+        {/* Auth */}
+        <div className={styles.authWrapper}>
+          {isLoggedIn ? (
+            <button
+              className={`${styles.authBtn} ${styles.logoutBtn}`}
+              onClick={handleLogout}
+            >
+              Sair ↩
+            </button>
+          ) : (
+            <button className={styles.authBtn} onClick={handleLogin}>
+              Entrar com Google
+            </button>
+          )}
+
+          {/* Modal: login */}
+          {showLoginModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modal}>
+                <p>
+                  Faça login no browser que abriu e clique em continuar quando
+                  terminar.
+                </p>
+                <button
+                  className={styles.modalConfirmBtn}
+                  onClick={handleLoginDone}
+                >
+                  Já fiz login ✓
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: download */}
+          {showDownloadModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modal}>
+                <h3>Download</h3>
+
+                {/* Abas Vídeo / Áudio */}
+                <div className={styles.downloadTabs}>
+                  <button
+                    className={
+                      downloadType === DOWNLOAD_TYPES.VIDEO
+                        ? styles.tabActive
+                        : styles.tab
+                    }
+                    onClick={() =>
+                      handleChangeDownloadType(DOWNLOAD_TYPES.VIDEO)
+                    }
+                  >
+                    🎬 Vídeo
+                  </button>
+                  <button
+                    className={
+                      downloadType === DOWNLOAD_TYPES.AUDIO
+                        ? styles.tabActive
+                        : styles.tab
+                    }
+                    onClick={() =>
+                      handleChangeDownloadType(DOWNLOAD_TYPES.AUDIO)
+                    }
+                  >
+                    🎵 Áudio (MP3)
+                  </button>
+                </div>
+
+                {fetchingFormats ? (
+                  <p>Carregando formatos...</p>
+                ) : (
+                  <>
+                    {/* Lista de qualidades de vídeo */}
+                    {downloadType === DOWNLOAD_TYPES.VIDEO && (
+                      <>
+                        {videoFormats.length === 0 ? (
+                          <p>Nenhum formato de vídeo disponível.</p>
+                        ) : (
+                          videoFormats.map((f) => (
+                            <button
+                              key={f.id}
+                              onClick={() => setSelectedFormatId(f.id)}
+                              style={{
+                                display: "block",
+                                margin: "5px 0",
+                                fontWeight:
+                                  selectedFormatId === f.id ? "bold" : "normal",
+                              }}
+                            >
+                              {f.resolution}
+                            </button>
+                          ))
+                        )}
+                      </>
+                    )}
+
+                    {/* Áudio: lista por kbps */}
+                    {downloadType === DOWNLOAD_TYPES.AUDIO && (
+                      <>
+                        {audioFormats.length === 0 ? (
+                          <p>Nenhum formato de áudio disponível.</p>
+                        ) : (
+                          audioFormats.map((f) => {
+                            const kbps = f.abr
+                              ? `${Math.round(f.abr)} kbps`
+                              : "? kbps";
+                            const size = f.filesize
+                              ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB`
+                              : "";
+                            const label = [f.ext?.toUpperCase(), kbps, size]
+                              .filter(Boolean)
+                              .join(" · ");
+                            return (
+                              <button
+                                key={f.id}
+                                onClick={() => setSelectedFormatId(f.id)}
+                                style={{
+                                  display: "block",
+                                  margin: "5px 0",
+                                  fontWeight:
+                                    selectedFormatId === f.id
+                                      ? "bold"
+                                      : "normal",
+                                }}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })
+                        )}
+                        <small style={{ opacity: 0.6 }}>
+                          Será convertido para MP3
+                        </small>
+                      </>
+                    )}
+
+                    <button
+                      onClick={handleStartDownload}
+                      disabled={downloading || !selectedFormatId}
+                    >
+                      {downloading ? "Baixando..." : "Baixar"}
+                    </button>
+                    <button onClick={closeDownloadModal}>Cancelar</button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Webview */}
+      <div className={styles.body}>
+        <webview
+          ref={webviewRef}
+          src="https://www.youtube.com"
+          partition="persist:youtube"
+          style={{ width: "100%", height: "100%" }}
         />
-      )}
-
-      {currentPage === "home" && (
-        <VideoGrid
-          items={search.featured}
-          loading={search.featuredLoading}
-          loadingId={youtubeActions.loadingId}
-          onCardClick={handleCardClick}
-          onDownloadClick={(e, item) => {
-            e.stopPropagation();
-            setModalItem(item);
-          }}
-        />
-      )}
-
-      {currentPage === "results" && (
-        <VideoList
-          items={search.results}
-          loading={search.loading}
-          loadingId={youtubeActions.loadingId}
-          onCardClick={handleCardClick}
-        />
-      )}
-
-      {modalItem && (
-        <QualityModal
-          item={modalItem}
-          onClose={() => setModalItem(null)}
-          actions={youtubeActions}
-        />
-      )}
+      </div>
     </div>
   );
 }

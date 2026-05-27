@@ -1,6 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
-import path from "path";
 
 const api = {
   settings: {
@@ -53,22 +52,14 @@ const api = {
     scanFolder: (folderPath) =>
       ipcRenderer.invoke("music:scanFolder", folderPath),
   },
-
+  // youtube via api.youtube — usado por componentes que acessam window.api
   youtube: {
     search: (query, forceRefresh, rawQuery) =>
       ipcRenderer.invoke("youtube:search", query, forceRefresh, rawQuery),
-    getStream: (videoId, formatId) =>
-      ipcRenderer.invoke("youtube:getStream", videoId, formatId),
-    getFormats: (videoId) => ipcRenderer.invoke("youtube:getFormats", videoId),
-    getAudioUrl: (videoId) =>
-      ipcRenderer.invoke("youtube:getAudioUrl", videoId),
-    download: (payload) => ipcRenderer.invoke("download:audio", payload),
-
     getVideoFormats: (videoId) =>
       ipcRenderer.invoke("youtube:getVideoFormats", videoId),
-    getVideoUrl: (videoId, formatId) =>
-      ipcRenderer.invoke("youtube:getVideoUrl", videoId, formatId),
     downloadVideo: (payload) => ipcRenderer.invoke("download:video", payload),
+    downloadAudio: (payload) => ipcRenderer.invoke("download:audio", payload),
   },
 };
 
@@ -78,12 +69,27 @@ const musicAPI = {
   scanFolder: (path) => ipcRenderer.invoke("music:scanFolder", path),
 };
 
-const profileAPI = {
-  saveListeningEvent: (data) =>
-    ipcRenderer.invoke("save-listening-event", data),
-  getUserProfile: () => ipcRenderer.invoke("get-user-profile"),
-  saveSearchHistory: (query) =>
-    ipcRenderer.invoke("save-search-history", query), // 👈
+const electronAuthAPI = {
+  openLoginWindow: (url) => ipcRenderer.invoke("auth:open-login", url),
+  onAuthCompleted: (callback) => ipcRenderer.on("auth:completed", callback),
+  removeAuthListener: (callback) =>
+    ipcRenderer.removeListener("auth:completed", callback),
+};
+
+// electronAPI — usado pelo SearchScreen e outros via window.electronAPI
+const electronAPIBridge = {
+  ...electronAuthAPI,
+  youtube: {
+    search: (query, forceRefresh, rawQuery) =>
+      ipcRenderer.invoke("youtube:search", query, forceRefresh, rawQuery),
+    getVideoFormats: (videoId) =>
+      ipcRenderer.invoke("youtube:getVideoFormats", videoId),
+    downloadVideo: (data) => ipcRenderer.invoke("download:video", data),
+    downloadAudio: (data) => ipcRenderer.invoke("download:audio", data),
+  },
+  googleLoginExternal: () => ipcRenderer.invoke("google:login-external"),
+  googleImportCookies: () => ipcRenderer.invoke("google:import-cookies"),
+  googleLogout: () => ipcRenderer.invoke("google:logout"),
 };
 
 if (process.contextIsolated) {
@@ -91,13 +97,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("musicAPI", musicAPI);
-    contextBridge.exposeInMainWorld("profile", {
-      saveListeningEvent: (data) =>
-        ipcRenderer.invoke("save-listening-event", data),
-      getUserProfile: () => ipcRenderer.invoke("get-user-profile"),
-      saveSearchHistory: (query) =>
-        ipcRenderer.invoke("save-search-history", query),
-    });
+    contextBridge.exposeInMainWorld("electronAPI", electronAPIBridge);
   } catch (error) {
     console.error(error);
   }
@@ -105,5 +105,5 @@ if (process.contextIsolated) {
   window.electron = electronAPI;
   window.api = api;
   window.musicAPI = musicAPI;
-  window.profile = profileAPI;
+  window.electronAPI = electronAPIBridge;
 }

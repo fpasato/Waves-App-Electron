@@ -57,7 +57,7 @@ export function ParticlesEffect() {
     renderer.domElement.style.zIndex = "1";
     container.appendChild(renderer.domElement);
 
-    const COUNT = 4000;
+    const COUNT = 1000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(COUNT * 3);
     const basePositions = new Float32Array(COUNT * 3);
