@@ -1,6 +1,9 @@
 import { Header } from "../../Components/Header";
 import styles from "./style.module.css";
 import { useRadio } from "../../hooks/useRadio";
+import { useState } from "react";
+import { usePlayerStore } from "../../store/playerStore";
+
 
 function WaveIcon() {
   return (
@@ -18,26 +21,25 @@ function Spinner() {
 }
 
 function RadioThumb({ radio, isActive, isBuffering }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className={styles.cardThumb}>
-      {radio.favicon ? (
+      {radio.favicon && !imgError ? (
         <img
           src={radio.favicon}
           alt={radio.name}
-          onError={(e) => {
-            e.currentTarget.src = "/radio-default.png";
-          }}
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+          onError={() => setImgError(true)}
         />
       ) : null}
 
-      <span
-        className={styles.cardInitial}
-        style={{
-          display: radio.favicon ? "none" : "flex",
-        }}
-      >
-        {radio.name?.[0]?.toUpperCase() ?? "R"}
-      </span>
+      {(imgError || !radio.favicon) && (
+        <span className={styles.cardInitial}>
+          {radio.name?.[0]?.toUpperCase() ?? "R"}
+        </span>
+      )}
 
       {isActive && (
         <div className={styles.cardActiveOverlay}>
@@ -226,43 +228,47 @@ function Player({ currentRadio, isPlaying, isBuffering, onPlay, onPause }) {
   );
 }
 
-export function RadioScreen({setScreen}) {
+
+export function RadioScreen({ setScreen }) {
+  const [activeTab, setActiveTab] = useState("search"); // ← adicionar
+
   const {
     query,
     setQuery,
-
     radios,
     popularRadios,
     favorites,
-
     loading,
     loadingPopular,
     error,
-
-    currentRadio,
-    isPlaying,
-    isBuffering,
-
-    activeTab,
-    setActiveTab,
-
     searchRadios,
-    playRadio,
-    pauseRadio,
-
     toggleFavorite,
     isFavorite,
   } = useRadio();
+
+  const currentRadio = usePlayerStore((state) => state.currentRadio);
+  const radioPlaying = usePlayerStore((state) => state.radioPlaying);
+  const radioBuffering = usePlayerStore((state) => state.radioBuffering);
+  const playRadio = usePlayerStore((state) => state.playRadio);
+  const pauseRadio = usePlayerStore((state) => state.pauseRadio);
+
+  // ← adicionar handlers faltando
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   const handleSearch = () => {
     searchRadios(query);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
+  const handlePlayRadio = (radio) => {
+    playRadio(radio);
+    setScreen("player"); // ← navega para o player
   };
+
+  // ← mapear para os nomes que RadioList espera
+  const isPlaying = radioPlaying;
+  const isBuffering = radioBuffering;
 
   return (
     <div className={styles.radioScreen}>
@@ -350,7 +356,7 @@ export function RadioScreen({setScreen}) {
 
         {activeTab === "search" && !query && !loading && (
           <section className={styles.popularSection}>
-            <h2 className={styles.sectionTitle}>Em alta no mundo</h2>
+            <h2 className={styles.sectionTitle}>Em alta</h2>
 
             {loadingPopular ? (
               <div className={styles.loadingRow}>
@@ -364,7 +370,7 @@ export function RadioScreen({setScreen}) {
                 isPlaying={isPlaying}
                 isBuffering={isBuffering}
                 isFavorite={isFavorite}
-                onPlay={playRadio}
+                onPlay={handlePlayRadio}
                 onPause={pauseRadio}
                 onFavorite={toggleFavorite}
                 emptyMessage="Nenhuma rádio popular encontrada."
@@ -380,7 +386,7 @@ export function RadioScreen({setScreen}) {
             isPlaying={isPlaying}
             isBuffering={isBuffering}
             isFavorite={isFavorite}
-            onPlay={playRadio}
+            onPlay={handlePlayRadio}
             onPause={pauseRadio}
             onFavorite={toggleFavorite}
             emptyMessage="Nenhuma rádio encontrada."
@@ -394,7 +400,7 @@ export function RadioScreen({setScreen}) {
             isPlaying={isPlaying}
             isBuffering={isBuffering}
             isFavorite={isFavorite}
-            onPlay={playRadio}
+            onPlay={handlePlayRadio}
             onPause={pauseRadio}
             onFavorite={toggleFavorite}
             emptyMessage="Nenhuma rádio favoritada ainda."

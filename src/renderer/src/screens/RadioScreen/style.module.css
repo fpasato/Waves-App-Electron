@@ -218,6 +218,8 @@
   gap: 1rem;
   align-items: center;
   min-width: 0;
+  background: transparent;
+  border: none;
 }
 
 /* ===== MINIATURA ===== */

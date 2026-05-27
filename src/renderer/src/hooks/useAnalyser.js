@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePlayer } from "../store/PlayerContext";
+import { usePlayerStore } from "../store/playerStore";
 
 export function useAnalyser() {
   const { audioRef, crossfadeAudioRef, analyserRef, audioContextRef } =
     usePlayer();
+  const radioSrcRef = useRef(null); // MediaElementSource da rádio
 
-  // resume no clique/tecla (mantém igual)
+  const playerType = usePlayerStore((state) => state.playerType);
+  const _radioAudio = usePlayerStore((state) => state._radioAudio);
+
+  // resume no clique/tecla
   useEffect(() => {
     const resume = () =>
       audioContextRef.current?.state === "suspended" &&
@@ -19,7 +24,7 @@ export function useAnalyser() {
     };
   }, []);
 
-  // setup roda UMA vez no mount — ambos os elementos já existem no Context
+  // setup roda UMA vez no mount — conecta os dois áudios de música
   useEffect(() => {
     if (analyserRef.current) return;
 
@@ -37,6 +42,21 @@ export function useAnalyser() {
     audioContextRef.current = ctx;
     analyserRef.current = analyser;
   }, []);
+
+  // conecta o _radioAudio ao analyser quando ele é criado
+  useEffect(() => {
+    if (!_radioAudio || !analyserRef.current || !audioContextRef.current) return;
+    if (radioSrcRef.current) return; // já conectado
+
+    try {
+      const src = audioContextRef.current.createMediaElementSource(_radioAudio);
+      src.connect(analyserRef.current);
+      radioSrcRef.current = src;
+    } catch (e) {
+      // MediaElementSource já foi criado para este elemento — ignora
+      console.warn("radioAudio source:", e);
+    }
+  }, [_radioAudio]);
 
   return { analyserRef };
 }

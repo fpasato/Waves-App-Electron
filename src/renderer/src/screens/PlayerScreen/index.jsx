@@ -15,6 +15,8 @@ import { useAnalyser } from "../../hooks/useAnalyser";
 export function PlayerScreen({ setScreen }) {
   useAnalyser();
   const currentSong = usePlayerStore((state) => state.currentSong);
+  const currentRadio = usePlayerStore((state) => state.currentRadio);
+  const playerType = usePlayerStore((state) => state.playerType);
   console.log(
     "🖥️ [PlayerScreen] re-renderizou, currentSong:",
     currentSong?.title,
@@ -34,13 +36,28 @@ export function PlayerScreen({ setScreen }) {
         <div className={styles.musicInfo}>
           <div className={styles.cover}>
             <img
-              src={randomCover(currentSong?.title || "Music Name")}
-              alt={currentSong?.title || "Music Name"}
+              src={
+                playerType === "radio"
+                  ? currentRadio?.favicon || "/radio-default.png"
+                  : randomCover(currentSong?.title || "Music Name")
+              }
+              onError={(e) => {
+                e.currentTarget.src = "/radio-default.png";
+              }}
             />
           </div>
           <div className={styles.musicDetails}>
-            <h3>{currentSong?.title || "Music Name"}</h3>
-            <p>{currentSong?.artist || "Artist Name"}</p>
+            <h3>
+              {playerType === "radio"
+                ? currentRadio?.name || "Rádio"
+                : currentSong?.title || "Music Name"}
+            </h3>
+
+            <p>
+              {playerType === "radio"
+                ? currentRadio?.country || "Rádio online"
+                : currentSong?.artist || "Artist Name"}
+            </p>
           </div>
         </div>
         <PlayerControls />

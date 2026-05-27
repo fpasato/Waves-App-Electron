@@ -6,8 +6,13 @@ import { memo } from "react";
 
 export const ProgressBar = memo(function ProgressBar() {
   const { audioRef, crossfadeAudioRef, analyserRef, activeAudioRef, seekRef } =
-    usePlayer(); // ← seekRef
+    usePlayer();
   const progress = usePlayerStore((state) => state.progress);
+  const playerType = usePlayerStore((state) => state.playerType);
+  const radioBuffering = usePlayerStore((state) => state.radioBuffering);
+  const radioPlaying = usePlayerStore((state) => state.radioPlaying);
+
+  const isRadio = playerType === "radio";
 
   const [time, setTime] = useState({ current: 0, duration: 0 });
   const barRef = useRef(null);
@@ -16,8 +21,9 @@ export const ProgressBar = memo(function ProgressBar() {
   const [dragging, setDragging] = useState(false);
   const [dragPercent, setDragPercent] = useState(null);
 
-  // ── TIMEUPDATE (sem alterações) ──
+  // ── TIMEUPDATE ──
   useEffect(() => {
+    if (isRadio) return; // rádio não tem progresso
     const onTime = () => {
       const active = activeAudioRef.current;
       if (!active) return;
@@ -35,39 +41,31 @@ export const ProgressBar = memo(function ProgressBar() {
       a?.removeEventListener("timeupdate", onTime);
       b?.removeEventListener("timeupdate", onTime);
     };
-  }, [activeAudioRef, audioRef, crossfadeAudioRef]);
+  }, [activeAudioRef, audioRef, crossfadeAudioRef, isRadio]);
 
-  // ── CANVAS DRAW (sem alterações) ──
+  // ── CANVAS DRAW ──
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-
     const totalBars = 100;
     const half = totalBars / 2;
     const maxIndex = 70;
-
     let smoothedHeights = new Array(totalBars).fill(0);
-
     const smoothing = 0.7;
 
     const resizeCanvas = () => {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
     };
-
     resizeCanvas();
-
     const resizeObserver = new ResizeObserver(resizeCanvas);
-
     resizeObserver.observe(canvas);
 
     const mapIndex = (pos, isLeft) => {
       const t = pos / (half - 1);
-
       const idx = isLeft ? (1 - t) * maxIndex : t * maxIndex;
-
       return Math.min(maxIndex, Math.max(0, Math.floor(idx)));
     };
 
@@ -95,10 +93,9 @@ export const ProgressBar = memo(function ProgressBar() {
       const grad = ctx.createLinearGradient(0, h, 0, 0);
       grad.addColorStop(0, accent);
       grad.addColorStop(1, accent);
-
       ctx.fillStyle = grad;
       ctx.shadowColor = accent;
-      ctx.shadowBlur = Math.max(8, Math.min(18, w * 0.02)); // mínimo 15
+      ctx.shadowBlur = Math.max(8, Math.min(18, w * 0.02));
 
       const barWidth = w / totalBars;
 
@@ -108,13 +105,11 @@ export const ProgressBar = memo(function ProgressBar() {
         const raw = dataArray ? dataArray[idx] : 0;
         const maxBarHeight = h * 0.72;
         const targetHeight = Math.max(4, (raw / 255) * maxBarHeight);
-
         smoothedHeights[i] =
           smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
 
         const actualBarWidth = Math.max(1, barWidth * 0.75);
         const xPos = i * barWidth + (barWidth - actualBarWidth) / 2;
-
         const radius = actualBarWidth / 2;
         const x = xPos;
         const y = h - smoothedHeights[i];
@@ -123,36 +118,27 @@ export const ProgressBar = memo(function ProgressBar() {
         ctx.beginPath();
         ctx.roundRect(x, y, actualBarWidth, bh, [radius, radius, 2, 2]);
         ctx.fill();
-      } // ← fechamento do for que estava faltando
+      }
 
       ctx.shadowBlur = 0;
       animationRef.current = requestAnimationFrame(draw);
     };
 
     draw();
-
     return () => {
       cancelAnimationFrame(animationRef.current);
-
       resizeObserver.disconnect();
     };
   }, [analyserRef]);
 
   function formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
-
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-
-    // Se tiver hora → HH:MM:SS
     if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs
-        .toString()
-        .padStart(2, "0")}`;
+      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
-
-    // Senão → MM:SS
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
@@ -167,23 +153,24 @@ export const ProgressBar = memo(function ProgressBar() {
 
   function commitSeek() {
     if (dragPercent !== null) {
-      seekRef.current?.(dragPercent); // ← chama o seek real do player principal
+      seekRef.current?.(dragPercent);
       setDragPercent(null);
     }
   }
 
   function handleMouseDown(e) {
+    if (isRadio) return; // não permite seek em rádio
     setDragging(true);
     updateDragPosition(e.clientX);
   }
 
   function handleMouseMove(e) {
-    if (!dragging) return;
+    if (!dragging || isRadio) return;
     updateDragPosition(e.clientX);
   }
 
   function handleMouseUp() {
-    if (dragging) {
+    if (dragging && !isRadio) {
       commitSeek();
       setDragging(false);
     }
@@ -199,15 +186,47 @@ export const ProgressBar = memo(function ProgressBar() {
       onMouseLeave={handleMouseUp}
     >
       <canvas ref={canvasRef} className={styles.wavebars} />
-      <div ref={barRef} className={styles.bar} onMouseDown={handleMouseDown}>
-        <div
-          className={styles.progress}
-          style={{ width: `${displayPercent}%` }}
-        />
-        <div className={styles.thumb} style={{ left: `${displayPercent}%` }} />
+
+      <div
+        ref={barRef}
+        className={styles.bar}
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isRadio ? "default" : "pointer" }}
+      >
+        {isRadio ? (
+          // barra de rádio: animação de "ao vivo"
+          <div
+            className={styles.progress}
+            style={{
+              width: radioBuffering ? "30%" : "100%",
+              opacity: radioPlaying ? 1 : 0.3,
+              transition: radioBuffering
+                ? "width 1.5s ease-in-out"
+                : "width 0.4s ease, opacity 0.3s ease",
+            }}
+          />
+        ) : (
+          <>
+            <div
+              className={styles.progress}
+              style={{ width: `${displayPercent}%` }}
+            />
+            <div
+              className={styles.thumb}
+              style={{ left: `${displayPercent}%` }}
+            />
+          </>
+        )}
       </div>
+
       <div className={styles.time}>
-        {formatTime(time.current)} / {formatTime(time.duration)}
+        {isRadio
+          ? radioBuffering
+            ? "Carregando..."
+            : radioPlaying
+              ? "● AO VIVO"
+              : "Pausado"
+          : `${formatTime(time.current)} / ${formatTime(time.duration)}`}
       </div>
     </div>
   );

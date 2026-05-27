@@ -36,6 +36,8 @@ export const usePlayerStore = create((set, get) => ({
   shuffleQueue: [],
   shufflePos: 0,
   restartSignal: 0,
+  currentRadio: null,
+  playerType: "music",
 
   fadeEnabled: false,
   fadeDuration: 3,
@@ -626,5 +628,118 @@ export const usePlayerStore = create((set, get) => ({
   setVolume: (value) => {
     logWithTime(`🔊 setVolume: ${value}`);
     set({ volume: value });
+  },
+
+  // ─── RÁDIO ────────────────────────────────────────
+  currentRadio: null,
+  playerType: "music", // "music" | "radio"
+  radioPlaying: false,
+  radioBuffering: false,
+
+  // Referência interna do Audio (não reativo, mas acessível)
+  _radioAudio: null,
+
+  setRadio: (radio) => {
+    // Pausa música local se estiver tocando
+    const state = get();
+    if (state.isPlaying) {
+      state.setPlaying(false);
+    }
+
+    set({
+      currentRadio: radio,
+      playerType: "radio",
+      radioPlaying: false,
+      radioBuffering: false,
+    });
+  },
+
+  clearRadio: () => {
+    const audio = get()._radioAudio;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
+    set({
+      currentRadio: null,
+      playerType: "music",
+      radioPlaying: false,
+      radioBuffering: false,
+    });
+  },
+
+  playRadio: async (radio) => {
+    const state = get();
+    let audio = state._radioAudio;
+
+    // Cria o Audio se não existir
+    if (!audio) {
+      audio = new Audio();
+      audio.preload = "none";
+
+      audio.addEventListener("play", () => {
+        set({ radioPlaying: true, radioBuffering: false });
+      });
+      audio.addEventListener("pause", () => {
+        set({ radioPlaying: false, radioBuffering: false });
+      });
+      audio.addEventListener("waiting", () => {
+        set({ radioBuffering: true });
+      });
+      audio.addEventListener("playing", () => {
+        set({ radioBuffering: false, radioPlaying: true });
+      });
+      audio.addEventListener("error", () => {
+        set({ radioPlaying: false, radioBuffering: false });
+      });
+
+      set({ _radioAudio: audio });
+    }
+
+    if (!radio?.stream) return;
+
+    // Se já é a mesma rádio, apenas retoma
+    if (state.currentRadio?.id === radio.id && audio.src) {
+      if (audio.paused) {
+        try {
+          set({ radioBuffering: true });
+          await audio.play();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+      return;
+    }
+
+    // Troca a stream
+    audio.pause();
+    audio.src = ""; // limpa
+    audio.src = radio.stream; // nova
+
+    set({
+      currentRadio: radio,
+      playerType: "radio",
+      radioBuffering: true,
+    });
+
+    try {
+      await audio.play();
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.error(err);
+      set({ radioBuffering: false });
+    }
+  },
+
+  pauseRadio: () => {
+    const audio = get()._radioAudio;
+    if (audio) {
+      audio.pause();
+      set({ radioPlaying: false });
+    }
+  },
+
+  stopRadio: () => {
+    get().clearRadio();
   },
 }));
