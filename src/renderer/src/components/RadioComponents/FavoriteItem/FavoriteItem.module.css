@@ -1,0 +1,56 @@
+/* src/Components/FavoriteItem.module.css */
+.favItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #2a2f3d;
+}
+
+.favItemMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+}
+
+.favItemThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.favItemName {
+  font-size: 14px;
+  color: #e8e8e8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favItemActions {
+  display: flex;
+  gap: 6px;
+}
+
+.favItemPlay,
+.favItemRemove {
+  background: none;
+  border: none;
+  color: #7a8099;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favItemPlay:hover,
+.favItemRemove:hover {
+  color: #e8e8e8;
+}

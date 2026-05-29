@@ -403,10 +403,10 @@ export function registerDatabaseHandlers() {
 
   ipcMain.handle("download:audio", async (_, { videoId, title }) => {
     try {
-      const vibePath = path.join(app.getPath("music"), "Vibe");
-      if (!fs.existsSync(vibePath)) fs.mkdirSync(vibePath, { recursive: true });
+      const savePath = path.join(app.getPath("documents"), "Vibe", "audios");
+      if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
       const safeTitle = (title ?? "audio").replace(/[<>:"/\\|?*]/g, "").trim();
-      const filePath = path.join(vibePath, `${safeTitle}.mp3`);
+      const filePath = path.join(savePath, `${safeTitle}.mp3`);
 
       await ytDlp.execPromise([
         `https://www.youtube.com/watch?v=${videoId}`,
@@ -431,10 +431,10 @@ export function registerDatabaseHandlers() {
 
   ipcMain.handle("download:video", async (_, { videoId, title, formatId }) => {
     try {
-      const vibePath = path.join(app.getPath("videos"), "Vibe");
-      if (!fs.existsSync(vibePath)) fs.mkdirSync(vibePath, { recursive: true });
+      const savePath = path.join(app.getPath("documents"), "Vibe", "video");
+      if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
       const safeTitle = (title ?? "video").replace(/[<>:"/\\|?*]/g, "").trim();
-      const filePath = path.join(vibePath, `${safeTitle}.mp4`);
+      const filePath = path.join(savePath, `${safeTitle}.mp4`);
 
       await new YTDlpWrap(ytDlpPath).execPromise([
         `https://www.youtube.com/watch?v=${videoId}`,
@@ -549,4 +549,13 @@ export function registerDatabaseHandlers() {
     });
     return true;
   });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Adicionar no main process (onde estão os outros ipcMain.handle)
+  // ─────────────────────────────────────────────────────────────────────
+  // Imports necessários (se ainda não estiverem):
+  // const fs   = require("fs");
+  // const path = require("path");
+  // const { app, shell } = require("electron");
+
 }

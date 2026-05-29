@@ -61,6 +61,11 @@ const api = {
     downloadVideo: (payload) => ipcRenderer.invoke("download:video", payload),
     downloadAudio: (payload) => ipcRenderer.invoke("download:audio", payload),
   },
+
+  radio: {
+    saveRecording: (buffer, radioName) =>
+      ipcRenderer.invoke("radio:saveRecording", { buffer, radioName }),
+  },
 };
 
 const musicAPI = {
@@ -87,9 +92,27 @@ const electronAPIBridge = {
     downloadVideo: (data) => ipcRenderer.invoke("download:video", data),
     downloadAudio: (data) => ipcRenderer.invoke("download:audio", data),
   },
+
   googleLoginExternal: () => ipcRenderer.invoke("google:login-external"),
   googleImportCookies: () => ipcRenderer.invoke("google:import-cookies"),
   googleLogout: () => ipcRenderer.invoke("google:logout"),
+
+  downloads: {
+    listFiles: () => ipcRenderer.invoke("downloads:listFiles"),
+    openFile: (filePath) => ipcRenderer.invoke("downloads:openFile", filePath),
+    revealFile: (filePath) =>
+      ipcRenderer.invoke("downloads:revealFile", filePath),
+    deleteFile: (filePath) =>
+      ipcRenderer.invoke("downloads:deleteFile", filePath),
+    onProgress: (cb) => ipcRenderer.on("download:progress", cb),
+    onDone: (cb) => ipcRenderer.on("download:done", cb),
+    onError: (cb) => ipcRenderer.on("download:error", cb),
+    removeListeners: () => {
+      ipcRenderer.removeAllListeners("download:progress");
+      ipcRenderer.removeAllListeners("download:done");
+      ipcRenderer.removeAllListeners("download:error");
+    },
+  },
 };
 
 if (process.contextIsolated) {

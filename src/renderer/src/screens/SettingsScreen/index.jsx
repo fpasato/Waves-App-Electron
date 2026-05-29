@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "../../Components/Header";
 import { PlaybackSettings } from "../../components/PlaybackSettings";
 import { DirectoriesSettings } from "../../components/DirectoriesSettings";
+import { Interface } from "../../components/SettingsComponents/Interface";
 import { Button } from "../../components/Button";
 
 import styles from "./style.module.css";
@@ -22,9 +23,14 @@ export function SettingsScreen({ setScreen }) {
               className={`${styles.tab} ${tab === "directories" ? styles.active : ""}`}
             />
             <Button
-              title="crossfade"
+              title="Crossfade"
               onClick={() => setTab("crossfade")}
               className={`${styles.tab} ${tab === "crossfade" ? styles.active : ""}`}
+            />{" "}
+            <Button
+              title="Interface"
+              onClick={() => setTab("interface")}
+              className={`${styles.tab} ${tab === "interface" ? styles.active : ""}`}
             />
           </div>
 
@@ -38,6 +44,7 @@ export function SettingsScreen({ setScreen }) {
         <div className={styles.content}>
           {tab === "directories" && <DirectoriesSettings />}
           {tab === "crossfade" && <PlaybackSettings />}
+          {tab === "interface" && <Interface />}
         </div>
       </div>
     </div>

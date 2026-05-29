@@ -23,6 +23,7 @@
   overflow: hidden;
   min-height: 0;
 }
+
 .sidebar {
   width: 100%;
   display: flex;
@@ -37,21 +38,18 @@
   border: 1px solid transparent;
   border-radius: 0.3rem;
   border-bottom: 1px solid red;
+  
   box-shadow: 0 0 5px var(--shadow);
-
   margin-top: 0.5rem;
   padding: 0.5rem;
   cursor: pointer;
 
+  background-color: rgba(255, 0, 0, 0.841);
+
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    box-shadow: 0 0 5px red;
-    transform: translateY(-2px) translateX(6px);
-    border-color: red;
-    color: red;
-    box-shadow: inset 0 0 10px red, 0 0 10px red;
-
+    background-color: rgba(255, 0, 0, 1);
   }
 }
 

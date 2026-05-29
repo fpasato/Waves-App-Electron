@@ -434,6 +434,9 @@ export function useAudio() {
     }
 
     if (isPlaying) {
+      // ✅ Para o rádio se estiver tocando
+      usePlayerStore.getState().stopRadioSilently();
+
       logWithTime(`🎧 [PLAY] solicitado`);
       getActive()
         .play()
@@ -445,6 +448,7 @@ export function useAudio() {
     }
   }, [isPlaying, currentSong?.id]);
 
+  
   // ---------- SEEK ----------
   function seek(percent) {
     logWithTime(

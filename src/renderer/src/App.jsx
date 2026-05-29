@@ -9,6 +9,7 @@ import { SearchScreen } from "./screens/SearchScreen";
 import { RadioScreen } from "./screens/RadioScreen";
 import { useAudio } from "./hooks/useAudio";
 import { usePlayerStore } from "./store/playerStore";
+import { DownloadScreen } from "./screens/DownloadsScreen";
 
 function PlayerApp() {
   const [screen, setScreen] = useState("player");
@@ -43,6 +44,7 @@ function PlayerApp() {
       {screen === "player" && <PlayerScreen setScreen={setScreen} />}
       {screen === "settings" && <SettingsScreen setScreen={setScreen} />}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
+      {screen === "downloads" && <DownloadScreen setScreen={setScreen} />}
 
       {searchMounted ? (
         <div

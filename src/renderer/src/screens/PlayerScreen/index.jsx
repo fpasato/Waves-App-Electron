@@ -17,6 +17,8 @@ export function PlayerScreen({ setScreen }) {
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentRadio = usePlayerStore((state) => state.currentRadio);
   const playerType = usePlayerStore((state) => state.playerType);
+  const clearRadio = usePlayerStore((state) => state.clearRadio);
+
   console.log(
     "🖥️ [PlayerScreen] re-renderizou, currentSong:",
     currentSong?.title,
@@ -59,6 +61,15 @@ export function PlayerScreen({ setScreen }) {
                 : currentSong?.artist || "Artist Name"}
             </p>
           </div>
+          {playerType === "radio" && (
+            <button
+              className={styles.clearRadioBtn}
+              onClick={clearRadio}
+              title="Remover rádio do player"
+            >
+              ✕
+            </button>
+          )}
         </div>
         <PlayerControls />
         <ProgressBar />

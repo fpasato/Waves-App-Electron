@@ -60,7 +60,7 @@ export const usePlayerStore = create((set, get) => ({
     try {
       const en = await window.api.settings.get("fadeEnabled");
       const du = await window.api.settings.get("fadeDuration");
-      const parsed = parseInt(du ?? "3", 10);
+      const parsed = parseFloat(du ?? "3", 10);
       const newFadeEnabled = en === "true";
       const newFadeDuration = Math.min(
         15,
@@ -667,11 +667,20 @@ export const usePlayerStore = create((set, get) => ({
       radioBuffering: false,
     });
   },
-
+  stopRadioSilently: () => {
+    const audio = get()._radioAudio;
+    if (audio && !audio.paused) {
+      audio.pause();
+      set({ radioPlaying: false });
+    }
+  },
   playRadio: async (radio) => {
     const state = get();
-    let audio = state._radioAudio;
 
+    if (state.isPlaying) {
+      set({ isPlaying: false });
+    }
+    let audio = state._radioAudio;
     // Cria o Audio se não existir
     if (!audio) {
       audio = new Audio();

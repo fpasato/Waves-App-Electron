@@ -3,9 +3,10 @@ import styles from "./style.module.css";
 import { FaPlay, FaPause, FaRandom } from "react-icons/fa";
 import { GiPreviousButton, GiNextButton } from "react-icons/gi";
 import { RiLoopLeftLine } from "react-icons/ri";
+import { MdFiberManualRecord, MdStop } from "react-icons/md";
 
 import { usePlayerStore } from "../../store/playerStore";
-import { memo } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 
 export const PlayerControls = memo(function PlayerControls() {
   // — música —
@@ -26,8 +27,12 @@ export const PlayerControls = memo(function PlayerControls() {
   const playRadio = usePlayerStore((state) => state.playRadio);
   const pauseRadio = usePlayerStore((state) => state.pauseRadio);
 
-  const isRadio = playerType === "radio";
+  // — gravação —
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
+  const isRadio = playerType === "radio";
   const playing = isRadio ? radioPlaying : isPlaying;
 
   const handlePlayPause = () => {
@@ -37,6 +42,59 @@ export const PlayerControls = memo(function PlayerControls() {
       togglePlay();
     }
   };
+
+  const handleRecord = useCallback(() => {
+    if (!isRecording) {
+      // Pega o Audio direto do store, não do DOM
+      const audioEl = usePlayerStore.getState()._radioAudio;
+      if (!audioEl) return;
+
+      let stream;
+      try {
+        stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
+      } catch (e) {
+        console.error("captureStream não suportado:", e);
+        return;
+      }
+
+      if (!stream) return;
+
+      chunksRef.current = [];
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm",
+      });
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
+        const arrayBuffer = await blob.arrayBuffer();
+        const radioName = currentRadio?.name ?? "radio";
+
+        try {
+          const savedPath = await window.api.radio.saveRecording(
+            arrayBuffer,
+            radioName,
+          );
+          console.log("✅ Gravação salva em:", savedPath);
+        } catch (e) {
+          console.error("❌ Erro ao salvar gravação:", e);
+        }
+      };
+
+      recorder.start(1000);
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } else {
+      mediaRecorderRef.current?.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+    }
+  }, [isRecording, currentRadio]);
 
   return (
     <div className={styles.playerControls}>
@@ -83,6 +141,28 @@ export const PlayerControls = memo(function PlayerControls() {
         disabled={isRadio}
       >
         <FaRandom />
+      </button>
+
+      {/* Botão de gravação — visível sempre, ativo só em modo rádio */}
+      <button
+        className={`${styles.button} ${styles.outButton} ${isRecording ? styles.recordingActive : ""}`}
+        onClick={handleRecord}
+        disabled={!isRadio || !radioPlaying}
+        title={
+          !isRadio
+            ? "Disponível apenas para rádio"
+            : !radioPlaying
+              ? "Inicie a rádio para gravar"
+              : isRecording
+                ? "Parar gravação"
+                : "Gravar rádio"
+        }
+        style={{
+          opacity: !isRadio ? 0.2 : !radioPlaying ? 0.4 : 1,
+          color: isRecording ? "var(--record-active, #ff3b3b)" : undefined,
+        }}
+      >
+        {isRecording ? <MdStop /> : <MdFiberManualRecord />}
       </button>
     </div>
   );
