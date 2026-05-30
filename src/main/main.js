@@ -19,8 +19,7 @@ import { initDatabase, closeDatabase } from "./database/database.js";
 import { registerDbHandlers } from "./handlers/dbHandlers.js";
 import { registerYoutubeHandlers } from "./handlers/youtubeHandlers.js";
 import { registerAuthHandlers } from "./handlers/authHandlers.js";
-import { registerFsHandlers } from "./handlers/fsHandlers.js";
-import fs from "fs";
+import { registerGeminiHandler } from "./handlers/geminiHandler.js";
 
 // Se você tem uma função searchYoutube real, importe-a:
 // import { searchYoutube } from './services/youtubeSearch.js';
@@ -66,7 +65,7 @@ async function bootstrap() {
     ffmpegPath,
     baseFlags,
   });
-
+  registerGeminiHandler();
 
   app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -24,10 +24,19 @@ export function PlayerScreen({ setScreen, file }) {
   const playSong = usePlayerStore((state) => state.playSong);
   const lyricsEnabled = usePlayerStore((state) => state.lyricsEnabled);
   const toggleLyrics = usePlayerStore((state) => state.toggleLyrics);
-  const { lines, activeIndex, status, isFading, currentLine, nextLine, offset, setOffset } =
-    useLyrics(lyricsEnabled);
-  
-  
+  const activeTheme = usePlayerStore((state) => state.activeTheme);
+
+  const {
+    lines,
+    activeIndex,
+    status,
+    isFading,
+    currentLine,
+    nextLine,
+    offset,
+    setOffset,
+  } = useLyrics(lyricsEnabled);
+
   useEffect(() => {
     setOffset(0);
   }, [currentSong, setOffset]);
@@ -50,6 +59,7 @@ export function PlayerScreen({ setScreen, file }) {
       <div className={styles.content}>
         <SideBar setScreen={setScreen} />
         <BackgroundVideo
+          theme={activeTheme}
           lyricsEnabled={lyricsEnabled}
           lines={lines}
           activeIndex={activeIndex}

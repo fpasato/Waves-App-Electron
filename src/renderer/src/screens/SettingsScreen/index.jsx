@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 
 import styles from "./style.module.css";
 
-export function SettingsScreen({ setScreen }) {
+export function SettingsScreen({ setScreen, setTheme }) {
   const [tab, setTab] = useState("directories");
 
   return (
@@ -44,7 +44,7 @@ export function SettingsScreen({ setScreen }) {
         <div className={styles.content}>
           {tab === "directories" && <DirectoriesSettings />}
           {tab === "crossfade" && <PlaybackSettings />}
-          {tab === "interface" && <Interface />}
+          {tab === "interface" && <Interface setTheme={setTheme} />}
         </div>
       </div>
     </div>

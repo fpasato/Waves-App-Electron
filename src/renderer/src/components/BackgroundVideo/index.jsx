@@ -1,14 +1,9 @@
-// BackgroundVideo/index.jsx  ← versão atualizada
 import { memo } from "react";
 import { ParticlesEffect } from "../ParticlesEffect";
 import { LyricsDisplay } from "../LyricsDisplay";
+import { usePlayerStore } from "../../store/playerStore";
 import styles from "./style.module.css";
-import bgVideo from "../../assets/bg.mp4";
 
-/**
- * Props:
- *   lyricsEnabled  boolean  — vem do estado do player (toggle)
- */
 export const BackgroundVideo = memo(function BackgroundVideo({
   lyricsEnabled,
   lines,
@@ -18,11 +13,20 @@ export const BackgroundVideo = memo(function BackgroundVideo({
   currentLine,
   nextLine,
 }) {
+  const activeTheme = usePlayerStore((state) => state.activeTheme);
+
   return (
     <div className={styles.backgroundVideo}>
       <div className={styles.inner}>
-        <video autoPlay muted loop playsInline className={styles.videoBg}>
-          <source src={bgVideo} type="video/mp4" />
+        <video
+          key={activeTheme.id}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className={styles.videoBg}
+        >
+          <source src={activeTheme.video} type="video/mp4" />
         </video>
         <ParticlesEffect />
         <div className={styles.lyricsArea}>

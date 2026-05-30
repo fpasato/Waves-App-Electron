@@ -130,7 +130,11 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("musicAPI", musicAPI);
-    contextBridge.exposeInMainWorld("electronAPI", electronAPIBridge);
+    contextBridge.exposeInMainWorld("electronAPI", {
+      ...electronAPIBridge,
+      parseFilenameWithGemini: (fileName) =>
+        ipcRenderer.invoke("gemini:parse-filename", fileName),
+    });
   } catch (error) {
     console.error(error);
   }

@@ -35,21 +35,11 @@
 }
 
 .backButton {
-  border: 1px solid transparent;
-  border-radius: 0.3rem;
-  border-bottom: 1px solid red;
-  
-  box-shadow: 0 0 5px var(--shadow);
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  cursor: pointer;
 
-  background-color: rgba(255, 0, 0, 0.841);
-
+  background-color: #1212122f;
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: rgba(255, 0, 0, 1);
   }
 }
 

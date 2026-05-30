@@ -11,7 +11,6 @@ export function mapTracksForDb(tracks, directoryId) {
   }));
 }
 
-/** Re-escaneia todas as pastas registadas e devolve a lista atualizada da DB. */
 export async function refreshLibraryFromDisk() {
   const dirs = await window.api.db.directories.list();
   for (const dir of dirs) {
@@ -21,14 +20,6 @@ export async function refreshLibraryFromDisk() {
   }
   return window.api.db.songs.getAll();
 }
-
-/**
- * Renomeia arquivos da biblioteca para o padrão "Artista - Título.mp3"
- * usando as mesmas funções de limpeza do useLyrics.
- * Retorna um relatório { renamed, skipped, errors }.
- */
-
-
 
 function getFileNameWithoutExtension(filePath) {
   const parts = filePath.split(/[\\/]/);
@@ -54,12 +45,17 @@ function resolveArtistTitle(fileName, metaArtist, metaTitle) {
   const title  = cleanFull(metaTitle);
   if (artist && title) return { artist, title };
 
-  // tenta invertido
   const a2 = cleanArtist(metaTitle);
-  const t2  = cleanFull(metaArtist);
+  const t2 = cleanFull(metaArtist);
   if (a2 && t2) return { artist: a2, title: t2 };
 
   return { artist: null, title: null };
+}
+
+// 📌 Gemini só via IPC (seguro, sem process)
+async function fetchArtistTitleFromGemini(fileName) {
+  const result = await window.electronAPI.parseFilenameWithGemini(fileName);
+  return result; // { artist, title } já vêm limpos do main process
 }
 
 export async function normalizeLibraryFileNames(onProgress) {
@@ -74,7 +70,16 @@ export async function normalizeLibraryFileNames(onProgress) {
       const dir      = song.path.replace(/[\\/][^\\/]+$/, "");
       const ext      = song.path.match(/\.[^.]+$/)?.[0] ?? ".mp3";
       const fileName = getFileNameWithoutExtension(song.path);
-      const { artist, title } = resolveArtistTitle(fileName, song.artist, song.title);
+
+      let { artist, title } = resolveArtistTitle(fileName, song.artist, song.title);
+
+      if (!artist || !title) {
+        const geminiResult = await fetchArtistTitleFromGemini(fileName);
+        if (geminiResult.artist && geminiResult.title) {
+          artist = geminiResult.artist;
+          title  = geminiResult.title;
+        }
+      }
 
       if (!artist || !title) {
         report.skipped.push({ path: song.path, reason: "não foi possível extrair" });

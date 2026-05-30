@@ -46,11 +46,17 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #004cff, #6a00ff);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     opacity: 0;
     transition: opacity 0.2s;
     border-radius: inherit;
 }
+
+.options button svg {
+  color: var(--text);
+  transition: color 0.2s;
+}
+
 
 .options button:hover::before {
     opacity: 1;
@@ -71,7 +77,7 @@
 }
 
 .options button:hover svg {
-    color: #fff;
+    color: #000000;
     transform: scale(1.1);
     filter: drop-shadow(0 0 8px rgba(100, 150, 255, 0.8));
 }

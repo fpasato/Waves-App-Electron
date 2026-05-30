@@ -13,7 +13,9 @@ import { DownloadScreen } from "./screens/DownloadsScreen";
 function PlayerApp() {
   const [screen, setScreenState] = useState("player");
   const [screenData, setScreenData] = useState(null); // dados extras
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "dark",
+  );
   const [searchUrl, setSearchUrl] = useState(null);
   const [searchMounted, setSearchMounted] = useState(true);
 
@@ -23,6 +25,18 @@ function PlayerApp() {
     setScreenData(data || null);
     if (name === "search") setSearchMounted(true);
   };
+
+  // aplica no body só quando theme muda
+  useEffect(() => {
+    document.body.className = theme;
+  }, [theme]);
+
+  // cor também vai pra um useEffect
+  useEffect(() => {
+    const savedColor = localStorage.getItem("accent-color");
+    if (savedColor)
+      document.documentElement.style.setProperty("--accent", savedColor);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +62,9 @@ function PlayerApp() {
       {screen === "player" && (
         <PlayerScreen setScreen={setScreen} file={screenData?.song} />
       )}
-      {screen === "settings" && <SettingsScreen setScreen={setScreen} />}
+      {screen === "settings" && (
+        <SettingsScreen setScreen={setScreen} setTheme={setTheme} />
+      )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
       {screen === "downloads" && <DownloadScreen setScreen={setScreen} />}
 

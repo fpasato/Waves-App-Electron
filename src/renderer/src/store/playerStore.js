@@ -3,6 +3,7 @@ import {
   refreshLibraryFromDisk,
   reloadLibraryFromDb,
 } from "../lib/syncLibrary";
+import { themes } from "../hooks/themes";
 
 // Helper para log com timestamp
 function logWithTime(...args) {
@@ -20,6 +21,9 @@ function shuffleArray(array) {
   }
   return arr;
 }
+
+const savedThemeId = localStorage.getItem("active-theme-id") || themes[0].id;
+const savedTheme = themes.find((t) => t.id === savedThemeId) || themes[0];
 
 export const usePlayerStore = create((set, get) => ({
   currentSong: null,
@@ -41,14 +45,22 @@ export const usePlayerStore = create((set, get) => ({
   lyricsEnabled: false,
   toggleLyrics: () => set((state) => ({ lyricsEnabled: !state.lyricsEnabled })),
   setLyricsEnabled: (value) => set({ lyricsEnabled: value }),
-
   fadeEnabled: false,
   fadeDuration: 3,
+  activeTheme: savedTheme,
+
+  setActiveTheme: (theme) => {
+    localStorage.setItem("active-theme-id", theme.id);
+    document.documentElement.style.setProperty("--accent", theme.accent);
+    document.documentElement.style.setProperty("--player-bg", theme.gradient);
+    set({ activeTheme: theme });
+  },
 
   setFadeEnabled: (fadeEnabled) => {
     logWithTime(`⚙️ setFadeEnabled: ${fadeEnabled}`);
     set({ fadeEnabled });
   },
+
   setFadeDuration: (value) => {
     const newVal = Math.min(15, Math.max(1, Number(value) || 3));
 
