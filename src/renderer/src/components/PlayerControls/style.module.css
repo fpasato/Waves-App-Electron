@@ -1,53 +1,83 @@
-.playerControls{
-    width: auto;
-    min-width: 150px;
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(0.1rem, 1vw, 1rem);
-    margin-right: 3rem;
-
-
-    background-color: transparent;
-
+.playerControls {
+  display: flex;
+  justify-content: center;
+  background-color: transparent;
+  gap: 1rem;
 }
 
-.button{
-    background-color: var(--accent);
-    color: var(--text);
-    border: none;
-    padding: 0.5rem;
-    border-radius: 50%;
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    filter: drop-shadow(0 0 5px var(--grey-shadow));
-
-    &:hover{
-        filter: brightness(1.2) drop-shadow(0 0 5px var(--accent));
-        transform: translateX(1px) translateY(-1px);
-    }
-    &:active{
-        transform: scale(0.95);
-    }
+.songsButtonContainer{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.1rem, 1vw, 1rem);
 }
 
-.subButton{
-    font-size: 1.2rem;
+.button {
+  background-color: var(--accent);
+  color: var(--text);
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  filter: drop-shadow(0 0 5px var(--grey-shadow));
+
+  &:hover {
+    filter: brightness(1.2) drop-shadow(0 0 5px var(--accent));
+    transform: translateX(1px) translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
-.ppButton{
-    font-size: 1.5rem;
+.buttonSecondary {
+  & svg {
+    width: clamp(0.4rem, 2vw, 1.5rem);
+    height: clamp(0.4rem, 2vw, 1.5rem);
+  }
 }
 
-.outButton{
-    font-size: 1.2rem;
-    background-color: transparent;
+.buttonPrimary {
+  padding: clamp(0.2rem, 1vw, 0.8rem);
+
+  & svg {
+    width: clamp(1.2rem, 2.5vw, 1.4rem);
+    height: clamp(1.2rem, 2.5vw, 1.4rem);
+  }
 }
+
+.buttonTertiary {
+  padding: 0.5rem;
+  
+  & svg {
+    width: clamp(0.4rem, 3vw, 1rem);
+    height: clamp(0.4rem, 3vw, 1rem);
+  }
+}
+
+.controlsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-row: 2;
+  row-gap: -2.3em;
+}
+
+.outButton {
+  background-color: transparent;
+
+  & svg {
+    width: clamp(0.6rem, 3vw, 1rem);
+    height: clamp(0.6rem, 3vw, 1rem);
+  }
+}
+
+
 
 /* Gravação ativa — pulsa em vermelho */
 .recordingActive {
@@ -55,11 +85,66 @@
 }
 
 @keyframes recordPulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.4;
   }
+}
+
+
+.lyricsActive {
+  color: #a8d0ff !important;
+  opacity: 1 !important;
+}
+
+.lyricsActive svg {
+  filter: drop-shadow(0 0 5px rgba(140, 200, 255, 0.9));
+}
+
+/* ── Offset Controls ── */
+.offsetControls {
+  grid-column: 1 / -1;              /* ocupa toda a largura do grid */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  height: 20px;
+  padding: 4px 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.offsetControls .button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #a8d0ff;
+  transition: all 0.2s ease;
+}
+
+.offsetControls .button:hover {
+  background: rgba(140, 200, 255, 0.15);
+  border-color: rgba(140, 200, 255, 0.4);
+  box-shadow: 0 0 8px rgba(140, 200, 255, 0.3);
+}
+
+.offsetLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(200, 220, 255, 0.7);
+  min-width: 45px;
+  text-align: center;
+  letter-spacing: 0.05em;
 }

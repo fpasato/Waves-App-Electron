@@ -6,9 +6,10 @@
   align-items: center;
   justify-content: center;
   width: 45px;
-  height: 45px;
+  height: 100%x;
   cursor: pointer;
   overflow: visible;
+  padding: 0.4rem;
 }
 
 .icon {

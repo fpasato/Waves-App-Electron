@@ -4,7 +4,7 @@ import { PlaylistScreen } from "../PlaylistScreen";
 
 import { IoOptionsSharp } from "react-icons/io5";
 import { IoLibrarySharp } from "react-icons/io5";
-import { FaSearch, FaHistory } from "react-icons/fa";
+import { FaYoutube, FaHistory } from "react-icons/fa";
 import { FaRadio } from "react-icons/fa6";
 import { ImFolderDownload } from "react-icons/im";
 
@@ -20,7 +20,7 @@ export function SideBar({ setScreen }) {
           title={<IoLibrarySharp />}
           onClick={() => setScreen("library")}
         />
-        <Button title={<FaSearch />} onClick={() => setScreen("search")} />
+        <Button title={<FaYoutube />} onClick={() => setScreen("search")} />
         <Button title={<FaHistory />} onClick={() => console.log("Recentes")} />
         <Button title={<FaRadio />} onClick={() => setScreen("radio")} />
         <Button title={<ImFolderDownload />} onClick={() => setScreen("downloads")} />

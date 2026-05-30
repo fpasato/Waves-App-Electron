@@ -4,6 +4,7 @@ import { useDirectories } from "../../hooks/useDatabase";
 import { mapTracksForDb } from "../../lib/syncLibrary";
 import { useSongs } from "../../hooks/useDatabase";
 import { Button } from "../../components/Button";
+import { normalizeLibraryFileNames } from "../../lib/syncLibrary";
 
 import styles from "./style.module.css";
 
@@ -15,6 +16,30 @@ export function DirectoriesSettings() {
   const [directories, setDirectories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
+  const [normalizing, setNormalizing] = useState(false);
+  const [normalizeProgress, setNormalizeProgress] = useState(null);
+
+  async function handleNormalize() {
+    if (!confirm("Isso vai renomear arquivos no disco. Continuar?")) return;
+    setNormalizing(true);
+    setStatus("Normalizando nomes...");
+    try {
+      const report = await normalizeLibraryFileNames(({ current, total }) => {
+        setNormalizeProgress({ current, total });
+        setStatus(`Normalizando... ${current}/${total}`);
+      });
+      await reloadLibraryFromDatabase();
+      setStatus(
+        `✅ ${report.renamed.length} renomeados · ${report.skipped.length} já ok · ${report.errors.length} erros`,
+      );
+    } catch (err) {
+      console.error(err);
+      setStatus("❌ Erro ao normalizar");
+    } finally {
+      setNormalizing(false);
+      setNormalizeProgress(null);
+    }
+  }
 
   // Carrega os diretórios do banco de dados
   useEffect(() => {
@@ -105,10 +130,20 @@ export function DirectoriesSettings() {
 
         <div className={styles.headerActions}>
           <Button title="+ Adicionar pasta" onClick={handleAddFolder} />
+          <Button
+            title={
+              normalizing
+                ? `${normalizeProgress?.current ?? 0}/${normalizeProgress?.total ?? "?"}`
+                : "Normalizar nomes"
+            }
+            onClick={handleNormalize}
+            disabled={normalizing}
+          />
         </div>
       </div>
       <span className={styles.warning}>
-        Caso uma pasta seja renomeada ou movida, será necessário removê-la e adicioná-la novamente para atualizar a biblioteca.
+        Caso uma pasta seja renomeada ou movida, será necessário removê-la e
+        adicioná-la novamente para atualizar a biblioteca.
       </span>
 
       {status && <p className={styles.status}>{status}</p>}

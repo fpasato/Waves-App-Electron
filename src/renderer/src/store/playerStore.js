@@ -38,6 +38,9 @@ export const usePlayerStore = create((set, get) => ({
   restartSignal: 0,
   currentRadio: null,
   playerType: "music",
+  lyricsEnabled: false,
+  toggleLyrics: () => set((state) => ({ lyricsEnabled: !state.lyricsEnabled })),
+  setLyricsEnabled: (value) => set({ lyricsEnabled: value }),
 
   fadeEnabled: false,
   fadeDuration: 3,
@@ -137,7 +140,7 @@ export const usePlayerStore = create((set, get) => ({
 
   setSong: (song) => {
     logWithTime(`🎵 setSong: ${song.title}`);
-    const { queue, shuffle, shuffleQueue, playSong } = get();
+    const { queue, shuffle, shuffleQueue, playSong, clearRadio } = get();
     const index = queue.findIndex((s) => s.id === song.id);
     if (index < 0) {
       logWithTime(`🎵 setSong: música não está na fila, chamando playSong`);
@@ -191,9 +194,9 @@ export const usePlayerStore = create((set, get) => ({
   peekNextSong: () => {
     const { queue, queueIndex, shuffle, repeat, shuffleQueue, shufflePos } =
       get();
-    logWithTime(
-      `👀 peekNextSong: queue.length=${queue.length}, queueIndex=${queueIndex}, shuffle=${shuffle}, repeat=${repeat}, shufflePos=${shufflePos}`,
-    );
+    // logWithTime(
+    // `👀 peekNextSong: queue.length=${queue.length}, queueIndex=${queueIndex}, shuffle=${shuffle}, repeat=${repeat}, shufflePos=${shufflePos}`,
+    // );
     if (queue.length === 0) {
       logWithTime(`👀 peekNextSong: fila vazia -> null`);
       return null;
@@ -204,40 +207,39 @@ export const usePlayerStore = create((set, get) => ({
       if (nextPos >= shuffleQueue.length) {
         if (repeat) {
           const nextIndex = shuffleQueue[0];
-          logWithTime(
-            `👀 peekNextSong (shuffle+repeat): fim da shuffleQueue, volta para índice ${nextIndex}`,
-          );
+          // logWithTime(
+          //   `👀 peekNextSong (shuffle+repeat): fim da shuffleQueue, volta para índice ${nextIndex}`,
+          // );
           return queue[nextIndex] ?? null;
         }
-        logWithTime(
-          `👀 peekNextSong (shuffle, sem repeat): fim da shuffleQueue -> null`,
-        );
+        // logWithTime(
+        //   `👀 peekNextSong (shuffle, sem repeat): fim da shuffleQueue -> null`,
+        // );
         return null;
       }
       const nextIndex = shuffleQueue[nextPos];
-      logWithTime(
-        `👀 peekNextSong (shuffle): próxima posição ${nextPos} -> queueIndex ${nextIndex} (${queue[nextIndex]?.title})`,
-      );
+      // logWithTime(
+      //   `👀 peekNextSong (shuffle): próxima posição ${nextPos} -> queueIndex ${nextIndex} (${queue[nextIndex]?.title})`,
+      // );
       return queue[nextIndex] ?? null;
     }
 
     const nextIndex = queueIndex + 1;
     if (nextIndex >= queue.length) {
       if (repeat) {
-        logWithTime(
-          `👀 peekNextSong (normal+repeat): fim da fila, volta para índice 0`,
-        );
+        // logWithTime(
+        //   `👀 peekNextSong (normal+repeat): fim da fila, volta para índice 0`,
+        // );
         return queue[0] ?? null;
       }
-      logWithTime(`👀 peekNextSong (normal): fim da fila -> null`);
+      // logWithTime(`👀 peekNextSong (normal): fim da fila -> null`);
       return null;
     }
-    logWithTime(
-      `👀 peekNextSong (normal): próximo índice ${nextIndex} (${queue[nextIndex]?.title})`,
-    );
+    // logWithTime(
+    //   `👀 peekNextSong (normal): próximo índice ${nextIndex} (${queue[nextIndex]?.title})`,
+    // );
     return queue[nextIndex] ?? null;
   },
-
   // ---------- nextSong (usa shufflePos) ----------
   nextSong: () => {
     logWithTime(`⏩ nextSong chamado`);
@@ -476,10 +478,12 @@ export const usePlayerStore = create((set, get) => ({
     // logWithTime(`📊 setProgress: ${value}%`);
     set({ progress: value });
   },
+
   setCurrentTime: (value) => {
     // logWithTime(`⏱️ setCurrentTime: ${value}s`);
     set({ currentTime: value });
   },
+
   setDuration: (value) => {
     logWithTime(`⏱️ setDuration: ${value}s`);
     set({ duration: value });
@@ -660,6 +664,7 @@ export const usePlayerStore = create((set, get) => ({
       audio.pause();
       audio.src = "";
     }
+
     set({
       currentRadio: null,
       playerType: "music",
@@ -667,6 +672,7 @@ export const usePlayerStore = create((set, get) => ({
       radioBuffering: false,
     });
   },
+
   stopRadioSilently: () => {
     const audio = get()._radioAudio;
     if (audio && !audio.paused) {

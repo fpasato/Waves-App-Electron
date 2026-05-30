@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
+import { promises as fs } from "fs";
 
 const api = {
   settings: {
     get: (key) => ipcRenderer.invoke("settings:get", key),
     set: (key, value) => ipcRenderer.invoke("settings:set", key, value),
   },
+
   db: {
     directories: {
       add: (dirPath) => ipcRenderer.invoke("db:directories:add", dirPath),
@@ -47,12 +49,13 @@ const api = {
         ipcRenderer.invoke("db:playlists:reorder", playlistId, songIds),
     },
   },
+
   music: {
     selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
     scanFolder: (folderPath) =>
       ipcRenderer.invoke("music:scanFolder", folderPath),
   },
-  // youtube via api.youtube — usado por componentes que acessam window.api
+
   youtube: {
     search: (query, forceRefresh, rawQuery) =>
       ipcRenderer.invoke("youtube:search", query, forceRefresh, rawQuery),
@@ -84,6 +87,7 @@ const electronAuthAPI = {
 // electronAPI — usado pelo SearchScreen e outros via window.electronAPI
 const electronAPIBridge = {
   ...electronAuthAPI,
+
   youtube: {
     search: (query, forceRefresh, rawQuery) =>
       ipcRenderer.invoke("youtube:search", query, forceRefresh, rawQuery),
@@ -99,19 +103,25 @@ const electronAPIBridge = {
 
   downloads: {
     listFiles: () => ipcRenderer.invoke("downloads:listFiles"),
+    deleteFile: (filePath) =>
+      ipcRenderer.invoke("downloads:deleteFile", filePath),
     openFile: (filePath) => ipcRenderer.invoke("downloads:openFile", filePath),
     revealFile: (filePath) =>
       ipcRenderer.invoke("downloads:revealFile", filePath),
-    deleteFile: (filePath) =>
-      ipcRenderer.invoke("downloads:deleteFile", filePath),
-    onProgress: (cb) => ipcRenderer.on("download:progress", cb),
-    onDone: (cb) => ipcRenderer.on("download:done", cb),
-    onError: (cb) => ipcRenderer.on("download:error", cb),
+    // Eventos de progresso
+    onProgress: (callback) => ipcRenderer.on("download:progress", callback),
+    onDone: (callback) => ipcRenderer.on("download:done", callback),
+    onError: (callback) => ipcRenderer.on("download:error", callback),
     removeListeners: () => {
       ipcRenderer.removeAllListeners("download:progress");
       ipcRenderer.removeAllListeners("download:done");
       ipcRenderer.removeAllListeners("download:error");
     },
+  },
+
+  fs: {
+    rename: (oldPath, newPath) =>
+      ipcRenderer.invoke("fs:rename", oldPath, newPath),
   },
 };
 

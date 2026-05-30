@@ -38,3 +38,31 @@
   height: 100%;
   display: block;
 }
+
+
+
+/* ── Cole no BackgroundVideo/style.module.css ── */
+
+/*
+  Posiciona a legenda na parte inferior do container,
+  abaixo das barras radiais do Three.js / canvas overlay.
+  Ajuste o valor de bottom conforme a altura do seu player controls.
+*/
+.lyricsArea {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;              /* acima do canvas (z=2) e renderer (z=1) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 12px;
+  /* Gradiente suave para não colidir visualmente com as barras */
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+}

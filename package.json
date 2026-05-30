@@ -2,7 +2,7 @@
   "name": "meu-projeto",
   "version": "1.0.0",
   "description": "An Electron application with React",
-  "main": "./out/main/index.js",
+  "main": "./out/main/main.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
   "scripts": {
@@ -25,6 +25,7 @@
     "chrome-cookies-secure": "^3.0.2",
     "cross-fetch": "^4.1.0",
     "ffmpeg-static": "^5.3.0",
+    "fs": "^0.0.1-security",
     "hls.js": "^1.6.16",
     "music-metadata": "^11.12.3",
     "radio-browser-api": "^6.0.3",

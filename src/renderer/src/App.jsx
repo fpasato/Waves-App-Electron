@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-
 import { PlayerScreen } from "./screens/PlayerScreen";
 import { PlayerProvider } from "./store/PlayerContext";
 import { SettingsScreen } from "./screens/SettingsScreen";
@@ -12,10 +11,18 @@ import { usePlayerStore } from "./store/playerStore";
 import { DownloadScreen } from "./screens/DownloadsScreen";
 
 function PlayerApp() {
-  const [screen, setScreen] = useState("player");
+  const [screen, setScreenState] = useState("player");
+  const [screenData, setScreenData] = useState(null); // dados extras
   const [theme, setTheme] = useState("dark");
   const [searchUrl, setSearchUrl] = useState(null);
   const [searchMounted, setSearchMounted] = useState(true);
+
+  // Função que substitui setScreen, agora aceita (name, data)
+  const setScreen = (name, data) => {
+    setScreenState(name);
+    setScreenData(data || null);
+    if (name === "search") setSearchMounted(true);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -35,13 +42,12 @@ function PlayerApp() {
   }, []);
 
   useAudio();
-  useEffect(() => {
-    if (screen === "search") setSearchMounted(true);
-  }, [screen]);
 
   return (
     <div className={theme}>
-      {screen === "player" && <PlayerScreen setScreen={setScreen} />}
+      {screen === "player" && (
+        <PlayerScreen setScreen={setScreen} file={screenData?.song} />
+      )}
       {screen === "settings" && <SettingsScreen setScreen={setScreen} />}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
       {screen === "downloads" && <DownloadScreen setScreen={setScreen} />}
