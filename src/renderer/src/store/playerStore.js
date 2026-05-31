@@ -48,6 +48,38 @@ export const usePlayerStore = create((set, get) => ({
   fadeEnabled: false,
   fadeDuration: 3,
   activeTheme: savedTheme,
+  particlesEnabled: localStorage.getItem("particles-enabled") !== "false",
+  seekSignal: 0,
+  seekTarget: 0,
+
+  seekForward: (seconds = 10) => {
+    const { currentTime, duration } = get();
+    if (!duration || isNaN(duration)) return;
+
+    const newTime = currentTime + seconds;
+
+    if (newTime >= duration - 1) {
+      // só chama nextSong se não foi chamado nos últimos 800ms
+      const now = Date.now();
+      const last = get()._lastNextSong ?? 0;
+      if (now - last < 800) return;
+      set({ _lastNextSong: now });
+      get().nextSong();
+    } else {
+      set({ seekTarget: newTime, seekSignal: get().seekSignal + 1 });
+    }
+  },
+
+  seekBackward: (seconds = 10) => {
+    const { currentTime } = get();
+    const newTime = Math.max(0, currentTime - seconds);
+    set({ seekTarget: newTime, seekSignal: get().seekSignal + 1 });
+  },
+
+  setParticlesEnabled: (value) => {
+    localStorage.setItem("particles-enabled", value);
+    set({ particlesEnabled: value });
+  },
 
   setActiveTheme: (theme) => {
     localStorage.setItem("active-theme-id", theme.id);

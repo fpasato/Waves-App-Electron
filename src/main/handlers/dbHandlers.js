@@ -62,6 +62,14 @@ export function registerDbHandlers(db) {
       .map(withAudioSrc);
   });
 
+  ipcMain.handle("db:songs:rename", (_, oldPath, newPath) => {
+    db.prepare("UPDATE songs SET path = ? WHERE path = ?").run(
+      newPath,
+      oldPath,
+    );
+    return true;
+  });
+
   ipcMain.handle("db:songs:getByDirectory", (_, id) => {
     return db
       .prepare("SELECT * FROM songs WHERE directory_id = ?")
@@ -69,6 +77,21 @@ export function registerDbHandlers(db) {
       .map(withAudioSrc);
   });
 
+  ipcMain.handle("fs:exists", (_, filePath) => {
+    return fs.existsSync(filePath);
+  });
+  // dbHandlers.js
+  ipcMain.handle("db:songs:removeInvalid", () => {
+    const songs = db.prepare("SELECT id, path FROM songs").all();
+    const removed = [];
+    for (const song of songs) {
+      if (!fs.existsSync(song.path)) {
+        db.prepare("DELETE FROM songs WHERE id = ?").run(song.id);
+        removed.push(song.path);
+      }
+    }
+    return removed;
+  });
   ipcMain.handle("db:songs:recordPlay", (_, songId) => {
     db.prepare(
       `UPDATE songs SET play_count = COALESCE(play_count, 0) + 1,

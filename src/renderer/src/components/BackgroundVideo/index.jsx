@@ -14,6 +14,8 @@ export const BackgroundVideo = memo(function BackgroundVideo({
   nextLine,
 }) {
   const activeTheme = usePlayerStore((state) => state.activeTheme);
+  const particlesEnabled = usePlayerStore((state) => state.particlesEnabled);
+
 
   return (
     <div className={styles.backgroundVideo}>
@@ -28,7 +30,7 @@ export const BackgroundVideo = memo(function BackgroundVideo({
         >
           <source src={activeTheme.video} type="video/mp4" />
         </video>
-        <ParticlesEffect />
+        {particlesEnabled && <ParticlesEffect />}
         <div className={styles.lyricsArea}>
           <LyricsDisplay
             enabled={lyricsEnabled}

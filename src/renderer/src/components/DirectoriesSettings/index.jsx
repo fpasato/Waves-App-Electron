@@ -129,7 +129,7 @@ export function DirectoriesSettings() {
         </div>
 
         <div className={styles.headerActions}>
-          <Button title="+ Adicionar pasta" onClick={handleAddFolder} />
+          <Button title="Adicionar pasta" onClick={handleAddFolder} />
           <Button
             title={
               normalizing

@@ -1,25 +1,27 @@
 .buttonpattern {
-    background-color: color-mix(in srgb, var(--accent) 20%, var(--mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #615e5e4c;
+    border-radius: 0.6rem 0 0.6rem 0;
     color: var(--text);
-    position: relative;
-    padding: 0.5rem;
-    cursor: pointer;
-    overflow: hidden;
-    font-size: clamp(0.8rem, 1vw, 1.2rem);
 
-    border: 1px solid var(--accent);
-    border-radius: 0.6rem;
+    outline: none;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    transition: 0.3s;
+}
 
-    transition: 0.2s all ease-in-out;
 
-    &:hover {
-        filter: brightness(1.3);
-        transform: translateX(1px) translateY(-1px);
-        font-weight: bold;
-    }
+.buttonpattern:hover {
+    filter: brightness(0.9);
+    border-radius: 0 0.6rem 0 0.6rem ;
+    background-color: var(--accent);
+    color: #000;
+    transform: scale(1.03);
+}
 
-    & svg {
-        width: clamp(25px, 1vw, 40px);
-        height: clamp(25px, 1vw, 40px);
-    }
+.buttonpattern:active{
+    transform: scale(0.9);
 }

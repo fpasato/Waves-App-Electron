@@ -1,4 +1,9 @@
-import { removeYoutubeChannel, cleanArtist, cleanFull, splitArtistTitle } from "./titleUtils";
+import {
+  removeYoutubeChannel,
+  cleanArtist,
+  cleanFull,
+  splitArtistTitle,
+} from "./titleUtils";
 
 export function mapTracksForDb(tracks, directoryId) {
   return tracks.map((t) => ({
@@ -37,12 +42,12 @@ function resolveArtistTitle(fileName, metaArtist, metaTitle) {
     const split = splitArtistTitle(removeYoutubeChannel(fileName));
     if (split) {
       const artist = cleanArtist(split.artist);
-      const title  = cleanFull(split.title);
+      const title = cleanFull(split.title);
       if (artist && title) return { artist, title };
     }
   }
   const artist = cleanArtist(metaArtist);
-  const title  = cleanFull(metaTitle);
+  const title = cleanFull(metaTitle);
   if (artist && title) return { artist, title };
 
   const a2 = cleanArtist(metaTitle);
@@ -59,6 +64,7 @@ async function fetchArtistTitleFromGemini(fileName) {
 }
 
 export async function normalizeLibraryFileNames(onProgress) {
+  await window.api.db.songs.removeInvalid();
   const songs = await window.api.db.songs.getAll();
   const report = { renamed: [], skipped: [], errors: [] };
 
@@ -67,8 +73,15 @@ export async function normalizeLibraryFileNames(onProgress) {
     onProgress?.({ current: i + 1, total: songs.length, song });
 
     try {
-      const dir      = song.path.replace(/[\\/][^\\/]+$/, "");
-      const ext      = song.path.match(/\.[^.]+$/)?.[0] ?? ".mp3";
+      // verifica se o arquivo existe antes de tudo
+      const exists = await window.electronAPI.fs.exists(song.path);
+      if (!exists) {
+        report.skipped.push({ path: song.path, reason: "arquivo não encontrado no disco" });
+        continue;
+      }
+
+      const dir = song.path.replace(/[\\/][^\\/]+$/, "");
+      const ext = song.path.match(/\.[^.]+$/)?.[0] ?? ".mp3";
       const fileName = getFileNameWithoutExtension(song.path);
 
       let { artist, title } = resolveArtistTitle(fileName, song.artist, song.title);
@@ -77,7 +90,7 @@ export async function normalizeLibraryFileNames(onProgress) {
         const geminiResult = await fetchArtistTitleFromGemini(fileName);
         if (geminiResult.artist && geminiResult.title) {
           artist = geminiResult.artist;
-          title  = geminiResult.title;
+          title = geminiResult.title;
         }
       }
 
@@ -94,8 +107,15 @@ export async function normalizeLibraryFileNames(onProgress) {
         continue;
       }
 
+      // se o destino já existe, pula pra não sobrescrever
+      const destExists = await window.electronAPI.fs.exists(newPath);
+      if (destExists) {
+        report.skipped.push({ path: song.path, reason: "destino já existe" });
+        continue;
+      }
+
       await window.electronAPI.fs.rename(song.path, newPath);
-      await window.api.db.songs.upsertMany([{ ...song, path: newPath }]);
+      await window.api.db.songs.renameSong(song.path, newPath);
 
       report.renamed.push({ from: song.path, to: newPath });
     } catch (err) {

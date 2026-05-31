@@ -32,7 +32,7 @@ export const themes = [
   {
     id: "ocean",
     name: "Ocean",
-    accent: "#00d4ff",
+    accent: "#00aeffff",
     video: videoOcean,
     gradient: `
       radial-gradient(circle at 20% 30%, #00d4ff 0%, transparent 35%),
@@ -56,7 +56,7 @@ export const themes = [
   {
     id: "gold",
     name: "Aurora",
-    accent: "#e4b61a",
+    accent: "#d0a310ff",
     video: videoGold,
     gradient: `
       radial-gradient(circle at 20% 30%, #e4b61a 0%, transparent 35%),

@@ -6,7 +6,17 @@ import { GiPreviousButton, GiNextButton } from "react-icons/gi";
 import { RiLoopLeftLine } from "react-icons/ri";
 import { MdFiberManualRecord, MdStop } from "react-icons/md";
 import { MdSubtitles } from "react-icons/md";
-import { TbPlayerTrackNextFilled, TbPlayerTrackPrevFilled } from "react-icons/tb";
+import {
+  TbPlayerTrackNextFilled,
+  TbPlayerTrackPrevFilled,
+} from "react-icons/tb";
+
+import { LuPlay } from "react-icons/lu"; //play
+import { LuPause } from "react-icons/lu";
+import { TbPlayerTrackNext } from "react-icons/tb";
+import { TbPlayerTrackPrev } from "react-icons/tb";
+import { RxTrackNext } from "react-icons/rx";
+import { RxTrackPrevious } from "react-icons/rx";
 
 import { usePlayerStore } from "../../store/playerStore";
 import { memo, useState, useRef, useCallback } from "react";
@@ -27,6 +37,8 @@ export const PlayerControls = memo(function PlayerControls({
   const nextSong = usePlayerStore((state) => state.nextSong);
   const previousSong = usePlayerStore((state) => state.previousSong);
   const playerType = usePlayerStore((state) => state.playerType);
+  const seekForward = usePlayerStore((state) => state.seekForward);
+  const seekBackward = usePlayerStore((state) => state.seekBackward);
 
   // — rádio —
   const radioPlaying = usePlayerStore((state) => state.radioPlaying);
@@ -106,7 +118,12 @@ export const PlayerControls = memo(function PlayerControls({
   return (
     <div className={styles.playerControls}>
       <div className={styles.songsButtonContainer}>
-        <button className={`${styles.button} ${styles.buttonTertiary}`}>
+        <button
+          className={`${styles.button} ${styles.buttonTertiary}`}
+          onClick={() => seekBackward(10)}
+          style={{ opacity: isRadio ? 0.2 : 1 }}
+          disabled={isRadio}
+        >
           <TbPlayerTrackPrevFilled />
         </button>
 
@@ -138,6 +155,7 @@ export const PlayerControls = memo(function PlayerControls({
 
         <button
           className={`${styles.button} ${styles.buttonTertiary}`}
+          onClick={() => seekForward(10)}
           style={{ opacity: isRadio ? 0.2 : 1 }}
           disabled={isRadio}
         >

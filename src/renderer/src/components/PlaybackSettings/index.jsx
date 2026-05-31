@@ -37,12 +37,12 @@ export function PlaybackSettings() {
             type="checkbox"
             checked={fadeEnabled}
             onChange={(e) => setFadeEnabled(e.target.checked)}
+            className={styles.toggleRow}
           />
         </label>
 
         <p className={styles.description}>
-          A próxima música começa antes da atual terminar{" "}
-          <br />
+          A próxima música começa antes da atual terminar <br />
           criando uma transição suave entre as faixas.
         </p>
       </div>
@@ -64,6 +64,9 @@ export function PlaybackSettings() {
             disabled={!fadeEnabled}
             onChange={(e) => setFadeDuration(Number(e.target.value))}
             className={styles.slider}
+            style={{
+              "--fill-percent": `${((fadeDuration - 1) / (10 - 1)) * 100}%`,
+            }}
           />
 
           <div className={styles.rangeMeter}>

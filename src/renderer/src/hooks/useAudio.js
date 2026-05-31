@@ -33,6 +33,9 @@ export function useAudio() {
   const crossfadeBlockedRef = useRef(false);
   const enteringAudioRef = useRef(null);
   const fadeIdRef = useRef(0);
+  const seekSignal = usePlayerStore((state) => state.seekSignal);
+  const seekTarget = usePlayerStore((state) => state.seekTarget);
+  const seekingRef = useRef(false);
 
   if (!activeAudioRef.current) {
     activeAudioRef.current = playerA;
@@ -42,13 +45,17 @@ export function useAudio() {
   // ---------- UTILITÁRIOS ----------
   function getActive() {
     const active = activeAudioRef.current;
-    logWithTime(`📍 [getActive] retornando player ${active === playerA ? "A" : "B"}`);
+    logWithTime(
+      `📍 [getActive] retornando player ${active === playerA ? "A" : "B"}`,
+    );
     return active;
   }
 
   function getInactive() {
     const inactive = activeAudioRef.current === playerA ? playerB : playerA;
-    logWithTime(`📍 [getInactive] retornando player ${inactive === playerA ? "A" : "B"}`);
+    logWithTime(
+      `📍 [getInactive] retornando player ${inactive === playerA ? "A" : "B"}`,
+    );
     return inactive;
   }
 
@@ -59,12 +66,15 @@ export function useAudio() {
     el.removeAttribute("src");
     el.load();
     el.volume = usePlayerStore.getState().volume;
-    logWithTime(`🧹 [RESET] ${label} concluído | volume setado para ${el.volume}`);
+    logWithTime(
+      `🧹 [RESET] ${label} concluído | volume setado para ${el.volume}`,
+    );
   }
 
   function swapActive() {
     const oldActive = activeAudioRef.current === playerA ? "A" : "B";
-    activeAudioRef.current = activeAudioRef.current === playerA ? playerB : playerA;
+    activeAudioRef.current =
+      activeAudioRef.current === playerA ? playerB : playerA;
     const newActive = activeAudioRef.current === playerA ? "A" : "B";
     logWithTime(`🔄 [SWAP] active swapped: ${oldActive} -> ${newActive}`);
   }
@@ -74,13 +84,17 @@ export function useAudio() {
       logWithTime(`⏭️ [ABORT] crossfade não estava ativo, ignorado`);
       return;
     }
-    logWithTime(`⛔ [ABORT] crossfade aborted | fadeId antes: ${fadeIdRef.current}`);
+    logWithTime(
+      `⛔ [ABORT] crossfade aborted | fadeId antes: ${fadeIdRef.current}`,
+    );
     fadeIdRef.current++;
     fadingRef.current = false;
 
     const entering = enteringAudioRef.current;
     if (entering) {
-      logWithTime(`⛔ [ABORT] parando entering player | src: ${entering.src || "none"}`);
+      logWithTime(
+        `⛔ [ABORT] parando entering player | src: ${entering.src || "none"}`,
+      );
       entering.pause();
       entering.currentTime = 0;
       entering.removeAttribute("src");
@@ -108,7 +122,9 @@ export function useAudio() {
     crossfadeBlockedRef.current = false;
 
     if (fadingRef.current) {
-      console.log("🎵 [ENDED] durante crossfade – apenas limpando player sainte");
+      console.log(
+        "🎵 [ENDED] durante crossfade – apenas limpando player sainte",
+      );
       fadingRef.current = false;
       swapActive();
       resetElement(getInactive(), "inactive (ended)");
@@ -160,9 +176,13 @@ export function useAudio() {
     entering.currentTime = 0;
     entering.volume = 0;
 
-    entering.play()
+    entering
+      .play()
       .then(() => {
-        if (fadeId !== fadeIdRef.current || !usePlayerStore.getState().isPlaying) {
+        if (
+          fadeId !== fadeIdRef.current ||
+          !usePlayerStore.getState().isPlaying
+        ) {
           logWithTime(`⛔ stale fade play prevented`);
           entering.pause();
           entering.currentTime = 0;
@@ -171,7 +191,9 @@ export function useAudio() {
           enteringAudioRef.current = null;
           return;
         }
-        logWithTime(`🎧 [CROSSFADE] entering.play() resolved | fadeId=${fadeId}`);
+        logWithTime(
+          `🎧 [CROSSFADE] entering.play() resolved | fadeId=${fadeId}`,
+        );
       })
       .catch((e) => logWithTime(`🎧 [CROSSFADE] play error:`, e));
 
@@ -207,7 +229,9 @@ export function useAudio() {
 
     const nowActive = getActive();
     currentSrcRef.current = nowActive.src;
-    logWithTime(`🎧 [CROSSFADE] currentSrcRef atualizado para ${currentSrcRef.current}`);
+    logWithTime(
+      `🎧 [CROSSFADE] currentSrcRef atualizado para ${currentSrcRef.current}`,
+    );
 
     resetElement(leaving, "leaving (completed)");
     enteringAudioRef.current = null;
@@ -269,7 +293,9 @@ export function useAudio() {
       }
 
       if (suppressCrossfadeRef.current) {
-        logWithTime(`⏸️ [TIME] suppressCrossfade ativo – ignorando início de fade`);
+        logWithTime(
+          `⏸️ [TIME] suppressCrossfade ativo – ignorando início de fade`,
+        );
         if (!fadingRef.current) active.volume = st.volume;
         return;
       }
@@ -310,7 +336,9 @@ export function useAudio() {
   // ---------- LOAD SONG ----------
   useEffect(() => {
     if (crossfadeDoneRef.current) {
-      logWithTime(`🎧 [LOAD] crossfadeDone ativo – reiniciando flag e ignorando load`);
+      logWithTime(
+        `🎧 [LOAD] crossfadeDone ativo – reiniciando flag e ignorando load`,
+      );
       crossfadeDoneRef.current = false;
       return;
     }
@@ -329,7 +357,9 @@ export function useAudio() {
     }
 
     if (currentSong.src === currentSrcRef.current) {
-      logWithTime(`🎧 [LOAD] mesma src mas restartSignal=${restartSignal} – reiniciando`);
+      logWithTime(
+        `🎧 [LOAD] mesma src mas restartSignal=${restartSignal} – reiniciando`,
+      );
       abortCrossfade();
       const active = getActive();
       active.currentTime = 0;
@@ -349,12 +379,16 @@ export function useAudio() {
     const active = getActive();
     active.src = currentSong.src;
     active.load();
-    logWithTime(`🎧 [LOAD] player ativo (${active === playerA ? "A" : "B"}) recebeu nova src`);
+    logWithTime(
+      `🎧 [LOAD] player ativo (${active === playerA ? "A" : "B"}) recebeu nova src`,
+    );
 
     active.addEventListener(
       "loadeddata",
       async () => {
-        logWithTime(`🎧 [LOAD] loadeddata disparado | duration=${active.duration}`);
+        logWithTime(
+          `🎧 [LOAD] loadeddata disparado | duration=${active.duration}`,
+        );
         if (audioContextRef.current?.state === "suspended") {
           logWithTime(`🎧 [LOAD] AudioContext suspended, tentando resume`);
           await audioContextRef.current.resume();
@@ -385,7 +419,9 @@ export function useAudio() {
     if (isPlaying) {
       usePlayerStore.getState().stopRadioSilently();
       logWithTime(`🎧 [PLAY] solicitado`);
-      getActive().play().catch((e) => console.error("🎧 [PLAY] erro:", e));
+      getActive()
+        .play()
+        .catch((e) => console.error("🎧 [PLAY] erro:", e));
     } else {
       logWithTime(`🎧 [PAUSE] solicitado`);
       playerA.pause();
@@ -395,7 +431,9 @@ export function useAudio() {
 
   // ---------- SEEK ----------
   function seek(percent) {
-    logWithTime(`🎧 [SEEK] percent=${percent} | currentTime antes=${getActive().currentTime}`);
+    logWithTime(
+      `🎧 [SEEK] percent=${percent} | currentTime antes=${getActive().currentTime}`,
+    );
     const active = getActive();
     if (!active.duration) {
       logWithTime(`🎧 [SEEK] duração inválida – ignorando`);
@@ -403,7 +441,9 @@ export function useAudio() {
     }
 
     if (fadingRef.current) {
-      logWithTime(`🎧 [SEEK] crossfade ativo – abortando e bloqueando temporariamente`);
+      logWithTime(
+        `🎧 [SEEK] crossfade ativo – abortando e bloqueando temporariamente`,
+      );
       abortCrossfade();
       crossfadeBlockedRef.current = true;
       setTimeout(() => {
@@ -422,8 +462,44 @@ export function useAudio() {
     active.currentTime = newTime;
     const newVolume = usePlayerStore.getState().volume;
     active.volume = newVolume;
-    logWithTime(`🎧 [SEEK] novo currentTime=${newTime.toFixed(2)}s | volume restaurado para ${newVolume}`);
+    logWithTime(
+      `🎧 [SEEK] novo currentTime=${newTime.toFixed(2)}s | volume restaurado para ${newVolume}`,
+    );
   }
+
+  // no useAudio, no useEffect do seekSignal:
+  useEffect(() => {
+    if (seekSignal === 0) return;
+    if (seekingRef.current) return;
+
+    const active = getActive();
+    if (!active.duration || isNaN(active.duration)) return;
+
+    // CRÍTICO: só executa se o seekTarget é válido para a duração atual
+    if (seekTarget >= active.duration) return;
+
+    seekingRef.current = true;
+    setTimeout(() => {
+      seekingRef.current = false;
+    }, 500);
+
+    if (fadingRef.current) {
+      abortCrossfade();
+      crossfadeBlockedRef.current = true;
+      setTimeout(() => {
+        crossfadeBlockedRef.current = false;
+      }, 1000);
+    }
+
+    suppressCrossfadeRef.current = true;
+    setTimeout(() => {
+      suppressCrossfadeRef.current = false;
+    }, 300);
+
+    active.currentTime = seekTarget;
+    active.volume = usePlayerStore.getState().volume;
+    logWithTime(`⏩ [SEEK_SIGNAL] seekTarget=${seekTarget}s`);
+  }, [seekSignal]);
 
   useEffect(() => {
     seekRef.current = seek;

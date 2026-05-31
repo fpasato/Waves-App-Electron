@@ -20,6 +20,9 @@ const api = {
       getByDirectory: (dirId) =>
         ipcRenderer.invoke("db:songs:getByDirectory", dirId),
       recordPlay: (songId) => ipcRenderer.invoke("db:songs:recordPlay", songId),
+      renameSong: (oldPath, newPath) =>
+        ipcRenderer.invoke("db:songs:rename", oldPath, newPath),
+      removeInvalid: () => ipcRenderer.invoke("db:songs:removeInvalid"), // ← aqui
     },
     favorites: {
       add: (songId) => ipcRenderer.invoke("db:favorites:add", songId),
@@ -119,9 +122,12 @@ const electronAPIBridge = {
     },
   },
 
+  renameSong: (oldPath, newPath) =>
+    ipcRenderer.invoke("db:songs:rename", oldPath, newPath),
   fs: {
     rename: (oldPath, newPath) =>
       ipcRenderer.invoke("fs:rename", oldPath, newPath),
+    exists: (path) => ipcRenderer.invoke("fs:exists", path),
   },
 };
 

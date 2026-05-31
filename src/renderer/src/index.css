@@ -11,19 +11,14 @@
 
 :root {
   --fontsize: 1rem;
-
 }
 
 .dark {
   --background: #000000;
   --text: #ffffff;
-  --mid: transparent;
-  --shadow: rgba(0, 0, 0, 0.346);
 }
 
 .light {
   --background: #ffffff;
-  --mid: #d3d3d3;
   --text: #121212;
-  --shadow: rgba(0, 0, 0, 0.5);
 }

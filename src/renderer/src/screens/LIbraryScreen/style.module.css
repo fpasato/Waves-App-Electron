@@ -26,6 +26,7 @@
   max-width: 1400px;
   margin: 0 auto 3rem auto;
   align-items: start;
+  
 }
 
 .libraryinfo {
@@ -39,6 +40,7 @@
   transform: skewX(-2deg);
   transition: all 0.25s ease;
   box-shadow: 8px 8px 0 rgba(255, 0, 200, 0.2);
+  padding:1rem;
 }
 
 .libraryinfoItem:first-child {
@@ -50,9 +52,9 @@
 .libraryinfoItem:last-child {
   grid-column: 2 / 3;
   text-align: right;
-  border-left-color: #ffcc00;
+  border-left-color: #00ffb7;
   transform: skewX(2deg);
-  box-shadow: -8px 8px 0 rgba(255, 204, 0, 0.2);
+  box-shadow: -8px 8px 0 rgba(0, 255, 195, 0.2);
 }
 
 .libraryinfoItem h2 {
@@ -81,6 +83,7 @@
   background: transparent;
   border: none;
   backdrop-filter: none;
+  padding:1rem;
 }
 
 /* ===== GRID ASSIMÉTRICO DE MÚSICAS ===== */
@@ -112,7 +115,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #ff00cc, #00ffff, #ffcc00);
+  background: linear-gradient(90deg, var(--accent), #00ffff, #00ffb7);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -120,7 +123,7 @@
 
 .libraryItem:hover {
   transform: translateY(-8px) rotate(0.5deg);
-  border-color: #ff00cc;
+  border-color: var(--accent);
   box-shadow: 0 20px 30px -15px rgba(255, 0, 204, 0.3);
 }
 
@@ -174,13 +177,13 @@
 .libraryItemActions button {
   flex: 1;
   background: transparent;
-  border: 1px solid #ff00cc;
+  border: 1px solid #00ffb7;
   padding: 0.6rem 0;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: #ff00cc;
+  color: #00ffb7;
   cursor: pointer;
   transition: all 0.2s;
   clip-path: polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
@@ -194,7 +197,7 @@
 }
 
 .libraryItemActions button:hover {
-  background: #ff00cc;
+  background: #00ffb7;
   color: #000;
   transform: skewX(-5deg);
 }
@@ -207,16 +210,16 @@
 
 /* Botão Voltar (fora do padrão) */
 .itemActionBack {
-  border-color: #ffcc00 !important;
-  color: #ffcc00 !important;
+  border-color: #ff0000 !important;
+  color: #ff0000 !important;
   clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%) !important;
 }
 
 .itemActionBack:hover {
-  background: #ffcc00 !important;
-  color: #000 !important;
+  background: #ff0000 !important;
+  color: #fff !important;
   transform: translateX(6px) skewX(-8deg) !important;
-  box-shadow: -4px 4px 0 rgba(255, 204, 0, 0.5) !important;
+  box-shadow: -4px 4px 0 rgba(255, 0, 0, 0.5) !important;
 }
 
 /* Botões do cabeçalho também customizados */
