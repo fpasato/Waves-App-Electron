@@ -1,23 +1,10 @@
 // src/components/PlayerControls/index.jsx
 import styles from "./style.module.css";
-
 import { FaPlay, FaPause, FaRandom } from "react-icons/fa";
 import { GiPreviousButton, GiNextButton } from "react-icons/gi";
 import { RiLoopLeftLine } from "react-icons/ri";
-import { MdFiberManualRecord, MdStop } from "react-icons/md";
-import { MdSubtitles } from "react-icons/md";
-import {
-  TbPlayerTrackNextFilled,
-  TbPlayerTrackPrevFilled,
-} from "react-icons/tb";
-
-import { LuPlay } from "react-icons/lu"; //play
-import { LuPause } from "react-icons/lu";
-import { TbPlayerTrackNext } from "react-icons/tb";
-import { TbPlayerTrackPrev } from "react-icons/tb";
-import { RxTrackNext } from "react-icons/rx";
-import { RxTrackPrevious } from "react-icons/rx";
-
+import { MdFiberManualRecord, MdStop, MdSubtitles } from "react-icons/md";
+import { TbPlayerTrackNextFilled, TbPlayerTrackPrevFilled } from "react-icons/tb";
 import { usePlayerStore } from "../../store/playerStore";
 import { memo, useState, useRef, useCallback } from "react";
 
@@ -27,34 +14,38 @@ export const PlayerControls = memo(function PlayerControls({
   offset = 0,
   onOffsetChange,
 }) {
-  // — música —
-  const isPlaying = usePlayerStore((state) => state.isPlaying);
-  const repeat = usePlayerStore((state) => state.repeat);
-  const shuffle = usePlayerStore((state) => state.shuffle);
-  const toggleRepeat = usePlayerStore((state) => state.toggleRepeat);
-  const togglePlay = usePlayerStore((state) => state.togglePlay);
-  const shuffleRemaining = usePlayerStore((state) => state.shuffleRemaining);
-  const nextSong = usePlayerStore((state) => state.nextSong);
-  const previousSong = usePlayerStore((state) => state.previousSong);
-  const playerType = usePlayerStore((state) => state.playerType);
-  const seekForward = usePlayerStore((state) => state.seekForward);
-  const seekBackward = usePlayerStore((state) => state.seekBackward);
+  // ────────── Store ──────────
+  const {
+    // Música local
+    isPlaying,
+    repeat,
+    shuffle,
+    toggleRepeat,
+    togglePlay,
+    shuffleRemaining,
+    nextSong,
+    previousSong,
+    playerType,
+    seekForward,
+    seekBackward,
+    // Rádio
+    radioPlaying,
+    radioBuffering,
+    currentRadio,
+    playRadio,
+    pauseRadio,
+  } = usePlayerStore();
 
-  // — rádio —
-  const radioPlaying = usePlayerStore((state) => state.radioPlaying);
-  const radioBuffering = usePlayerStore((state) => state.radioBuffering);
-  const currentRadio = usePlayerStore((state) => state.currentRadio);
-  const playRadio = usePlayerStore((state) => state.playRadio);
-  const pauseRadio = usePlayerStore((state) => state.pauseRadio);
-
-  // — gravação —
+  // ────────── Estado local ──────────
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
+  // ────────── Derivados ──────────
   const isRadio = playerType === "radio";
   const playing = isRadio ? radioPlaying : isPlaying;
 
+  // ────────── Handlers ──────────
   const handlePlayPause = () => {
     if (isRadio) {
       radioPlaying ? pauseRadio() : playRadio(currentRadio);
@@ -68,37 +59,26 @@ export const PlayerControls = memo(function PlayerControls({
       const audioEl = usePlayerStore.getState()._radioAudio;
       if (!audioEl) return;
 
-      let stream;
-      try {
-        stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
-      } catch (e) {
-        console.error("captureStream não suportado:", e);
-        return;
-      }
-
+      const stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
       if (!stream) return;
 
       chunksRef.current = [];
-      const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-          ? "audio/webm;codecs=opus"
-          : "audio/webm",
-      });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+      const recorder = new MediaRecorder(stream, { mimeType });
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         const arrayBuffer = await blob.arrayBuffer();
         const radioName = currentRadio?.name ?? "radio";
 
         try {
-          const savedPath = await window.api.radio.saveRecording(
-            arrayBuffer,
-            radioName,
-          );
+          const savedPath = await window.api.radio.saveRecording(arrayBuffer, radioName);
           console.log("✅ Gravação salva em:", savedPath);
         } catch (e) {
           console.error("❌ Erro ao salvar gravação:", e);
@@ -115,14 +95,16 @@ export const PlayerControls = memo(function PlayerControls({
     }
   }, [isRecording, currentRadio]);
 
+  // ────────── Render ──────────
   return (
     <div className={styles.playerControls}>
+      {/* Controles de navegação/transporte */}
       <div className={styles.songsButtonContainer}>
         <button
           className={`${styles.button} ${styles.buttonTertiary}`}
           onClick={() => seekBackward(10)}
-          style={{ opacity: isRadio ? 0.2 : 1 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : 1 }}
         >
           <TbPlayerTrackPrevFilled />
         </button>
@@ -130,8 +112,8 @@ export const PlayerControls = memo(function PlayerControls({
         <button
           className={`${styles.button} ${styles.buttonSecondary}`}
           onClick={previousSong}
-          style={{ opacity: isRadio ? 0.2 : 1 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : 1 }}
         >
           <GiPreviousButton />
         </button>
@@ -147,8 +129,8 @@ export const PlayerControls = memo(function PlayerControls({
         <button
           className={`${styles.button} ${styles.buttonSecondary}`}
           onClick={nextSong}
-          style={{ opacity: isRadio ? 0.2 : 1 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : 1 }}
         >
           <GiNextButton />
         </button>
@@ -156,30 +138,34 @@ export const PlayerControls = memo(function PlayerControls({
         <button
           className={`${styles.button} ${styles.buttonTertiary}`}
           onClick={() => seekForward(10)}
-          style={{ opacity: isRadio ? 0.2 : 1 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : 1 }}
         >
           <TbPlayerTrackNextFilled />
         </button>
       </div>
+
+      {/* Controles auxiliares */}
       <div className={styles.controlsContainer}>
         <button
           className={`${styles.button} ${styles.outButton}`}
           onClick={toggleRepeat}
-          style={{ opacity: isRadio ? 0.2 : repeat ? 1 : 0.4 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : repeat ? 1 : 0.4 }}
           title={isRadio ? "Indisponível para rádio" : undefined}
         >
           <RiLoopLeftLine />
         </button>
+
         <button
           className={`${styles.button} ${styles.outButton}`}
           onClick={shuffleRemaining}
-          style={{ opacity: isRadio ? 0.2 : shuffle ? 1 : 0.4 }}
           disabled={isRadio}
+          style={{ opacity: isRadio ? 0.2 : shuffle ? 1 : 0.4 }}
         >
           <FaRandom />
         </button>
+
         <button
           className={`${styles.button} ${styles.outButton} ${isRecording ? styles.recordingActive : ""}`}
           onClick={handleRecord}
@@ -216,20 +202,24 @@ export const PlayerControls = memo(function PlayerControls({
         >
           <MdSubtitles />
         </button>
-        {lyricsEnabled && !isRadio && (
+
+        {/* Controles de offset da legenda (ajuste grosso) */}
+         {lyricsEnabled && !isRadio && (
           <div className={styles.offsetControls}>
             <button
               className={`${styles.button} ${styles.outButton}`}
               onClick={() => onOffsetChange(offset - 0.5)}
+              title="Atrasar -0.5s"
             >
               −
             </button>
             <span className={styles.offsetLabel}>
-              {offset > 0 ? `+${offset}s` : `${offset}s`}
+              {offset > 0 ? `+${offset.toFixed(1)}` : offset.toFixed(1)}s
             </span>
             <button
               className={`${styles.button} ${styles.outButton}`}
               onClick={() => onOffsetChange(offset + 0.5)}
+              title="Adiantar +0.5s"
             >
               +
             </button>

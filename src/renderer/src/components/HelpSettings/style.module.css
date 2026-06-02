@@ -1,0 +1,81 @@
+:root {
+    --glass-bg: rgba(20, 20, 30, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-light: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    --accent: #6c5ce7;
+    --accent-hover: #8273e8;
+    --text: #ffffff;
+    --text-muted: rgb(255, 255, 255);
+    --warning-bg: rgba(255, 193, 7, 0.15);
+    --warning-border: rgba(255, 193, 7, 0.3);
+    --status-bg: rgba(108, 92, 231, 0.15);
+}
+
+.helpSettings {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    height: 90%;
+    overflow-y: auto;
+    padding: 1rem;
+    color: var(--text);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 1.2rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+
+}
+
+.helpSettings h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    letter-spacing: 0.2px;
+}
+
+/* cada bloco */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem;
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    transition: 0.2s ease;
+}
+
+/* leve destaque no hover (opcional mas melhora UX) */
+.section:hover {
+    border-color: var(--glass-border-light);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+}
+
+.section p {
+    font-size: 0.9rem;
+    line-height: 1.4rem;
+    color: var(--text-muted);
+}
+
+/* bloco de código (ex: padrão de nome) */
+.code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.6rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    width: fit-content;
+}

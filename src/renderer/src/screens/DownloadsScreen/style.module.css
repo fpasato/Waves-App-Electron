@@ -48,6 +48,17 @@
   margin-bottom: 14px;
 }
 
+.actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  & svg{
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+  }
+}
+
 .title {
   font-size: 22px;
   font-weight: 600;
@@ -474,4 +485,18 @@
   margin-top: 5px;
   font-size: 10px;
   color: var(--text-muted);
+}
+
+
+.exitBtn{
+  background-color: transparent;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.exitBtn:hover{
+  background-color: #333;
 }

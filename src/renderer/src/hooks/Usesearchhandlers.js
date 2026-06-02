@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback , useEffect} from "react";
 
 // Tipos de download disponíveis no modal
 export const DOWNLOAD_TYPES = {
@@ -31,23 +31,28 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
 
   // ─── Estado de busca ────────────────────────────────────────────────────────
   const [query, setQuery] = useState("");
+  const queryRef = useRef(query);
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
 
   const YT_SEARCH_BASE = "https://www.youtube.com/results";
 
   const handleSearch = useCallback(() => {
-    if (!query.trim()) return;
-    const url = `${YT_SEARCH_BASE}?search_query=${encodeURIComponent(query.trim())}`;
+    const q = queryRef.current.trim();
+    if (!q) return;
+    const url = `${YT_SEARCH_BASE}?search_query=${encodeURIComponent(q)}`;
     if (webviewRef.current) {
       webviewRef.current.src = url;
       setSearchUrl?.(url);
     }
-  }, [query, setSearchUrl]);
+  }, [setSearchUrl]);
 
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter") handleSearch();
     },
-    [handleSearch],
+    [handleSearch], 
   );
 
   const clearQuery = useCallback(() => {
@@ -229,7 +234,7 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
         webviewRef.current.src = "https://www.youtube.com";
       }
     } catch (err) {
-      console.error("Erro no logout" );
+      console.error("Erro no logout");
     }
   }, [webviewRef]);
 

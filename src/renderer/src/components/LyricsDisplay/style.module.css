@@ -1,17 +1,25 @@
-/* LyricsDisplay/style.module.css */
-
 .lyricsWrapper {
   width: 100%;
-  padding: 16px 0 8px;
-  min-height: 90px;
+  padding: 48px 0 8px;
+  height: 120px;          /* fixo — não cresce com texto longo */
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: center;    /* centraliza horizontalmente */
+  justify-content: flex-start;
   flex-direction: column;
   gap: 10px;
-  overflow: hidden;
+  overflow: hidden;       /* corta o que passar da altura */
   pointer-events: none;
   user-select: none;
+  transition:
+    opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fading {
+  opacity: 0;
+  filter: blur(6px);
+  transform: scale(0.98);
 }
 
 /* ── Karaokê view ── */
@@ -24,40 +32,49 @@
   padding: 0 20px;
 }
 
+/* ── Wrapper da linha ativa ── */
+.activeLineWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.wrapperIn {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 440ms ease-in-out,
+    filter 440ms ease-in-out,
+    transform 440ms ease-in-out;
+}
+
+.wrapperOut {
+  opacity: 0;
+  filter: blur(5px);
+  transform: translateY(-8px) scale(0.97);
+  transition:
+    opacity 340ms ease-in-out,
+    filter 340ms ease-in-out,
+    transform 340ms ease-in-out;
+}
+
 /* ── Linha ativa ── */
 .activeLine {
   margin: 0;
   padding: 0 28px;
   text-align: center;
-
-  /* 900px mínimo → 1920px máximo */
-  font-size: clamp(1.05rem, 1.2vw + 0.3rem, 1.6rem);
+  font-size: clamp(1rem, 1.2vw + 0.3rem, 1.6rem);
   font-weight: 700;
   letter-spacing: 0.03em;
   line-height: 1.35;
-
   color: #ffffff;
   text-shadow:
     0 0 12px rgba(255, 255, 255, 0.95),
     0 0 30px rgba(160, 210, 255, 0.85),
     0 0 60px rgba(100, 170, 255, 0.65),
     0 0 100px rgba(80, 140, 255, 0.35);
-
-  animation: lineIn 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform, filter;
-}
-
-@keyframes lineIn {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.96);
-    filter: blur(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0px);
-  }
 }
 
 /* ── Próxima linha ── */
@@ -65,20 +82,35 @@
   margin: 0;
   padding: 0 36px;
   text-align: center;
-
   font-size: clamp(0.75rem, 0.8vw + 0.2rem, 1rem);
   font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1.4;
-
   color: rgba(190, 220, 255, 0.38);
   text-shadow: 0 0 20px rgba(120, 180, 255, 0.2);
   filter: blur(1.5px);
-
+  opacity: 1;
+  transform: translateY(0);
   transition:
-    opacity 0.7s ease,
-    filter 0.7s ease,
-    transform 0.7s ease;
+    opacity 140ms ease-in-out,
+    filter 140ms ease-in-out,
+    transform 140ms ease-in-out;
+}
+
+.nextOut {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(-4px);
+}
+
+/* ── Instrumental ── */
+.instrumental {
+  margin: 0;
+  font-size: clamp(0.75rem, 0.8vw + 0.2rem, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: rgba(190, 220, 255, 0.3);
+  text-shadow: 0 0 20px rgba(120, 180, 255, 0.15);
 }
 
 /* ── Status texts ── */
@@ -97,15 +129,13 @@
   text-transform: lowercase;
   color: rgba(180, 210, 255, 0.25);
   text-shadow: none;
-
-  /* Aparece e some sozinho */
   animation: notFoundLife 3.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes notFoundLife {
-  0%   { opacity: 0; transform: translateY(6px); filter: blur(4px); }
-  18%  { opacity: 1; transform: translateY(0);   filter: blur(0);   }
-  72%  { opacity: 1; transform: translateY(0);   filter: blur(0);   }
+  0%   { opacity: 0; transform: translateY(6px);  filter: blur(4px); }
+  18%  { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+  72%  { opacity: 1; transform: translateY(0);    filter: blur(0);   }
   100% { opacity: 0; transform: translateY(-4px); filter: blur(3px); }
 }
 
@@ -135,46 +165,54 @@
     transform: scale(1.3);
     box-shadow: 0 0 14px rgba(140, 200, 255, 0.9);
   }
-}
-
-/* ── Linha saindo (fade out para cima) ── */
-.lineOut {
-  animation: lineOut 0.65s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-  pointer-events: none;
-}
-
-@keyframes lineOut {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0px);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.97);
-    filter: blur(6px);
-  }
-}
-
-/* ── Crossfade ativo: legenda some suavemente ── */
-.fading {
+}.wrapperOutGap {
   opacity: 0;
-  filter: blur(6px);
-  transform: scale(0.98);
-  /* Duração deve cobrir o fadeDuration máximo do usuário (até 15s),
-     mas a transição de saída é rápida — o blur/opacity somem em 0.6s.
-     Quando o crossfade aborta, isFading volta a false e a legenda
-     reaparece via a transition abaixo. */
+  filter: blur(5px);
+  transform: translateY(-8px) scale(0.97);
   transition:
-    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--gap-fade, 600ms) ease-in-out,
+    filter var(--gap-fade, 600ms) ease-in-out,
+    transform var(--gap-fade, 600ms) ease-in-out;
 }
 
-/* Estado normal: transição de volta (crossfade abortado ou completo) */
-.lyricsWrapper {
+/* ── Durações ─────────────────────────────── */
+:root {
+  --lyrics-fade: 400ms;
+  --lyrics-slide: 18px;
+}
+
+/* ── Wrapper da linha ativa ───────────────── */
+.activeLineWrapper {
   transition:
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--lyrics-fade) ease,
+    transform var(--lyrics-fade) ease;
+  opacity: 0;
+  transform: translateY(var(--lyrics-slide));
+}
+
+.lineIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lineOut {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--lyrics-slide)));
+}
+
+/* ── Próxima linha ────────────────────────── */
+.nextLine {
+  transition:
+    opacity var(--lyrics-fade) ease,
+    transform var(--lyrics-fade) ease;
+}
+
+.nextIn {
+  opacity: 0.45;
+  transform: translateY(0);
+}
+
+.nextOut {
+  opacity: 0;
+  transform: translateY(8px);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import styles from "./style.module.css";
 
 import { Header } from "../../components/Header";
@@ -9,6 +9,7 @@ import { PlayerControls } from "../../components/PlayerControls";
 import { ProgressBar } from "../../components/ProgressBar";
 import { VolumeControls } from "../../components/VolumeControls";
 
+import { FaExplosion } from "react-icons/fa6";
 import { randomCover } from "../../utils/randomCover";
 import { usePlayerStore } from "../../store/playerStore";
 import { useAnalyser } from "../../hooks/useAnalyser";
@@ -25,7 +26,7 @@ export function PlayerScreen({ setScreen, file }) {
   const lyricsEnabled = usePlayerStore((state) => state.lyricsEnabled);
   const toggleLyrics = usePlayerStore((state) => state.toggleLyrics);
   const activeTheme = usePlayerStore((state) => state.activeTheme);
-
+  const prevSongIdRef = useRef(null);
   const {
     lines,
     activeIndex,
@@ -38,8 +39,12 @@ export function PlayerScreen({ setScreen, file }) {
   } = useLyrics(lyricsEnabled);
 
   useEffect(() => {
-    setOffset(0);
-  }, [currentSong, setOffset]);
+    const id = currentSong?.id ?? null;
+    if (prevSongIdRef.current !== null && prevSongIdRef.current !== id) {
+      setOffset(0);
+    }
+    prevSongIdRef.current = id;
+  }, [currentSong?.id, setOffset]);
 
   useEffect(() => {
     if (file) {
@@ -54,7 +59,7 @@ export function PlayerScreen({ setScreen, file }) {
 
   return (
     <div className={styles.playerScreen}>
-      <Header title="Player" />
+      <Header title="Vibe Player" />
 
       <div className={styles.content}>
         <SideBar setScreen={setScreen} />
@@ -73,29 +78,35 @@ export function PlayerScreen({ setScreen, file }) {
 
       <div className={styles.playerArea}>
         <div className={styles.musicInfo}>
-          <div className={styles.cover}>
-            <img
-              src={
-                playerType === "radio"
-                  ? currentRadio?.favicon || "/radio-default.png"
-                  : randomCover(currentSong?.title || "Music Name")
-              }
-              onError={(e) => {
-                e.currentTarget.src = "/radio-default.png";
-              }}
-            />
-          </div>
-          <div className={styles.musicDetails}>
-            <h3>
-              {playerType === "radio"
-                ? currentRadio?.name || "Rádio"
-                : currentSong?.title || "Music Name"}
-            </h3>
-            <p>
-              {playerType === "radio"
-                ? currentRadio?.country || "Rádio online"
-                : currentSong?.artist || "Artist Name"}
-            </p>
+          <div className={styles.musicInfoLeft}>
+            <div className={styles.cover}>
+              <img
+                src={
+                  playerType === "radio"
+                    ? currentRadio?.favicon ||
+                      randomCover(currentRadio?.name || "Radio")
+                    : randomCover(currentSong?.title || "Music Name")
+                }
+                onError={(e) => {
+                  e.currentTarget.onerror = null; // evita loop
+                  e.currentTarget.src = randomCover(
+                    currentRadio?.name || currentSong?.title || "Music",
+                  );
+                }}
+              />
+            </div>
+            <div className={styles.musicDetails}>
+              <h3>
+                {playerType === "radio"
+                  ? currentRadio?.name || "Rádio"
+                  : currentSong?.title || "Sem Sons Reproduzindo"}
+              </h3>
+              <p>
+                {playerType === "radio"
+                  ? currentRadio?.country || "Rádio online"
+                  : currentSong?.artist || ""}
+              </p>
+            </div>
           </div>
           {playerType === "radio" && (
             <button
@@ -103,7 +114,7 @@ export function PlayerScreen({ setScreen, file }) {
               onClick={clearRadio}
               title="Remover rádio do player"
             >
-              ✕
+              <FaExplosion />
             </button>
           )}
         </div>

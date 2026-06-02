@@ -182,13 +182,15 @@ export function registerDownloadHandlers({
   });
 
   // ── download:audio ──────────────────────────────────────
-  ipcMain.handle("download:audio", async (_, { videoId, title }) => {
+  ipcMain.handle("download:audio", async (_, { videoId, title, formatId }) => {
     const id = `audio-${videoId}-${Date.now()}`;
     try {
       const savePath = DOWNLOAD_DIRS.audio;
       fs.mkdirSync(savePath, { recursive: true });
       const safeTitle = (title ?? "audio").replace(/[<>:"/\\|?*]/g, "").trim();
-      const filePath = path.join(savePath, `${safeTitle}.mp3`);
+
+      // Extensão vai ser a do formato escolhido (m4a, webm, opus...)
+      const filePath = path.join(savePath, `${safeTitle}.%(ext)s`);
 
       sendProgress({ id, title, type: "audio", percent: 0 });
 
@@ -198,13 +200,8 @@ export function registerDownloadHandlers({
         type: "audio",
         args: [
           `https://www.youtube.com/watch?v=${videoId}`,
-          "-x",
-          "--audio-format",
-          "mp3",
-          "--audio-quality",
-          "0",
-          "--ffmpeg-location",
-          ffmpegPath,
+          "-f",
+          formatId, // formato exato que o usuário escolheu
           "--newline",
           "-o",
           filePath,

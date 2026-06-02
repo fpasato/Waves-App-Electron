@@ -1,10 +1,21 @@
 import { useEffect } from "react";
 import styles from "./style.module.css";
+
+import { Button } from "../../components/Button";
 import { CUSTOM_CSS, SKIP_ADS_SCRIPT } from "./customCss";
 import {
   useSearchHandlers,
   DOWNLOAD_TYPES,
 } from "../../hooks/Usesearchhandlers";
+
+import { FaExplosion } from "react-icons/fa6";
+import { GrFormPrevious } from "react-icons/gr";
+import { GrFormNext } from "react-icons/gr";
+import { IoReload } from "react-icons/io5";
+import { FaHome, FaDownload } from "react-icons/fa";
+import { BsSearch } from "react-icons/bs";
+import { ImExit } from "react-icons/im";
+import { LuLogIn } from "react-icons/lu";
 
 export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
   const {
@@ -50,25 +61,24 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     const wv = webviewRef.current;
     if (!wv) return;
     let destroyed = false;
+    wv.setMaxListeners?.(50);
 
-    const handleDomReady = async () => {
+    async function injectScripts() {
       if (destroyed || !wv.isConnected) return;
-
-      // Pequeno delay para o webview estabilizar
-      await new Promise((r) => setTimeout(r, 300));
-      if (destroyed || !wv.isConnected) return;
-
       try {
         await wv.insertCSS(CUSTOM_CSS);
       } catch (e) {}
-
       try {
         await wv.executeJavaScript(
-          `try { (${SKIP_ADS_SCRIPT})() } catch(e) {}`,
+          `try{(${SKIP_ADS_SCRIPT})()}catch(e){console.error('skip error',e)}`,
         );
       } catch (e) {}
+    }
 
-      // Login check com delay maior
+    const handleDomReady = async () => {
+      if (destroyed || !wv.isConnected) return;
+      await injectScripts();
+
       setTimeout(async () => {
         if (destroyed || !wv.isConnected) return;
         try {
@@ -82,21 +92,21 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
       if (!destroyed) updateNavState();
     };
 
-    const handleNavigate = () => {
+    // did-stop-loading dispara após cada navegação SPA terminar de carregar
+    const handleStopLoading = async () => {
+      if (destroyed || !wv.isConnected) return;
+      await injectScripts();
       if (!destroyed) updateNavState();
     };
 
     wv.addEventListener("dom-ready", handleDomReady);
-    wv.addEventListener("did-navigate", handleNavigate);
-    wv.addEventListener("did-navigate-in-page", handleNavigate);
+    wv.addEventListener("did-stop-loading", handleStopLoading);
 
     return () => {
       destroyed = true;
-      // Remove listeners apenas se o webview ainda estiver no DOM
       if (wv.isConnected) {
         wv.removeEventListener("dom-ready", handleDomReady);
-        wv.removeEventListener("did-navigate", handleNavigate);
-        wv.removeEventListener("did-navigate-in-page", handleNavigate);
+        wv.removeEventListener("did-stop-loading", handleStopLoading);
       }
     };
   }, [updateNavState, setIsLoggedIn, webviewRef]);
@@ -105,23 +115,23 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     <div className={styles.searchScreen}>
       <div className={styles.searchHeader}>
         {/* Navegação */}
-        <button
+        <Button
           className={styles.backBtn}
           onClick={() => setScreen("player")}
-          title="Home"
-        >
-          🏠
-        </button>
+          title={<FaHome />}
+        />
+
         <button className={styles.navBtn} onClick={onClose} title="Fechar">
-          ✕
+          <FaExplosion />
         </button>
+
         <button
           className={styles.navBtn}
           onClick={handleGoBack}
           disabled={!canGoBack}
           title="Voltar"
         >
-          ←
+          <GrFormPrevious />
         </button>
         <button
           className={styles.navBtn}
@@ -129,14 +139,14 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           disabled={!canGoForward}
           title="Avançar"
         >
-          →
+          <GrFormNext />
         </button>
         <button
           className={styles.navBtn}
           onClick={handleReload}
           title="Recarregar"
         >
-          ⟳
+          <IoReload />
         </button>
 
         {/* Busca */}
@@ -161,11 +171,11 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           )}
         </div>
         <button
-          className={styles.searchBtn}
+          className={styles.navBtn}
           onClick={handleSearch}
           disabled={!query.trim()}
         >
-          🔍
+          <BsSearch />
         </button>
 
         {/* Download */}
@@ -174,7 +184,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           onClick={openDownloadModal}
           title="Baixar vídeo"
         >
-          ⬇️
+          <FaDownload />
         </button>
 
         {/* Auth */}
@@ -184,11 +194,11 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
               className={`${styles.authBtn} ${styles.logoutBtn}`}
               onClick={handleLogout}
             >
-              Sair ↩
+              <ImExit />
             </button>
           ) : (
             <button className={styles.authBtn} onClick={handleLogin}>
-              Entrar com Google
+              <LuLogIn />
             </button>
           )}
 
@@ -258,12 +268,11 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                             <button
                               key={f.id}
                               onClick={() => setSelectedFormatId(f.id)}
-                              style={{
-                                display: "block",
-                                margin: "5px 0",
-                                fontWeight:
-                                  selectedFormatId === f.id ? "bold" : "normal",
-                              }}
+                              className={`${styles.formatButton} ${
+                                selectedFormatId === f.id
+                                  ? styles.formatButtonSelected
+                                  : ""
+                              }`}
                             >
                               {f.resolution}
                             </button>
@@ -292,14 +301,11 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                               <button
                                 key={f.id}
                                 onClick={() => setSelectedFormatId(f.id)}
-                                style={{
-                                  display: "block",
-                                  margin: "5px 0",
-                                  fontWeight:
-                                    selectedFormatId === f.id
-                                      ? "bold"
-                                      : "normal",
-                                }}
+                                className={`${styles.formatButton} ${
+                                  selectedFormatId === f.id
+                                    ? styles.formatButtonSelected
+                                    : ""
+                                }`}
                               >
                                 {label}
                               </button>
@@ -312,13 +318,25 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                       </>
                     )}
 
-                    <button
-                      onClick={handleStartDownload}
-                      disabled={downloading || !selectedFormatId}
-                    >
-                      {downloading ? "Baixando..." : "Baixar"}
-                    </button>
-                    <button onClick={closeDownloadModal}>Cancelar</button>
+                    <div className={styles.modalActions}>
+                      <button
+                        className={styles.downloadBtn}
+                        onClick={() => {
+                          handleStartDownload();
+                          closeDownloadModal();
+                        }}
+                        disabled={downloading || !selectedFormatId}
+                      >
+                        {downloading ? "Baixando..." : "Baixar"}
+                      </button>
+
+                      <button
+                        className={styles.cancelBtn}
+                        onClick={closeDownloadModal}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -331,8 +349,10 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
       <div className={styles.body}>
         <webview
           ref={webviewRef}
+          id="youtube-view"
           src="https://www.youtube.com"
           partition="persist:youtube"
+          nodeintegrationinsubframes="true"
           style={{ width: "100%", height: "100%" }}
         />
       </div>

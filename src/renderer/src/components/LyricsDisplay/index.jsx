@@ -1,60 +1,105 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./style.module.css";
+
+const LINGER_MS   = 2000;
+const FADE_OUT_MS = 400;
 
 export function LyricsDisplay({
   enabled,
-  lines,               // opcional – pode ser usado para debug, mas não obrigatório
-  activeIndex,
   status,
   isFading,
   currentLine,
   nextLine,
+  isGap,
 }) {
-  const [displayed, setDisplayed] = useState({ current: null, next: null, key: -1 });
-  const [exiting, setExiting] = useState(null);
-  const [statusKey, setStatusKey] = useState(0);
-  const prevLineRef = useRef(null); // guarda a linha anterior para a animação de saída
+  const [displayed, setDisplayed] = useState({ line: null, next: null });
+  // "hidden" | "entering" | "visible" | "leaving"
+  const [phase, setPhase] = useState("hidden");
+  const lingerTimer = useRef(null);
+  const fadeTimer   = useRef(null);
+  const rafRef      = useRef(null);
 
-  // Atualiza a chave quando estado é "não encontrado" ou "erro"
-  useEffect(() => {
-    if (status === "notfound" || status === "error") {
-      setStatusKey((k) => k + 1);
-    }
-  }, [status]);
+  const clearTimers = useCallback(() => {
+    clearTimeout(lingerTimer.current);
+    clearTimeout(fadeTimer.current);
+    cancelAnimationFrame(rafRef.current);
+  }, []);
 
-  // Efeito principal – animação de troca de linha
+  // Monta conteúdo, força repaint, então anima entrada
+  const enterWith = useCallback((line, next) => {
+    setDisplayed({ line, next });
+    setPhase("hidden"); // garante que começa invisível
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = requestAnimationFrame(() => {
+        setPhase("entering");
+        fadeTimer.current = setTimeout(() => setPhase("visible"), FADE_OUT_MS);
+      });
+    });
+  }, []);
+
+  // Fade-out e depois executa callback
+  const leaveWith = useCallback((cb) => {
+    setPhase("leaving");
+    fadeTimer.current = setTimeout(() => {
+      cb?.();
+    }, FADE_OUT_MS);
+  }, []);
+
   useEffect(() => {
-    // Se não há linha atual, limpa tudo
-    if (!currentLine) {
-      setDisplayed({ current: null, next: null, key: activeIndex });
-      setExiting(null);
-      prevLineRef.current = null;
+    // Sem conteúdo nenhum
+    if (!currentLine && !isGap) {
+      clearTimers();
+      if (phase === "hidden") return;
+      leaveWith(() => {
+        setDisplayed({ line: null, next: null });
+        setPhase("hidden");
+      });
       return;
     }
 
-    // Só faz a animação se a nova linha for diferente da anterior
-    if (prevLineRef.current && prevLineRef.current.text !== currentLine.text) {
-      // Guarda a linha anterior para a animação de saída
-      setExiting(prevLineRef.current);
-    } else {
-      // Mesma linha (ex.: primeiro carregamento) → sem animação
-      setExiting(null);
+    // Gap instrumental: aguarda LINGER_MS antes de sumir
+    if (!currentLine && isGap) {
+      clearTimers();
+      lingerTimer.current = setTimeout(() => {
+        leaveWith(() => {
+          setDisplayed({ line: null, next: null });
+          setPhase("hidden");
+        });
+      }, LINGER_MS);
+      return;
     }
 
-    // Atualiza a referência da linha anterior
-    prevLineRef.current = currentLine;
+    // Mesma linha — só atualiza next sem animar
+    if (currentLine?.text === displayed.line?.text) {
+      if (nextLine?.text !== displayed.next?.text) {
+        setDisplayed((d) => ({ ...d, next: nextLine ?? null }));
+      }
+      return;
+    }
 
-    // Timeout para remover a animação de saída e exibir a nova linha
-    const t = setTimeout(() => {
-      setExiting(null);
-      setDisplayed({ current: currentLine, next: nextLine, key: activeIndex });
-    }, 80);
+    // Nova linha e estava oculto: entra direto
+    if (phase === "hidden") {
+      clearTimers();
+      enterWith(currentLine, nextLine ?? null);
+      return;
+    }
 
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, currentLine, nextLine]); // <-- sem displayed.current
+    // Nova linha com uma já visível: sai → entra
+    clearTimers();
+    leaveWith(() => {
+      enterWith(currentLine, nextLine ?? null);
+    });
+
+    return () => clearTimers();
+  }, [currentLine, nextLine, isGap]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => () => clearTimers(), [clearTimers]);
 
   if (!enabled) return null;
+
+  const isLeaving  = phase === "leaving";
+  const isEntering = phase === "entering" || phase === "visible";
+  const nextVisible = isEntering && !isLeaving;
 
   return (
     <div
@@ -70,39 +115,43 @@ export function LyricsDisplay({
       )}
 
       {status === "notfound" && (
-        <p key={statusKey} className={`${styles.statusText} ${styles.notFound}`}>
+        <p className={`${styles.statusText} ${styles.notFound}`}>
           letra não encontrada
         </p>
       )}
 
       {status === "error" && (
-        <p key={statusKey} className={`${styles.statusText} ${styles.notFound}`}>
+        <p className={`${styles.statusText} ${styles.notFound}`}>
           falha ao buscar letra
         </p>
       )}
 
       {status === "found" && (
         <div className={styles.karaokeView}>
-          {/* Linha saindo (animação) */}
-          {exiting && (
-            <p
-              key={`exit-${displayed.key}`}
-              className={`${styles.activeLine} ${styles.lineOut}`}
-            >
-              {exiting.text}
-            </p>
-          )}
+          <div
+            className={[
+              styles.activeLineWrapper,
+              isEntering && styles.lineIn,
+              isLeaving  && styles.lineOut,
+            ].filter(Boolean).join(" ")}
+          >
+            {displayed.line && (
+              <p className={styles.activeLine}>{displayed.line.text}</p>
+            )}
+            {!displayed.line && isGap && (
+              <p className={styles.instrumental}>♫ instrumental ♫</p>
+            )}
+          </div>
 
-          {/* Linha atual (aparece depois da animação ou imediatamente se não houve saída) */}
-          {!exiting && displayed.current && (
-            <p key={`active-${displayed.key}`} className={styles.activeLine}>
-              {displayed.current.text}
-            </p>
-          )}
-
-          {/* Próxima linha (prévia) */}
           {displayed.next && (
-            <p className={styles.nextLine}>{displayed.next.text}</p>
+            <p
+              className={[
+                styles.nextLine,
+                nextVisible ? styles.nextIn : styles.nextOut,
+              ].join(" ")}
+            >
+              {displayed.next.text}
+            </p>
           )}
         </div>
       )}

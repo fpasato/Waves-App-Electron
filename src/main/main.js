@@ -1,6 +1,6 @@
 // src/main/main.js
 import { app, BrowserWindow } from "electron";
-import { electronApp, optimizer } from "@electron-toolkit/utils";
+import { electronApp } from "@electron-toolkit/utils";
 
 import {
   ensureYtDlp,
@@ -42,37 +42,36 @@ let mainWindow = null;
 async function bootstrap() {
   electronApp.setAppUserModelId("com.electron");
 
-  // 1. Garantir que o yt-dlp está baixado
   await ensureYtDlp();
-
-  // 2. Iniciar adblocker
   await setupAdBlocker(USER_AGENT, YOUTUBE_PARTITION);
 
-  // 3. Inicializar banco e registrar handlers que não dependem da janela
   const db = initDatabase();
   registerDbHandlers(db);
   registerYoutubeHandlers({ ytDlp, ffmpegPath, baseFlags, searchYoutube });
   registerAuthHandlers();
-  registerMiscHandlers(); // ping, dialog, scan, radio
+  registerMiscHandlers();
+  registerGeminiHandler();
 
-  // 4. Criar janela principal
+  // ✅ Handlers de download registrados UMA vez, fora do createWindow
   mainWindow = await createWindow(USER_AGENT);
 
-  // 5. Registrar handlers que dependem da janela (download com progresso)
   registerDownloadHandlers({
     mainWindow,
     ytDlpPath,
     ffmpegPath,
     baseFlags,
   });
-  registerGeminiHandler();
 
+  // ✅ No activate, só recria a janela — NÃO registra handlers de novo
   app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = await createWindow(USER_AGENT);
+      // registerDownloadHandlers NÃO vai aqui
     }
   });
 }
+
+
 
 app.whenReady().then(bootstrap);
 

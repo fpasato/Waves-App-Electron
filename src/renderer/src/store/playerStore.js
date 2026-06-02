@@ -51,6 +51,19 @@ export const usePlayerStore = create((set, get) => ({
   particlesEnabled: localStorage.getItem("particles-enabled") !== "false",
   seekSignal: 0,
   seekTarget: 0,
+  lyricsLines: [],
+  lyricsStatus: "idle",
+  lyricsOffset: 0,
+  lyricsSource: "lrclib", // "lrclib" | "whisperx"
+
+// actions
+setLyricsSource: (source) => set({ lyricsSource: source }),
+
+  setLyricsOffset: (offset) => set({ lyricsOffset: offset }),
+
+  setLyricsLines: (lines) => set({ lyricsLines: lines }),
+  setLyricsStatus: (status) => set({ lyricsStatus: status }),
+  clearLyrics: () => set({ lyricsLines: [], lyricsStatus: "idle" }),
 
   seekForward: (seconds = 10) => {
     const { currentTime, duration } = get();

@@ -3,12 +3,14 @@ import { useCallback } from "react";
 import { useDownloads } from "../../hooks/useDownloads";
 import styles from "./style.module.css";
 
+import { GiExitDoor } from "react-icons/gi";
+import { FaMusic, FaTrashAlt, FaFolder, FaPlay } from "react-icons/fa";
+import { GiClapperboard } from "react-icons/gi";
+import { FaMicrophoneAlt } from "react-icons/fa";
+import { IoReload } from "react-icons/io5";
+
 // ─── funções utilitárias (mantidas aqui, não mudam) ────────────────────────
 const AUDIO_EXTS = [".mp3", ".m4a", ".opus"];
-
-function isAudioFile(name = "") {
-  return AUDIO_EXTS.some((e) => name.toLowerCase().endsWith(e));
-}
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return "—";
@@ -48,7 +50,7 @@ function FileCard({ file, onOpen, onReveal, onDelete }) {
         className={styles.fileIcon}
         data-type={isAudioLike ? "audio" : "video"}
       >
-        {isAudioLike ? "🎵" : "🎬"}
+        {isAudioLike ? <FaMusic /> : <GiClapperboard />}
       </div>
       <div className={styles.fileMeta}>
         <p className={styles.fileName} title={file.name}>
@@ -60,21 +62,21 @@ function FileCard({ file, onOpen, onReveal, onDelete }) {
       </div>
       <div className={styles.fileActions}>
         <button className={styles.actionBtn} title="Abrir" onClick={onOpen}>
-          ▶
+          <FaPlay />
         </button>
         <button
           className={styles.actionBtn}
           title="Mostrar no Explorer"
           onClick={() => onReveal(file.path)}
         >
-          📁
+          <FaFolder />
         </button>
         <button
           className={`${styles.actionBtn} ${styles.deleteBtn}`}
           title="Excluir"
           onClick={() => onDelete(file)}
         >
-          🗑
+          <FaTrashAlt />
         </button>
       </div>
     </div>
@@ -96,7 +98,7 @@ export function DownloadScreen({ setScreen }) {
     filtered,
     totalVideo,
     totalAudio,
-    totalRadio, // ← recebe do hook
+    totalRadio,
   } = useDownloads();
 
   const handleOpen = useCallback(
@@ -113,7 +115,7 @@ export function DownloadScreen({ setScreen }) {
         window.electronAPI.downloads.openFile(file.path).catch(console.error);
       }
     },
-    [setScreen]
+    [setScreen],
   );
 
   const handleReveal = (p) =>
@@ -125,14 +127,34 @@ export function DownloadScreen({ setScreen }) {
       <div className={styles.header}>
         <div className={styles.titleRow}>
           <h1 className={styles.title}>Downloads</h1>
-          <button className={styles.refreshBtn} onClick={loadFiles} title="Atualizar">↻</button>
-          <button onClick={() => setScreen("player")}>voltar</button>
+          <div className={styles.actions}>
+            <button
+              className={styles.refreshBtn}
+              onClick={loadFiles}
+              title="Atualizar"
+            >
+              <IoReload />
+            </button>
+            <button
+              onClick={() => setScreen("player")}
+              className={styles.exitBtn}
+            >
+              <GiExitDoor />
+            </button>
+          </div>
         </div>
 
         <div className={styles.statsRow}>
-          <span className={styles.chip}>🎬 {totalVideo} vídeo{totalVideo !== 1 ? "s" : ""}</span>
-          <span className={styles.chip}>🎵 {totalAudio} áudio{totalAudio !== 1 ? "s" : ""}</span>
-          <span className={styles.chip}>🎙️ {totalRadio} gravação{totalRadio !== 1 ? "s" : ""}</span>
+          <span className={styles.chip}>
+            {<GiClapperboard />} {totalVideo} vídeo{totalVideo !== 1 ? "s" : ""}
+          </span>
+          <span className={styles.chip}>
+            {<FaMusic />} {totalAudio} áudio{totalAudio !== 1 ? "s" : ""}
+          </span>
+          <span className={styles.chip}>
+            {<FaMicrophoneAlt />} {totalRadio} gravação
+            {totalRadio !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <input
@@ -145,10 +167,30 @@ export function DownloadScreen({ setScreen }) {
 
         <div className={styles.tabs}>
           {[
-            ["all", "Todos"],
-            ["video", "🎬 Vídeos"],
-            ["audio", "🎵 Áudios"],
-            ["radio", "🎙️ Gravações"],
+            [
+              "all",
+              <>
+                <GiClapperboard /> Todos
+              </>,
+            ],
+            [
+              "video",
+              <>
+                <GiClapperboard /> Vídeos
+              </>,
+            ],
+            [
+              "audio",
+              <>
+                <FaMusic /> Áudios
+              </>,
+            ],
+            [
+              "radio",
+              <>
+                <FaMicrophoneAlt /> Gravações
+              </>,
+            ],
           ].map(([k, label]) => (
             <button
               key={k}
@@ -194,8 +236,18 @@ export function DownloadScreen({ setScreen }) {
             <p className={styles.modalFile}>{confirmDelete.name}</p>
             <p className={styles.modalWarn}>Essa ação não pode ser desfeita.</p>
             <div className={styles.modalBtns}>
-              <button className={styles.btnCancel} onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className={styles.btnDelete} onClick={handleDeleteConfirm}>Excluir</button>
+              <button
+                className={styles.btnCancel}
+                onClick={() => setConfirmDelete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.btnDelete}
+                onClick={handleDeleteConfirm}
+              >
+                Excluir
+              </button>
             </div>
           </div>
         </div>

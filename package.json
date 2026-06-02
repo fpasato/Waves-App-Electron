@@ -1,9 +1,9 @@
 {
-  "name": "meu-projeto",
+  "name": "VIBE",
   "version": "1.0.0",
-  "description": "An Electron application with React",
+  "description": "Um programa de músicas",
   "main": "./out/main/main.js",
-  "author": "example.com",
+  "author": "Fer.com",
   "homepage": "https://electron-vite.org",
   "scripts": {
     "format": "prettier --write .",
@@ -16,6 +16,25 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.vibe.app",
+    "productName": "Vibe",
+    "asar": false,
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "resources/yt-dlp.exe",
+        "to": "yt-dlp.exe"
+      }
+    ],
+    "files": [
+      "out/**/*",
+      "node_modules/**/*"
+    ]
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

@@ -92,80 +92,111 @@ export const CUSTOM_CSS = `
   /* Player de anúncio — esconde overlay enquanto o script não pula */
   .ytp-ad-overlay-container { display: none !important; }
   .ytp-ad-text-overlay { display: none !important; }
+
+   /* ── Ads no feed/menu ── */
+  /* Card de anúncio disfarçado de vídeo */
+  ytd-rich-item-renderer:has([aria-label*="Patrocinado"]),
+  ytd-rich-item-renderer:has([aria-label*="Sponsored"]) { display: none !important; }
+
+  /* Shelf de anúncio */
+  ytd-rich-shelf-renderer:has(ytd-ad-slot-renderer) { display: none !important; }
+
+  /* Overlay de anúncio no player — esconde até o script pular */
+  .ytp-ad-player-overlay,
+  .ytp-ad-player-overlay-instream-info,
+  .ytp-ad-preview-container,
+  .ytp-ad-preview-text,
+  .ytp-ad-badge,
+  .ytp-ad-progress,
+  .ytp-ad-progress-list { display: none !important; }
+
+  /* Tela preta durante carregamento do ad */
+  .ytp-ad-module { display: none !important; }
+
+  /* Painel lateral de anúncios */
+  #related #player-ads { display: none !important; }
+  ytd-item-section-renderer:has(ytd-ad-slot-renderer) { display: none !important; }
+
+
+  /* Primeiro card de ad no feed */
+  /* Remove qualquer item que contenha um display-ad-renderer */
+  ytd-rich-item-renderer:has(ytd-display-ad-renderer) { display: none !important; }
+  ytd-display-ad-renderer { display: none !important; }
+
+  /* Remove banner de anúncio no topo da página inicial */
+  ytd-banner-promo-renderer { display: none !important; }
+  ytd-statement-banner-renderer { display: none !important; }
+
+  /* ── Remove botão de login da topbar ── */
+  #buttons a[href*="ServiceLogin"] { display: none !important; }
+  /* ou, se necessário, o container inteiro */
+  #buttons ytd-button-renderer:has(a[href*="ServiceLogin"]) { display: none !important; }
+
+  /* ── Remove bloco "Faça login para curtir..." da sidebar ── */
+  ytd-guide-signin-promo-renderer { display: none !important; }
+
+  /* ── (Opcional) Remove o link "Pular navegação" (acessibilidade) ── */
+  #skip-navigation { display: none !important; }
 `;
 
-// Injeta no webview via executeJavaScript no dom-ready.
-// Roda a cada 300ms: clica em "Pular", fecha overlays e
-// avança o vídeo de ad para o fim forçando o skip.
 export const SKIP_ADS_SCRIPT = `
 (function () {
-  if (window.__adSkipperRunning) return;
-  window.__adSkipperRunning = true;
+  if (window.__adSkipTimer) clearInterval(window.__adSkipTimer);
+  if (window.__adSkipObserver) window.__adSkipObserver.disconnect();
 
-  let skipTimer;
-  let observer;
+  // Reseta o patch de fetch em cada injeção
+  window.__fetchPatched = false;
 
-  // ── Função principal de limpeza ──────────────────────────────
-  function skipAds() {
-    // 1. Botão "Pular anúncio" (qualquer variante)
-    const skipBtn = document.querySelector(
-      '.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern'
-    );
-    if (skipBtn) {
-      skipBtn.click();
-    }
+  if (!window.__fetchPatched) {
+    window.__fetchPatched = true;
 
-    // 2. Overlay de banner (fecha o "X")
-    const overlayClose = document.querySelector('.ytp-ad-overlay-close-button');
-    if (overlayClose) {
-      overlayClose.click();
-    }
+    const _fetch = window.__originalFetch || window.fetch;
+    window.__originalFetch = _fetch;
 
-    // 3. Anúncio de vídeo em execução → avança para o fim
-    const video = document.querySelector('video');
-    const isAd =
-      document.querySelector('.ytp-ad-player-overlay') ||
-      document.querySelector('.ytp-ad-badge');
-    if (video && isAd && video.duration && !isNaN(video.duration)) {
-      video.currentTime = video.duration;  // força o término do ad
-    }
-
-    // 4. Garante que o vídeo principal volte a tocar após o ad
-    const mainVideo = document.querySelector('.html5-main-video');
-    if (
-      mainVideo &&
-      mainVideo.paused &&
-      !document.querySelector('.ytp-ad-player-overlay') // não estamos mais em um ad
-    ) {
-      mainVideo.play().catch(() => {});
-    }
-
-    // 5. Remove qualquer overlay de anúncio que tenha sobrado (banners, info)
-    document
-      .querySelectorAll(
-        '.ytp-ad-overlay-container, .ytp-ad-overlay-ad-info-button-container, .ytp-ad-action-interstitial'
-      )
-      .forEach((el) => el.remove());
+    window.fetch = async function(...args) {
+      const response = await _fetch.apply(this, args);
+      const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+      if (url.includes('/youtubei/v1/player')) {
+        try {
+          const json = await response.clone().json();
+          delete json.adPlacements;
+          delete json.playerAds;
+          delete json.adSlots;
+          return new Response(JSON.stringify(json), {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
+        } catch { return response; }
+      }
+      return response;
+    };
   }
 
-  // ── Polling rápido como fallback (100ms) ─────────────────────
-  skipTimer = setInterval(skipAds, 100);
+  function skipAds() {
+    const skip = document.querySelector(
+      '.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern'
+    );
+    if (skip) { skip.click(); return; }
 
-  // ── MutationObserver: reage a cada elemento novo no DOM ──────
-  observer = new MutationObserver(() => {
-    // Dispara imediatamente, sem esperar o próximo tick do timer
-    skipAds();
-  });
+    const video = document.querySelector('video');
+    const isAd = document.querySelector('.ad-showing, .ytp-ad-badge');
+    if (video && isAd && isFinite(video.duration)) {
+      video.muted = true;
+      video.currentTime = video.duration;
+    }
+  }
 
-  observer.observe(document.body, {
+  window.__adSkipTimer = setInterval(skipAds, 100);
+
+  window.__adSkipObserver = new MutationObserver(skipAds);
+  window.__adSkipObserver.observe(document.documentElement, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ['class'],
   });
 
-  // Limpeza opcional se a página for navegada (SPA)
-  window.addEventListener('beforeunload', () => {
-    clearInterval(skipTimer);
-    observer.disconnect();
-  }, { once: true });
-})();
+  skipAds();
+})()
 `;

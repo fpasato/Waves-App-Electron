@@ -43,7 +43,7 @@ export function LibraryScreen({ setScreen }) {
 
   return (
     <div className={styles.libraryContainer}>
-      <Header title="Library" />
+      <Header title="Biblioteca" />
       <div className={styles.libraryContentContainer}>
         <div className={styles.libraryHeader}>
           <div className={styles.libraryinfo}>
