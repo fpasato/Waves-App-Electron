@@ -43,7 +43,7 @@ async function bootstrap() {
   electronApp.setAppUserModelId("com.electron");
 
   await ensureYtDlp();
-  await setupAdBlocker(USER_AGENT, YOUTUBE_PARTITION);
+  await setupAdBlocker(YOUTUBE_PARTITION);
 
   const db = initDatabase();
   registerDbHandlers(db);
@@ -70,8 +70,6 @@ async function bootstrap() {
     }
   });
 }
-
-
 
 app.whenReady().then(bootstrap);
 

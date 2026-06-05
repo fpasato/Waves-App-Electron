@@ -142,6 +142,11 @@ export function registerDownloadHandlers({
     return results;
   });
 
+
+
+
+
+  
   // ── download:video ──────────────────────────────────────
   ipcMain.handle("download:video", async (_, { videoId, title, formatId }) => {
     const id = `video-${videoId}-${Date.now()}`;
@@ -215,6 +220,128 @@ export function registerDownloadHandlers({
       console.error("❌ download:audio erro:", err);
       sendError(id, err.message);
       return { success: false, error: err.message };
+    }
+  });
+
+  // ── download:mix ────────────────────────────────────────
+  ipcMain.handle(
+    "download:mix",
+    async (_, { playlistId, videoId, title, mode, format }) => {
+      // mode: 'single' | 'mix'
+      // format: 'video' | 'audio'
+      const id = `mix-${playlistId}-${Date.now()}`;
+
+      try {
+        const type = format === "audio" ? "audio" : "video";
+        const savePath = DOWNLOAD_DIRS[type];
+        fs.mkdirSync(savePath, { recursive: true });
+
+        // URL da mix — com ?list= para yt-dlp baixar a playlist inteira
+        const url =
+          mode === "single"
+            ? `https://www.youtube.com/watch?v=${videoId}`
+            : `https://www.youtube.com/watch?v=${videoId}&list=${playlistId}`;
+
+        const outputTemplate =
+          mode === "mix"
+            ? path.join(savePath, "%(playlist_index)s - %(title)s.%(ext)s")
+            : path.join(
+                savePath,
+                `${(title ?? "video").replace(/[<>:"/\\|?*]/g, "").trim()}.%(ext)s`,
+              );
+
+        sendProgress({ id, title: title ?? "Mix", type, percent: 0 });
+
+        const formatArgs =
+          format === "audio"
+            ? [
+                "-f",
+                "bestaudio[ext=m4a]/bestaudio",
+                "--ffmpeg-location",
+                ffmpegPath,
+              ]
+            : [
+                "-f",
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+                "--merge-output-format",
+                "mp4",
+                "--ffmpeg-location",
+                ffmpegPath,
+              ];
+
+        const playlistArgs =
+          mode === "mix"
+            ? ["--yes-playlist", "--ignore-errors", "--no-abort-on-error"]
+            : ["--no-playlist"];
+
+        await runWithProgress({
+          id,
+          title: title ?? "Mix",
+          type,
+          args: [
+            url,
+            ...formatArgs,
+            ...playlistArgs,
+            "--newline",
+            "-o",
+            outputTemplate,
+            ...baseFlags(),
+          ],
+        });
+
+        sendDone(id);
+        return { success: true };
+      } catch (err) {
+        console.error("❌ download:mix erro:", err);
+        sendError(id, err.message);
+        return { success: false, error: err.message };
+      }
+    },
+  );
+
+  // ── youtube:getMixInfo ───────────────────────────────────
+  // Retorna título da mix e quantidade de vídeos (sem baixar nada)
+  ipcMain.handle("youtube:getMixInfo", async (_, { videoId, playlistId }) => {
+    try {
+      const url = `https://www.youtube.com/watch?v=${videoId}&list=${playlistId}`;
+
+      const proc = spawn(
+        ytDlpPath,
+        [
+          url,
+          "--flat-playlist",
+          "--dump-single-json",
+          "--yes-playlist",
+          ...baseFlags(),
+        ],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      );
+
+      let stdout = "";
+      let stderr = "";
+      proc.stdout.on("data", (d) => (stdout += d.toString()));
+      proc.stderr.on("data", (d) => (stderr += d.toString()));
+
+      return await new Promise((resolve) => {
+        proc.on("close", (code) => {
+          if (code !== 0) {
+            console.error("getMixInfo stderr:", stderr);
+            return resolve({ title: "Mix", count: null });
+          }
+          try {
+            const data = JSON.parse(stdout);
+            resolve({
+              title: data.title ?? "Mix",
+              count: data.entries?.length ?? null,
+            });
+          } catch {
+            resolve({ title: "Mix", count: null });
+          }
+        });
+      });
+    } catch (err) {
+      console.error("❌ getMixInfo erro:", err);
+      return { title: "Mix", count: null };
     }
   });
 }

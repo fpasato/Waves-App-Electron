@@ -11,6 +11,7 @@
 
 :root {
   --fontsize: 1rem;
+  --glass-bg: rgba(20, 20, 30, 0.4);
 }
 
 .dark {

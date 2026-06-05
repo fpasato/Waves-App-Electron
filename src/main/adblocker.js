@@ -89,9 +89,12 @@ async function updateEngineFromLists() {
   if (!engine) return;
   try {
     console.log("[Adblock] Atualizando listas de filtro...");
-    await engine.updateFromLists(fetch, FILTER_LISTS, {
+
+    // updateFromLists não existe — recria o motor com as listas atualizadas
+    engine = await ElectronBlocker.fromLists(fetch, FILTER_LISTS, {
       enableCompression: true,
     });
+
     console.log("[Adblock] Listas atualizadas com sucesso.");
     await saveEngineToCache(engine);
   } catch (err) {
@@ -118,15 +121,33 @@ function scheduleUpdates() {
  * @returns {Promise<ElectronBlocker>} Instância do motor de bloqueio.
  */
 export async function setupAdBlocker(partition) {
-  // Evita múltiplas inicializações, mas permite ativar em outras sessões se necessário
   if (!engine) {
     engine = await createOrLoadEngine();
     scheduleUpdates();
   }
 
-  // Habilita o bloqueio na sessão do webview
   const targetSession = session.fromPartition(partition);
   await engine.enableBlockingInSession(targetSession);
+
+  // ✅ Camada extra: bloqueia domínios de ad na rede antes de baixar
+  targetSession.webRequest.onBeforeRequest(
+    {
+      urls: [
+        "*://*.doubleclick.net/*",
+        "*://*.googlesyndication.com/*",
+        "*://*.googleadservices.com/*",
+      ],
+    },
+    (details, callback) => {
+      const blocked = [
+        /youtube\.com\/pagead/,
+        /youtube\.com\/api\/stats\/ads/,
+        /youtube\.com\/get_midroll/,
+      ];
+      const shouldBlock = blocked.some((r) => r.test(details.url));
+      callback({ cancel: shouldBlock });
+    },
+  );
 
   console.log(`[Adblock] Bloqueio ativo na sessão "${partition}".`);
   return engine;

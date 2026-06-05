@@ -65,7 +65,7 @@
 .section p {
     font-size: 0.9rem;
     line-height: 1.4rem;
-    color: var(--text-muted);
+    color: var(--text);
 }
 
 /* bloco de código (ex: padrão de nome) */

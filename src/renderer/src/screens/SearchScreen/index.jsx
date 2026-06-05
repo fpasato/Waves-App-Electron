@@ -55,6 +55,10 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     handleLogin,
     handleLoginDone,
     handleLogout,
+    mixInfo,
+    mixMode,
+    setMixMode,
+    setQuery: setQuerySynced,
   } = useSearchHandlers({ setSearchUrl, setScreen });
 
   useEffect(() => {
@@ -157,7 +161,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
             type="text"
             placeholder="Buscar no YouTube..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setQuerySynced(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           {query && (
@@ -258,6 +262,28 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                   <p>Carregando formatos...</p>
                 ) : (
                   <>
+                    {mixInfo && (
+                      <div className="mix-toggle">
+                        <p>
+                          🎵 Mix detectada: <strong>{mixInfo.title}</strong>
+                          {mixInfo.count && ` (${mixInfo.count} vídeos)`}
+                        </p>
+                        <div className="toggle-buttons">
+                          <button
+                            className={mixMode === "single" ? "active" : ""}
+                            onClick={() => setMixMode("single")}
+                          >
+                            Só este vídeo
+                          </button>
+                          <button
+                            className={mixMode === "mix" ? "active" : ""}
+                            onClick={() => setMixMode("mix")}
+                          >
+                            Mix inteira
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Lista de qualidades de vídeo */}
                     {downloadType === DOWNLOAD_TYPES.VIDEO && (
                       <>

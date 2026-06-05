@@ -422,3 +422,55 @@
   opacity: 0.8;
   transform: scale(1.1);
 }
+
+
+/* Mix banner */
+.mixBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 200, 0, 0.1);
+  border: 1px solid rgba(255, 200, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.mixIcon { font-size: 1.2rem; }
+.mixBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  font-size: 0.82rem;
+}
+.mixBannerText strong { font-size: 0.85rem; }
+
+/* Toggle */
+.mixToggle {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.mixToggleBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s;
+}
+.mixToggleActive {
+  background: rgba(255, 200, 0, 0.25);
+  border-color: rgba(255, 200, 0, 0.6);
+  opacity: 1;
+}
+
+/* Aviso mix inteira */
+.mixWarning {
+  font-size: 0.82rem;
+  opacity: 0.7;
+  text-align: center;
+  padding: 12px 0;
+}

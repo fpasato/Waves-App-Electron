@@ -15,7 +15,7 @@
 }
 
 .songsArea h1 {
-    font-size: clamp(0.8rem, 1.8vw, 1.6rem);
+    font-size: clamp(0.8rem, 1.6vw, 1.6rem);
     padding-left: 0.4rem;
     align-self: flex-start;
 }

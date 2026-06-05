@@ -9,6 +9,7 @@ import { RadioScreen } from "./screens/RadioScreen";
 import { useAudio } from "./hooks/useAudio";
 import { usePlayerStore } from "./store/playerStore";
 import { DownloadScreen } from "./screens/DownloadsScreen";
+import { themes } from "./hooks/themes";
 
 function PlayerApp() {
   const [screen, setScreenState] = useState("player");
@@ -33,9 +34,28 @@ function PlayerApp() {
 
   // cor também vai pra um useEffect
   useEffect(() => {
-    const savedColor = localStorage.getItem("accent-color");
-    if (savedColor)
-      document.documentElement.style.setProperty("--accent", savedColor);
+    const applyTheme = () => {
+      const themeId = localStorage.getItem("active-theme-id");
+      const activeTheme = themes.find((t) => t.id === themeId) || themes[0];
+
+      document.documentElement.style.setProperty(
+        "--accent",
+        activeTheme.accent,
+      );
+      document.documentElement.style.setProperty(
+        "--player-bg",
+        activeTheme.gradient,
+      );
+      document.documentElement.style.setProperty(
+        "--glass-bg",
+        activeTheme.glassBg ?? "",
+      );
+    };
+
+    applyTheme(); // aplica na montagem
+    window.addEventListener("theme-changed", applyTheme);
+
+    return () => window.removeEventListener("theme-changed", applyTheme);
   }, []);
 
   useEffect(() => {

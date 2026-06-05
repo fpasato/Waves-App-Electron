@@ -66,6 +66,8 @@ const api = {
       ipcRenderer.invoke("youtube:getVideoFormats", videoId),
     downloadVideo: (payload) => ipcRenderer.invoke("download:video", payload),
     downloadAudio: (payload) => ipcRenderer.invoke("download:audio", payload),
+    getMixInfo: (payload) => ipcRenderer.invoke("youtube:getMixInfo", payload),
+    downloadMix: (payload) => ipcRenderer.invoke("download:mix", payload),
   },
 
   radio: {
@@ -98,6 +100,9 @@ const electronAPIBridge = {
       ipcRenderer.invoke("youtube:getVideoFormats", videoId),
     downloadVideo: (data) => ipcRenderer.invoke("download:video", data),
     downloadAudio: (data) => ipcRenderer.invoke("download:audio", data),
+
+    getMixInfo: (payload) => ipcRenderer.invoke("youtube:getMixInfo", payload),
+    downloadMix: (payload) => ipcRenderer.invoke("download:mix", payload),
   },
 
   googleLoginExternal: () => ipcRenderer.invoke("google:login-external"),
