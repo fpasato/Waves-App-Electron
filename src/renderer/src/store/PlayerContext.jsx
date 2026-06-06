@@ -1,5 +1,4 @@
-// PlayerContext.jsx
-import { createContext, useContext, useRef } from "react";
+import { createContext, useContext, useRef, useState, useCallback } from "react";
 
 const PlayerContext = createContext(null);
 
@@ -12,9 +11,11 @@ export function PlayerProvider({ children }) {
   const activeAudioRef = useRef(null);
   const fadingRef = useRef(false);
   const crossfadeDoneRef = useRef(false);
-  const seekRef = useRef(null);  
+  const seekRef = useRef(null);
   audioRef.current.crossOrigin = "anonymous";
   crossfadeAudioRef.current.crossOrigin = "anonymous";
+
+
   return (
     <PlayerContext.Provider value={{
       audioRef,

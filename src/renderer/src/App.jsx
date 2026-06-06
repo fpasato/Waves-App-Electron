@@ -10,6 +10,8 @@ import { useAudio } from "./hooks/useAudio";
 import { usePlayerStore } from "./store/playerStore";
 import { DownloadScreen } from "./screens/DownloadsScreen";
 import { themes } from "./hooks/themes";
+import { useDownloadQueue } from "./hooks/useDownloadQueue";
+import { Toast } from "./components/Toast";
 
 function PlayerApp() {
   const [screen, setScreenState] = useState("player");
@@ -19,6 +21,26 @@ function PlayerApp() {
   );
   const [searchUrl, setSearchUrl] = useState(null);
   const [searchMounted, setSearchMounted] = useState(true);
+  const downloadQueue = useDownloadQueue();
+  const toast = usePlayerStore((s) => s.toast);
+  const toasts = usePlayerStore((s) => s.toasts);
+  const dismissToast = usePlayerStore((s) => s.dismissToast);
+
+  useEffect(() => {
+    const handleDone = () => {
+      toast({ message: "Download concluído!", type: "success" });
+    };
+    const handleError = (_, { error }) => {
+      toast({ message: "Falha no download: " + error, type: "error" });
+    };
+
+    window.electronAPI.downloads.onDone(handleDone);
+    window.electronAPI.downloads.onError(handleError);
+
+    return () => {
+      window.electronAPI.downloads.removeListeners();
+    };
+  }, [toast]);
 
   // Função que substitui setScreen, agora aceita (name, data)
   const setScreen = (name, data) => {
@@ -86,7 +108,9 @@ function PlayerApp() {
         <SettingsScreen setScreen={setScreen} setTheme={setTheme} />
       )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
-      {screen === "downloads" && <DownloadScreen setScreen={setScreen} />}
+      {screen === "downloads" && (
+        <DownloadScreen setScreen={setScreen} downloadQueue={downloadQueue} />
+      )}
 
       {searchMounted ? (
         <div
@@ -110,6 +134,7 @@ function PlayerApp() {
       ) : null}
 
       {screen === "radio" && <RadioScreen setScreen={setScreen} />}
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

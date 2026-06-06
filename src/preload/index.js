@@ -68,6 +68,8 @@ const api = {
     downloadAudio: (payload) => ipcRenderer.invoke("download:audio", payload),
     getMixInfo: (payload) => ipcRenderer.invoke("youtube:getMixInfo", payload),
     downloadMix: (payload) => ipcRenderer.invoke("download:mix", payload),
+    getMixVideos: (payload) =>
+      ipcRenderer.invoke("youtube:getMixVideos", payload),
   },
 
   radio: {
@@ -100,9 +102,10 @@ const electronAPIBridge = {
       ipcRenderer.invoke("youtube:getVideoFormats", videoId),
     downloadVideo: (data) => ipcRenderer.invoke("download:video", data),
     downloadAudio: (data) => ipcRenderer.invoke("download:audio", data),
-
     getMixInfo: (payload) => ipcRenderer.invoke("youtube:getMixInfo", payload),
     downloadMix: (payload) => ipcRenderer.invoke("download:mix", payload),
+    getMixVideos: (payload) =>
+      ipcRenderer.invoke("youtube:getMixVideos", payload), // ← adiciona
   },
 
   googleLoginExternal: () => ipcRenderer.invoke("google:login-external"),
@@ -117,10 +120,12 @@ const electronAPIBridge = {
     revealFile: (filePath) =>
       ipcRenderer.invoke("downloads:revealFile", filePath),
     // Eventos de progresso
+    onQueued: (callback) => ipcRenderer.on("download:queued", callback), 
     onProgress: (callback) => ipcRenderer.on("download:progress", callback),
     onDone: (callback) => ipcRenderer.on("download:done", callback),
     onError: (callback) => ipcRenderer.on("download:error", callback),
     removeListeners: () => {
+      ipcRenderer.removeAllListeners("download:queued"); 
       ipcRenderer.removeAllListeners("download:progress");
       ipcRenderer.removeAllListeners("download:done");
       ipcRenderer.removeAllListeners("download:error");

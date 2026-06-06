@@ -3,8 +3,6 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-border-light: rgba(255, 255, 255, 0.2);
     --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    --accent: #6c5ce7;
-    --accent-hover: #8273e8;
     --text: #ffffff;
     --text-muted: rgb(255, 255, 255);
     --warning-bg: rgba(255, 193, 7, 0.15);
@@ -20,12 +18,10 @@
     overflow-y: auto;
     padding: 1rem;
     color: var(--text);
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border-radius: 1.2rem;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    background: var(--glass-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    filter: drop-shadow(0 0 10px black);
 
 }
 
@@ -78,4 +74,13 @@
     border: 1px solid var(--glass-border);
     color: var(--text);
     width: fit-content;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+
+    &:hover {
+        text-shadow: 0 0 10px var(--accent);
+    }
 }

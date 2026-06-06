@@ -6,13 +6,19 @@ import { randomCover } from "../../utils/randomCover";
 import styles from "./style.module.css";
 
 export function LibraryScreen({ setScreen }) {
-  const { library, playSong, addToQueue, setQueue, clearRadio, syncLibraryWithDatabase } =
-    usePlayerStore();
+  const {
+    library,
+    playSong,
+    addToQueue,
+    setQueue,
+    clearRadio,
+    syncLibraryWithDatabase,
+  } = usePlayerStore();
   const [scanning, setScanning] = useState(false);
 
   const totalSeconds = library.reduce(
     (acc, song) => acc + (song.duration || 0),
-    0
+    0,
   );
 
   // Formata duração
@@ -39,7 +45,7 @@ export function LibraryScreen({ setScreen }) {
 
   useEffect(() => {
     scanFolders();
-  }, [scanFolders]);
+  }, []); 
 
   return (
     <div className={styles.libraryContainer}>

@@ -18,11 +18,13 @@ export function mapTracksForDb(tracks, directoryId) {
 
 export async function refreshLibraryFromDisk() {
   const dirs = await window.api.db.directories.list();
+
   for (const dir of dirs) {
     const tracks = await window.api.music.scanFolder(dir.path);
     if (tracks.length === 0) continue;
     await window.api.db.songs.upsertMany(mapTracksForDb(tracks, dir.id));
   }
+  await window.api.db.songs.removeInvalid();
   return window.api.db.songs.getAll();
 }
 
@@ -76,7 +78,10 @@ export async function normalizeLibraryFileNames(onProgress) {
       // verifica se o arquivo existe antes de tudo
       const exists = await window.electronAPI.fs.exists(song.path);
       if (!exists) {
-        report.skipped.push({ path: song.path, reason: "arquivo não encontrado no disco" });
+        report.skipped.push({
+          path: song.path,
+          reason: "arquivo não encontrado no disco",
+        });
         continue;
       }
 
@@ -84,7 +89,11 @@ export async function normalizeLibraryFileNames(onProgress) {
       const ext = song.path.match(/\.[^.]+$/)?.[0] ?? ".mp3";
       const fileName = getFileNameWithoutExtension(song.path);
 
-      let { artist, title } = resolveArtistTitle(fileName, song.artist, song.title);
+      let { artist, title } = resolveArtistTitle(
+        fileName,
+        song.artist,
+        song.title,
+      );
 
       if (!artist || !title) {
         const geminiResult = await fetchArtistTitleFromGemini(fileName);
@@ -95,7 +104,10 @@ export async function normalizeLibraryFileNames(onProgress) {
       }
 
       if (!artist || !title) {
-        report.skipped.push({ path: song.path, reason: "não foi possível extrair" });
+        report.skipped.push({
+          path: song.path,
+          reason: "não foi possível extrair",
+        });
         continue;
       }
 

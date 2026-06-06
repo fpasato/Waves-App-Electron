@@ -8,6 +8,7 @@ import {
   ytDlp,
   ffmpegPath,
   baseFlags,
+  baseFlagsPlaylist, // ← adiciona
   USER_AGENT,
   YOUTUBE_PARTITION,
 } from "./utils.js";
@@ -19,7 +20,6 @@ import { initDatabase, closeDatabase } from "./database/database.js";
 import { registerDbHandlers } from "./handlers/dbHandlers.js";
 import { registerYoutubeHandlers } from "./handlers/youtubeHandlers.js";
 import { registerAuthHandlers } from "./handlers/authHandlers.js";
-import { registerGeminiHandler } from "./handlers/geminiHandler.js";
 
 // Se você tem uma função searchYoutube real, importe-a:
 // import { searchYoutube } from './services/youtubeSearch.js';
@@ -50,7 +50,6 @@ async function bootstrap() {
   registerYoutubeHandlers({ ytDlp, ffmpegPath, baseFlags, searchYoutube });
   registerAuthHandlers();
   registerMiscHandlers();
-  registerGeminiHandler();
 
   // ✅ Handlers de download registrados UMA vez, fora do createWindow
   mainWindow = await createWindow(USER_AGENT);
@@ -60,6 +59,7 @@ async function bootstrap() {
     ytDlpPath,
     ffmpegPath,
     baseFlags,
+    baseFlagsPlaylist,
   });
 
   // ✅ No activate, só recria a janela — NÃO registra handlers de novo

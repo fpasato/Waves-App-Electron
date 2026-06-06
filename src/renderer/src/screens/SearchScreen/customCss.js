@@ -2,42 +2,10 @@ export const CUSTOM_CSS = `
   /* Shorts */
   ytd-guide-entry-renderer:has(a[title="Shorts"]) { display: none !important; }
 
-  /* Inscrições */
-  ytd-guide-entry-renderer:has(a[href="/feed/subscriptions"]) { display: none !important; }
-
-  /* Você */
-  ytd-guide-entry-renderer:has(a[href="/feed/you"]) { display: none !important; }
-
-  /* Assistir mais tarde */
-  ytd-guide-entry-renderer:has(a[href*="list=WL"]) { display: none !important; }
-
-  /* Downloads */
-  ytd-guide-entry-renderer:has(a[href="/feed/downloads"]) { display: none !important; }
-
-  /* Explorar (seção) */
-  ytd-guide-section-renderer:has(a[href="/feed/explore"]) { display: none !important; }
-
-  /* Shopping */
-  ytd-guide-entry-renderer:has(a[href*="UCkYQyvc_i9hXEo4xic9Hh2g"]) { display: none !important; }
-
-  /* Música */
-  ytd-guide-entry-renderer:has(a[href*="UC-9-kyTW8ZkZNDHQJ6FgpwQ"]) { display: none !important; }
-
-  /* Filmes */
-  ytd-guide-entry-renderer:has(a[href*="storefront"]) { display: none !important; }
-
   /* Mais do YouTube, rodapé, etc */
   ytd-guide-collapsible-entry-renderer { display: none !important; }
   ytd-guide-section-renderer:has(a[href*="premium"]) { display: none !important; }
   ytd-guide-renderer #footer { display: none !important; }
-
-  /* +Criar, sino, avatar, voz */
-  ytd-masthead #buttons ytd-topbar-menu-button-renderer { display: none !important; }
-  #notification-button { display: none !important; }
-  button[aria-label="Criar"] { display: none !important; }
-  button[aria-label="Notificações"] { display: none !important; }
-  #voice-search-button { display: none !important; }
-  #avatar-btn { display: none !important; }
 
   /* Vídeos com Gostei */
   ytd-guide-entry-renderer:has(a[href*="list=LL"]) { display: none !important; }
@@ -80,10 +48,6 @@ export const CUSTOM_CSS = `
   ytd-merch-shelf-renderer { display: none !important; }
   ytd-ticket-shelf-renderer { display: none !important; }
 
-  /* Logo do YouTube na topbar */
-  #logo { display: none !important; }
-  ytd-topbar-logo-renderer { display: none !important; }
-  #center { display: none !important; }
 
   /* Slots de anúncio no feed */
   ytd-ad-slot-renderer { display: none !important; }
@@ -117,7 +81,6 @@ export const CUSTOM_CSS = `
   #related #player-ads { display: none !important; }
   ytd-item-section-renderer:has(ytd-ad-slot-renderer) { display: none !important; }
 
-
   /* Primeiro card de ad no feed */
   /* Remove qualquer item que contenha um display-ad-renderer */
   ytd-rich-item-renderer:has(ytd-display-ad-renderer) { display: none !important; }
@@ -126,17 +89,6 @@ export const CUSTOM_CSS = `
   /* Remove banner de anúncio no topo da página inicial */
   ytd-banner-promo-renderer { display: none !important; }
   ytd-statement-banner-renderer { display: none !important; }
-
-  /* ── Remove botão de login da topbar ── */
-  #buttons a[href*="ServiceLogin"] { display: none !important; }
-  /* ou, se necessário, o container inteiro */
-  #buttons ytd-button-renderer:has(a[href*="ServiceLogin"]) { display: none !important; }
-
-  /* ── Remove bloco "Faça login para curtir..." da sidebar ── */
-  ytd-guide-signin-promo-renderer { display: none !important; }
-
-  /* ── (Opcional) Remove o link "Pular navegação" (acessibilidade) ── */
-  #skip-navigation { display: none !important; }
 `;
 
 export const SKIP_ADS_SCRIPT = `

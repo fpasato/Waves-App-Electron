@@ -1,3 +1,4 @@
+/* ── Base ─────────────────────────────────────────────────── */
 .playlists {
   width: 100%;
   height: 100%;
@@ -6,10 +7,14 @@
   display: flex;
   flex-direction: column;
   gap: clamp(0.4rem, 1vw, 1rem);
-  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.2rem;
+  padding: 0.2rem;
   z-index: 1;
 }
 
+/* ── Header ───────────────────────────────────────────────── */
 .playlistsHeader {
   display: flex;
   align-items: center;
@@ -19,89 +24,57 @@
 }
 
 .playlistsTitle {
+  flex: 1;
+  min-width: 0;
+  margin-left: 0.5rem;
   font-size: clamp(0.7rem, 1.5vw, 1.4rem);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
+}
+
+/* ── Botões ───────────────────────────────────────────────── */
+.createPlaylistButton,
+.backButton,
+.playAllButton,
+.confirmButton,
+.actionButton,
+.toggleButton {
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
 .createPlaylistButton {
-  background: transparent;
-  border: 1px solid var(--background);
-  color: var(--text);
+  border: 1px solid var(--text);
   border-radius: 50%;
   width: clamp(1.4rem, 2.5vw, 2rem);
   height: clamp(1.4rem, 2.5vw, 2rem);
   font-size: clamp(0.8rem, 1.5vw, 1.2rem);
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
+  color: var(--text);
 }
-
-.createPlaylistButton:hover {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-}
+.createPlaylistButton:hover { background:  var(--accent);}
 
 .backButton {
-  background: transparent;
   border: none;
   color: var(--text-secondary, #ccc);
   font-size: clamp(0.6rem, 1.3vw, 0.9rem);
-  cursor: pointer;
   padding: 0.2rem 0.3rem;
   border-radius: 0.3rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: color 0.2s;
 }
-
-.backButton:hover {
-  color: var(--text);
-}
+.backButton:hover { color: var(--text); }
 
 .playAllButton {
-  background: transparent;
   border: 1px solid var(--background);
-  color: var(--text);
   font-size: clamp(0.55rem, 1.2vw, 0.8rem);
-  cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 0.5rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.2s;
 }
-
-.playAllButton:hover {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-}
-
-.createForm {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.input {
-  min-width: 0;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--background);
-  border-radius: 0.4rem;
-  color: var(--text);
-  padding: 0.3rem 0.5rem;
-  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
-  outline: none;
-  width: 100%;
-}
-
-.input:focus {
-  border-color: color-mix(in srgb, var(--accent) 80%, white);
-}
+.playAllButton:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
 
 .confirmButton {
   background: #1c1a1a53;
@@ -110,90 +83,60 @@
   border-radius: 0.4rem;
   padding: 0.3rem 0.5rem;
   font-size: clamp(0.6rem, 1.3vw, 0.85rem);
-  cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.2s;
 }
-
-.confirmButton:hover {
-  background: color-mix(in srgb, var(--background) 20%, transparent);
-}
-
-/* ---- lista de playlists ---- */
-.playlistsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex: 1;
-  min-height: 0;
-  padding: clamp(0.3rem, 1vw, 0.6rem);
-  background-color: var(--glass-bg);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-}
-
-.playlistItem {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.3rem, 1vw, 0.75rem);
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.4rem;
-  border: 1px solid var(--accent);
-  background-color: var(--mid);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.playlistItem:hover {
-  background: color-mix(in srgb, var(--accent) 12%, var(--mid));
-}
-
-.playlistItem img {
-  width: clamp(28px, 4vw, 40px);
-  height: clamp(28px, 4vw, 40px);
-  border-radius: 0.35rem;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.playlistItem h3 {
-  flex: 1;
-  font-size: clamp(0.7rem, 1.6vw, 1rem);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.playlistActions {
-  display: flex;
-  gap: 0.2rem;
-  flex-shrink: 0;
-}
+.confirmButton:hover { background: color-mix(in srgb, var(--background) 20%, transparent); }
 
 .actionButton {
-  background: transparent;
   border: none;
   color: var(--text-secondary, #ccc);
   font-size: clamp(0.7rem, 1.4vw, 0.9rem);
-  cursor: pointer;
   padding: 0.15rem 0.25rem;
   border-radius: 0.3rem;
-  transition: color 0.2s, background 0.2s;
 }
+.actionButton:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
 
-.actionButton:hover {
+.toggleButton {
+  flex-shrink: 0;
+  width: clamp(1.2rem, 2vw, 1.6rem);
+  height: clamp(1.2rem, 2vw, 1.6rem);
+  border-radius: 50%;
+  border: 1px solid;
+  font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toggleAdd  { border-color: var(--accent); color: var(--accent); }
+.toggleAdd:hover  { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+.toggleRemove { border-color: #ff6b6b; color: #ff6b6b; }
+.toggleRemove:hover { background: rgba(255, 107, 107, 0.15); }
+
+/* ── Input ────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  min-width: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--background);
+  border-radius: 0.4rem;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+  padding: 0.3rem 0.5rem;
+  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+  outline: none;
+}
+.input:focus { border-color: color-mix(in srgb, var(--accent) 80%, white); }
+
+/* ── Create form ──────────────────────────────────────────── */
+.createForm {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
 }
 
-/* ---- músicas dentro da playlist ---- */
+/* ── Listas (shared) ──────────────────────────────────────── */
+.playlistsList,
 .songsList {
   display: flex;
   flex-direction: column;
@@ -203,30 +146,34 @@
   flex: 1;
   min-height: 0;
   padding: clamp(0.3rem, 1vw, 0.6rem);
-  background: rgba(0, 0, 0, 0.469);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
+.playlistsList { background-color: var(--glass-bg); }
+.songsList     { background: rgba(0, 0, 0, 0.469); }
+
+/* ── Itens (shared) ───────────────────────────────────────── */
+.playlistItem,
 .songItem {
   display: flex;
   align-items: center;
-  gap: clamp(0.3rem, 1vw, 0.6rem);
+  gap: clamp(0.3rem, 1vw, 0.75rem);
   padding: 0.35rem 0.5rem;
   border-radius: 0.4rem;
   border: 1px solid var(--accent);
   background-color: var(--mid);
   transition: background 0.2s;
-}
-
-.songItem:hover {
-  background: color-mix(in srgb, var(--accent) 12%, var(--mid));
   cursor: pointer;
 }
 
+.playlistItem:hover,
+.songItem:hover { background: color-mix(in srgb, var(--accent) 12%, var(--mid)); }
+
+.playlistItem img,
 .songCover {
   width: clamp(28px, 4vw, 40px);
   height: clamp(28px, 4vw, 40px);
@@ -235,36 +182,43 @@
   flex-shrink: 0;
 }
 
-.songInfo {
+.playlistItem h3 {
   flex: 1;
   min-width: 0;
+  font-size: clamp(0.7rem, 1.6vw, 1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inPlaylist { background: color-mix(in srgb, var(--accent) 12%, var(--mid)); }
+
+/* ── Song info ────────────────────────────────────────────── */
+.playlistActions,
+.songInfo {
   display: flex;
+  min-width: 0;
+}
+
+.playlistActions { gap: 0.2rem; flex-shrink: 0; }
+
+.songInfo {
+  flex: 1;
   flex-direction: column;
   gap: 1px;
 }
 
-.songTitle {
-  font-size: clamp(0.65rem, 1.6vw, 1rem);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+.songTitle,
 .songArtist {
-  font-size: clamp(0.6rem, 1.4vw, 0.85rem);
-  color: var(--text-secondary, #ccc);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.empty {
-  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
-  color: var(--text-secondary, #ccc);
-  text-align: center;
-  padding: 0.75rem 0;
-}
+.songTitle  { font-size: clamp(0.65rem, 1.6vw, 1rem); }
+.songArtist { font-size: clamp(0.6rem, 1.4vw, 0.85rem); color: var(--text-secondary, #ccc); }
 
+/* ── Misc ─────────────────────────────────────────────────── */
 .sectionLabel {
   font-size: clamp(0.55rem, 1.2vw, 0.75rem);
   color: var(--text-secondary, #ccc);
@@ -273,40 +227,9 @@
   padding: 0.2rem 0.1rem 0;
 }
 
-.inPlaylist {
-  background: color-mix(in srgb, var(--accent) 12%, var(--mid));
-}
-
-.toggleButton {
-  flex-shrink: 0;
-  width: clamp(1.2rem, 2vw, 1.6rem);
-  height: clamp(1.2rem, 2vw, 1.6rem);
-  border-radius: 50%;
-  border: 1px solid;
-  background: transparent;
-  font-size: clamp(0.8rem, 1.5vw, 1.1rem);
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s;
-}
-
-.toggleAdd {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.toggleAdd:hover {
-  background: color-mix(in srgb, var(--accent) 25%, transparent);
-}
-
-.toggleRemove {
-  border-color: #ff6b6b;
-  color: #ff6b6b;
-}
-
-.toggleRemove:hover {
-  background: rgba(255, 107, 107, 0.15);
+.empty {
+  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+  color: var(--text-secondary, #ccc);
+  text-align: center;
+  padding: 0.75rem 0;
 }

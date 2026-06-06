@@ -1,43 +1,104 @@
-/* SearchScreen — WebView Edition */
+/* ================================================================
+   Variáveis (compartilhadas com o resto da aplicação)
+   ================================================================ */
+:root {
+  --accent: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface-hover: #1a1a1a;
+  --border: #222222;
+  --border-hover: #333333;
+
+  --text: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --transition: 150ms ease;
+}
+
+/* ================================================================
+   Layout principal
+   ================================================================ */
 .searchScreen {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  background: #0f0f0f;
-  color: #fff;
+  background: var(--bg);
+  color: var(--text);
   overflow: hidden;
 }
 
-/* ── Header ─────────────────────────────────────────── */
+/* ── Header ──────────────────────────────────────────────────── */
 .searchHeader {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #2a2a2a;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   -webkit-app-region: no-drag;
 }
 
+/* Botão "Home" */
 .backBtn {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 18px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .backBtn:hover {
   color: #fff;
-  background: #2a2a2a;
+  background: var(--surface-hover);
 }
 
+/* ── Botões de navegação e ação (ícone) ──────────────────────── */
+.navBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.navBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navBtn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  opacity: 1;
+}
+
+.navBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Campo de busca */
 .searchInputWrapper {
   flex: 1;
   position: relative;
@@ -47,22 +108,22 @@
 
 .searchInput {
   width: 100%;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  color: #fff;
+  color: var(--text);
   font-size: 14px;
   padding: 7px 36px 7px 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition);
 }
 
 .searchInput::placeholder {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .searchInput:focus {
-  border-color: #ff0000;
+  border-color: var(--accent);
 }
 
 .clearBtn {
@@ -70,105 +131,19 @@
   right: 10px;
   background: none;
   border: none;
-  color: #666;
+  color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 50%;
-  transition: color 0.15s;
+  transition: color var(--transition);
 }
 
 .clearBtn:hover {
-  color: #fff;
+  color: var(--text);
 }
 
-.searchBtn {
-  background: #ff0000;
-  border: none;
-  border-radius: 20px;
-  color: #fff;
-  font-size: 14px;
-  padding: 7px 14px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s, opacity 0.15s;
-}
-
-.searchBtn:hover:not(:disabled) {
-  background: #cc0000;
-}
-
-.searchBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* ── Body ────────────────────────────────────────────── */
-.body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* ── Player inline ───────────────────────────────────── */
-.playerPanel {
-  display: flex;
-  flex-direction: column;
-  width: 420px;
-  flex-shrink: 0;
-  background: #111;
-  border-right: 1px solid #2a2a2a;
-}
-
-.playerTopBar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 6px 8px;
-  background: #1a1a1a;
-  flex-shrink: 0;
-}
-
-.closePlayerBtn {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
-}
-
-.closePlayerBtn:hover {
-  color: #fff;
-  background: #2a2a2a;
-}
-
-.ytEmbed {
-  width: 100%;
-  flex: 1;
-  border: none;
-  min-height: 0;
-}
-
-/* ── WebView ─────────────────────────────────────────── */
-.webview {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  border: none;
-  background: #0f0f0f;
-}
-
-.webviewNarrow {
-  /* quando o player está aberto, a webview ocupa o restante */
-  flex: 1;
-}
-
-
-
-/* ─── Login / Logout ─────────────────────────────────────────── */
+/* ── Autenticação (Login/Logout) ──────────────────────────────── */
 .authWrapper {
   position: relative;
   display: flex;
@@ -176,301 +151,489 @@
 }
 
 .authBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s, border-color 0.2s;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  transition: var(--transition);
 }
 
 .authBtn:hover {
-  background: rgba(138, 0, 255, 0.25);
-  border-color: rgba(138, 0, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
   color: #fff;
 }
 
 .logoutBtn {
-  background: rgba(255, 60, 60, 0.1);
-  border-color: rgba(255, 60, 60, 0.25);
-  color: rgba(255, 180, 180, 0.9);
+  background: rgba(255, 60, 60, 0.08);
+  border-color: rgba(255, 60, 60, 0.2);
+  color: #ff8080;
 }
 
 .logoutBtn:hover {
-  background: rgba(255, 60, 60, 0.25);
-  border-color: rgba(255, 60, 60, 0.5);
+  background: rgba(255, 60, 60, 0.15);
+  border-color: rgba(255, 60, 60, 0.35);
   color: #fff;
 }
 
-/* ─── Modal ──────────────────────────────────────────────────── */
+/* ── Body (webview) ──────────────────────────────────────────── */
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.webview {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: var(--bg);
+}
+
+/* ================================================================
+   MODAIS (login e download)
+   ================================================================ */
+
 /* Overlay */
 .modalOverlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 9999;
   padding: 1rem;
 }
 
-/* Modal */
+/* Caixa do modal */
 .modal {
   width: 100%;
-  max-width: 500px;
+  max-width: 420px;
   max-height: 85vh;
-
   overflow-y: auto;
-
-  background: rgba(20, 20, 30, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-
-  padding: 1.5rem;
-
-  box-shadow:
-    0 0 40px rgba(255, 0, 212, 0.15),
-    0 0 80px rgba(0, 174, 255, 0.08);
-
-  color: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 /* Título */
 .modal h3 {
   text-align: center;
-  margin-bottom: 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 700;
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
 }
 
-/* Abas */
+/* Modal de login (simples) */
+.modal p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+}
+
+.modalConfirmBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 8px;
+}
+
+.modalConfirmBtn:hover {
+  filter: brightness(1.1);
+}
+
+/* ================================================================
+   COMPONENTES DO MODAL DE DOWNLOAD
+   ================================================================ */
+
+/* ── Banner de mix ──────────────────────────────────────────── */
+.mixBanner {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mixBannerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mixBannerInfo span:first-child {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mixBannerInfo div strong {
+  font-size: 13px;
+  color: #fff;
+}
+
+.mixBannerInfo div small {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Toggle "Este vídeo" / "Mix inteira" */
+.mixToggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.mixToggleBtn {
+  flex: 1;
+  padding: 7px 0;
+  background: none;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mixToggleBtn:hover {
+  color: #fff;
+}
+
+.mixToggleActive {
+  background: rgba(var(--accent-rgb), 0.2);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Lista de vídeos da mix ──────────────────────────────────── */
+.mixVideoList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mixLoadingText {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px 0;
+}
+
+.mixListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mixListCount {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mixListActions {
+  display: flex;
+  gap: 6px;
+}
+
+.mixListActionBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mixListActionBtn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: #fff;
+}
+
+.mixListActionBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Itens da lista */
+.mixVideoItems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mixVideoItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mixVideoItems::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.mixVideoItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+  border: 1px solid transparent;
+}
+
+.mixVideoItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mixVideoItemDeselected {
+  opacity: 0.5;
+}
+
+/* Checkbox customizado */
+.mixCheckbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.mixCheckbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mixCheckbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.mixVideoIndex {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 20px;
+  text-align: right;
+}
+
+.mixVideoTitle {
+  font-size: 12px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Seletor de qualidade (mix) ──────────────────────────────── */
+.mixQualitySelector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mixQualitySelector label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.mixQualitySelect {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--transition);
+  cursor: pointer;
+}
+
+.mixQualitySelect:focus {
+  border-color: var(--accent);
+}
+
+/* ── Abas de download (Vídeo / Áudio) ────────────────────────── */
 .downloadTabs {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  gap: 8px;
 }
 
 .tab,
 .tabActive {
   flex: 1;
-
+  padding: 10px 12px;
   border: none;
-  border-radius: 12px;
-
-  padding: 0.85rem;
-
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-
-  transition: all 0.25s ease;
-
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.tab {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ddd;
+  transition: var(--transition);
+  text-align: center;
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
 }
 
 .tabActive {
-  background: linear-gradient(
-    135deg,
-    #ff00d4,
-    #00bfff
-  );
-
-  color: white;
-
-  box-shadow:
-    0 0 15px rgba(255, 0, 212, 0.35),
-    0 0 20px rgba(0, 191, 255, 0.25);
+  color: #fff;
+  border-bottom-color: var(--accent);
 }
 
-/* Lista de formatos */
+/* ── Botões de formato ──────────────────────────────────────── */
 .formatButton {
   width: 100%;
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-
-  color: white;
-
-  border-radius: 12px;
-
-  padding: 0.85rem 1rem;
-  margin-bottom: 0.5rem;
-
-  text-align: center;
-
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
   cursor: pointer;
-  transition: 0.2s;
+  transition: var(--transition);
+  text-align: left;
 }
 
 .formatButton:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
 }
 
 .formatButtonSelected {
-  background: rgba(255, 0, 212, 0.15);
-  border-color: #ff00d4;
-
-  box-shadow:
-    0 0 12px rgba(255, 0, 212, 0.25);
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: #fff;
+  font-weight: 500;
 }
 
 /* Texto auxiliar */
 .modal small {
   display: block;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
-  color: #aaa;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  margin-bottom: 4px;
 }
 
-/* Ações */
+/* ── Botões de ação do modal ────────────────────────────────── */
 .modalActions {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .downloadBtn,
 .cancelBtn {
   flex: 1;
-
-  border: none;
-  border-radius: 12px;
-
-  padding: 0.9rem;
-
+  padding: 11px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-
-  font-weight: 700;
-  transition: 0.25s;
+  transition: var(--transition);
+  border: 1px solid transparent;
 }
 
 .downloadBtn {
-  background: linear-gradient(
-    135deg,
-    #ff00d4,
-    #00bfff
-  );
-  color: white;
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
 }
 
 .downloadBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 .downloadBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .cancelBtn {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: #ccc;
 }
 
 .cancelBtn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
-/* Scroll */
+/* ================================================================
+   Scroll global do modal
+   ================================================================ */
 .modal::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .modal::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 999px;
 }
 
-.navBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem;
-  background-color: transparent;
-  color: #fff;
-  border: none;
 
-  & svg {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.navBtn:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
-}
-
-
-/* Mix banner */
-.mixBanner {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: rgba(255, 200, 0, 0.1);
-  border: 1px solid rgba(255, 200, 0, 0.3);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-.mixIcon { font-size: 1.2rem; }
-.mixBannerText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  font-size: 0.82rem;
-}
-.mixBannerText strong { font-size: 0.85rem; }
-
-/* Toggle */
-.mixToggle {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.mixToggleBtn {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: transparent;
-  font-size: 0.75rem;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.15s;
-}
-.mixToggleActive {
-  background: rgba(255, 200, 0, 0.25);
-  border-color: rgba(255, 200, 0, 0.6);
+.navBtnActive {
+  color: #ff4500; /* laranja YouTube */
   opacity: 1;
 }
 
-/* Aviso mix inteira */
-.mixWarning {
-  font-size: 0.82rem;
-  opacity: 0.7;
-  text-align: center;
-  padding: 12px 0;
-}
+
+

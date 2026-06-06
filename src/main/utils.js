@@ -29,12 +29,8 @@ export const ytDlpPath = app.isPackaged
 
 export const ffmpegPath = ffmpegStatic;
 
-export const cookiesPath = path.join(
-  os.homedir(),
-  "AppData",
-  "Roaming",
-  "meu-projeto",
-  "cookies.txt",
+const cookiesPath = path.join(
+  os.homedir(), 'AppData', 'Roaming', 'meu-projeto', 'cookies.txt'
 );
 
 // Instância única do yt-dlp (compartilhada)
@@ -53,6 +49,11 @@ export function getAuthFlags() {
 
 export function baseFlags() {
   return ["--no-playlist", "--js-runtimes", "node", ...getAuthFlags()];
+}
+
+// baseFlags sem --no-playlist — usar em comandos de playlist/mix
+export function baseFlagsPlaylist() {
+  return ["--js-runtimes", "node", ...getAuthFlags()];
 }
 
 // ─── Download/verificação do yt-dlp ─────────────────────────

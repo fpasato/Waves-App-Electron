@@ -6,6 +6,8 @@ import { CUSTOM_CSS, SKIP_ADS_SCRIPT } from "./customCss";
 import {
   useSearchHandlers,
   DOWNLOAD_TYPES,
+  MIX_VIDEO_QUALITIES,
+  MIX_AUDIO_QUALITIES,
 } from "../../hooks/Usesearchhandlers";
 
 import { FaExplosion } from "react-icons/fa6";
@@ -16,26 +18,24 @@ import { FaHome, FaDownload } from "react-icons/fa";
 import { BsSearch } from "react-icons/bs";
 import { ImExit } from "react-icons/im";
 import { LuLogIn } from "react-icons/lu";
+import { usePlayerStore } from "../../store/playerStore";
 
 export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
+  const toast = usePlayerStore((s) => s.toast);
+
   const {
-    // refs
     webviewRef,
     inputRef,
-    // navegação
     canGoBack,
     canGoForward,
     updateNavState,
     handleGoBack,
     handleGoForward,
     handleReload,
-    // busca
     query,
-    setQuery,
     clearQuery,
     handleSearch,
     handleKeyDown,
-    // download
     showDownloadModal,
     videoFormats,
     audioFormats,
@@ -48,7 +48,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     openDownloadModal,
     closeDownloadModal,
     handleStartDownload,
-    // autenticação
     isLoggedIn,
     setIsLoggedIn,
     showLoginModal,
@@ -58,17 +57,26 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     mixInfo,
     mixMode,
     setMixMode,
+    mixVideos,
+    loadingMixVideos,
+    toggleMixVideo,
+    toggleAllMixVideos,
+    mixQuality,
+    setMixQuality,
     setQuery: setQuerySynced,
-  } = useSearchHandlers({ setSearchUrl, setScreen });
-
+  } = useSearchHandlers({ setSearchUrl, setScreen, toast });
+  
   useEffect(() => {
     const wv = webviewRef.current;
     if (!wv) return;
     let destroyed = false;
+
     wv.setMaxListeners?.(50);
 
     async function injectScripts() {
       if (destroyed || !wv.isConnected) return;
+      const url = wv.getURL?.();
+      if (!url || url === "about:blank") return;
       try {
         await wv.insertCSS(CUSTOM_CSS);
       } catch (e) {}
@@ -81,8 +89,9 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
 
     const handleDomReady = async () => {
       if (destroyed || !wv.isConnected) return;
+      const url = wv.getURL?.();
+      if (!url || url === "about:blank") return;
       await injectScripts();
-
       setTimeout(async () => {
         if (destroyed || !wv.isConnected) return;
         try {
@@ -92,14 +101,16 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           if (!destroyed) setIsLoggedIn(logged);
         } catch (e) {}
       }, 2000);
-
       if (!destroyed) updateNavState();
     };
 
-    // did-stop-loading dispara após cada navegação SPA terminar de carregar
     const handleStopLoading = async () => {
       if (destroyed || !wv.isConnected) return;
-      await injectScripts();
+      const url = wv.getURL?.();
+      if (!url || url === "about:blank") return;
+      try {
+        await injectScripts();
+      } catch (e) {}
       if (!destroyed) updateNavState();
     };
 
@@ -108,27 +119,24 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
 
     return () => {
       destroyed = true;
-      if (wv.isConnected) {
+      try {
         wv.removeEventListener("dom-ready", handleDomReady);
         wv.removeEventListener("did-stop-loading", handleStopLoading);
-      }
+      } catch (e) {}
     };
-  }, [updateNavState, setIsLoggedIn, webviewRef]);
+  }, []);
 
   return (
     <div className={styles.searchScreen}>
       <div className={styles.searchHeader}>
-        {/* Navegação */}
         <Button
           className={styles.backBtn}
           onClick={() => setScreen("player")}
           title={<FaHome />}
         />
-
         <button className={styles.navBtn} onClick={onClose} title="Fechar">
           <FaExplosion />
         </button>
-
         <button
           className={styles.navBtn}
           onClick={handleGoBack}
@@ -153,7 +161,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           <IoReload />
         </button>
 
-        {/* Busca */}
         <div className={styles.searchInputWrapper}>
           <input
             ref={inputRef}
@@ -174,6 +181,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
             </button>
           )}
         </div>
+
         <button
           className={styles.navBtn}
           onClick={handleSearch}
@@ -181,8 +189,15 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
         >
           <BsSearch />
         </button>
-
-        {/* Download */}
+        <button
+          className={`${styles.navBtn} ${isLoggedIn ? styles.navBtnActive : ""}`}
+          onClick={handleLogin}
+          title={
+            isLoggedIn ? "Logado no Google" : "Fazer login com Google (cookies)"
+          }
+        >
+          🍪
+        </button>
         <button
           className={styles.navBtn}
           onClick={openDownloadModal}
@@ -191,7 +206,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
           <FaDownload />
         </button>
 
-        {/* Auth */}
         <div className={styles.authWrapper}>
           {isLoggedIn ? (
             <button
@@ -206,7 +220,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
             </button>
           )}
 
-          {/* Modal: login */}
           {showLoginModal && (
             <div className={styles.modalOverlay}>
               <div className={styles.modal}>
@@ -224,13 +237,11 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
             </div>
           )}
 
-          {/* Modal: download */}
           {showDownloadModal && (
             <div className={styles.modalOverlay}>
               <div className={styles.modal}>
                 <h3>Download</h3>
 
-                {/* Abas Vídeo / Áudio */}
                 <div className={styles.downloadTabs}>
                   <button
                     className={
@@ -263,86 +274,163 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                 ) : (
                   <>
                     {mixInfo && (
-                      <div className="mix-toggle">
-                        <p>
-                          🎵 Mix detectada: <strong>{mixInfo.title}</strong>
-                          {mixInfo.count && ` (${mixInfo.count} vídeos)`}
-                        </p>
-                        <div className="toggle-buttons">
+                      <div className={styles.mixBanner}>
+                        <div className={styles.mixBannerInfo}>
+                          <span>🎵</span>
+                          <div>
+                            <strong>{mixInfo.title}</strong>
+                            {mixInfo.count && (
+                              <small>{mixInfo.count} vídeos</small>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className={styles.mixToggle}>
                           <button
-                            className={mixMode === "single" ? "active" : ""}
+                            className={`${styles.mixToggleBtn} ${mixMode === "single" ? styles.mixToggleActive : ""}`}
                             onClick={() => setMixMode("single")}
                           >
                             Só este vídeo
                           </button>
                           <button
-                            className={mixMode === "mix" ? "active" : ""}
+                            className={`${styles.mixToggleBtn} ${mixMode === "mix" ? styles.mixToggleActive : ""}`}
                             onClick={() => setMixMode("mix")}
                           >
                             Mix inteira
                           </button>
                         </div>
+
+                        {mixMode === "mix" && (
+                          <div className={styles.mixVideoList}>
+                            {loadingMixVideos ? (
+                              <p className={styles.mixLoadingText}>
+                                Carregando vídeos da mix...
+                              </p>
+                            ) : (
+                              <>
+                                <div className={styles.mixQualitySelector}>
+                                  <label>Qualidade:</label>
+                                  <select
+                                    className={styles.mixQualitySelect}
+                                    value={mixQuality}
+                                    onChange={(e) =>
+                                      setMixQuality(e.target.value)
+                                    }
+                                  >
+                                    {downloadType === DOWNLOAD_TYPES.VIDEO
+                                      ? MIX_VIDEO_QUALITIES.map((q) => (
+                                          <option key={q.value} value={q.value}>
+                                            {q.label}
+                                          </option>
+                                        ))
+                                      : MIX_AUDIO_QUALITIES.map((q) => (
+                                          <option key={q.value} value={q.value}>
+                                            {q.label}
+                                          </option>
+                                        ))}
+                                  </select>
+                                </div>
+
+                                <div className={styles.mixListHeader}>
+                                  <span className={styles.mixListCount}>
+                                    {mixVideos.filter((v) => v.selected).length}
+                                    /{mixVideos.length} selecionados
+                                  </span>
+                                  <div className={styles.mixListActions}>
+                                    <button
+                                      className={styles.mixListActionBtn}
+                                      onClick={() => toggleAllMixVideos(true)}
+                                    >
+                                      Todos
+                                    </button>
+                                    <button
+                                      className={styles.mixListActionBtn}
+                                      onClick={() => toggleAllMixVideos(false)}
+                                    >
+                                      Nenhum
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <ul className={styles.mixVideoItems}>
+                                  {mixVideos.map((v) => (
+                                    <li
+                                      key={v.id}
+                                      className={`${styles.mixVideoItem} ${!v.selected ? styles.mixVideoItemDeselected : ""}`}
+                                      onClick={() => toggleMixVideo(v.id)}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className={styles.mixCheckbox}
+                                        checked={v.selected}
+                                        onChange={() => toggleMixVideo(v.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                      <span className={styles.mixVideoIndex}>
+                                        {v.index}.
+                                      </span>
+                                      <span className={styles.mixVideoTitle}>
+                                        {v.title}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
-                    {/* Lista de qualidades de vídeo */}
-                    {downloadType === DOWNLOAD_TYPES.VIDEO && (
-                      <>
-                        {videoFormats.length === 0 ? (
-                          <p>Nenhum formato de vídeo disponível.</p>
-                        ) : (
-                          videoFormats.map((f) => (
-                            <button
-                              key={f.id}
-                              onClick={() => setSelectedFormatId(f.id)}
-                              className={`${styles.formatButton} ${
-                                selectedFormatId === f.id
-                                  ? styles.formatButtonSelected
-                                  : ""
-                              }`}
-                            >
-                              {f.resolution}
-                            </button>
-                          ))
-                        )}
-                      </>
-                    )}
 
-                    {/* Áudio: lista por kbps */}
-                    {downloadType === DOWNLOAD_TYPES.AUDIO && (
-                      <>
-                        {audioFormats.length === 0 ? (
-                          <p>Nenhum formato de áudio disponível.</p>
-                        ) : (
-                          audioFormats.map((f) => {
-                            const kbps = f.abr
-                              ? `${Math.round(f.abr)} kbps`
-                              : "? kbps";
-                            const size = f.filesize
-                              ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB`
-                              : "";
-                            const label = [f.ext?.toUpperCase(), kbps, size]
-                              .filter(Boolean)
-                              .join(" · ");
-                            return (
+                    {(mixMode === "single" || !mixInfo) &&
+                      downloadType === DOWNLOAD_TYPES.VIDEO && (
+                        <>
+                          {videoFormats.length === 0 ? (
+                            <p>Nenhum formato de vídeo disponível.</p>
+                          ) : (
+                            videoFormats.map((f) => (
                               <button
                                 key={f.id}
                                 onClick={() => setSelectedFormatId(f.id)}
-                                className={`${styles.formatButton} ${
-                                  selectedFormatId === f.id
-                                    ? styles.formatButtonSelected
-                                    : ""
-                                }`}
+                                className={`${styles.formatButton} ${selectedFormatId === f.id ? styles.formatButtonSelected : ""}`}
                               >
-                                {label}
+                                {f.resolution}
                               </button>
-                            );
-                          })
-                        )}
-                        <small style={{ opacity: 0.6 }}>
-                          Será convertido para MP3
-                        </small>
-                      </>
-                    )}
+                            ))
+                          )}
+                        </>
+                      )}
+
+                    {(mixMode === "single" || !mixInfo) &&
+                      downloadType === DOWNLOAD_TYPES.AUDIO && (
+                        <>
+                          {audioFormats.length === 0 ? (
+                            <p>Nenhum formato de áudio disponível.</p>
+                          ) : (
+                            audioFormats.map((f) => {
+                              const kbps = f.abr
+                                ? `${Math.round(f.abr)} kbps`
+                                : "? kbps";
+                              const size = f.filesize
+                                ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB`
+                                : "";
+                              const label = [f.ext?.toUpperCase(), kbps, size]
+                                .filter(Boolean)
+                                .join(" · ");
+                              return (
+                                <button
+                                  key={f.id}
+                                  onClick={() => setSelectedFormatId(f.id)}
+                                  className={`${styles.formatButton} ${selectedFormatId === f.id ? styles.formatButtonSelected : ""}`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })
+                          )}
+                          <small>Será convertido para MP3</small>
+                        </>
+                      )}
 
                     <div className={styles.modalActions}>
                       <button
@@ -351,11 +439,15 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                           handleStartDownload();
                           closeDownloadModal();
                         }}
-                        disabled={downloading || !selectedFormatId}
+                        disabled={
+                          downloading ||
+                          (mixInfo && mixMode === "mix"
+                            ? mixVideos.filter((v) => v.selected).length === 0
+                            : !selectedFormatId)
+                        }
                       >
                         {downloading ? "Baixando..." : "Baixar"}
                       </button>
-
                       <button
                         className={styles.cancelBtn}
                         onClick={closeDownloadModal}
@@ -371,7 +463,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
         </div>
       </div>
 
-      {/* Webview */}
       <div className={styles.body}>
         <webview
           ref={webviewRef}

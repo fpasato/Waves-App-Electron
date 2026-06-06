@@ -1,34 +1,152 @@
 // src/renderer/hooks/useSearchHandlers.js
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
+
+// ============================================================================
+// Constantes e Helpers
+// ============================================================================
 
 export const DOWNLOAD_TYPES = {
   VIDEO: "video",
   AUDIO: "audio",
 };
 
-// ─── Helper: detecta mix pela URL ──────────────────────────────────────────
+// Qualidades disponíveis para download de mix (vídeo)
+export const MIX_VIDEO_QUALITIES = [
+  {
+    label: "Melhor qualidade (4K se disponível)",
+    value: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+  },
+  {
+    label: "1080p",
+    value:
+      "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]",
+  },
+  {
+    label: "720p",
+    value:
+      "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]",
+  },
+  {
+    label: "480p",
+    value:
+      "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]",
+  },
+];
+
+// Qualidades disponíveis para download de mix (áudio)
+export const MIX_AUDIO_QUALITIES = [
+  { label: "Melhor qualidade (m4a)", value: "bestaudio[ext=m4a]/bestaudio" },
+  { label: "128 kbps (mp3)", value: "bestaudio[abr<=128]/bestaudio" },
+];
+
+/**
+ * Extrai informações de mix do YouTube a partir da URL
+ * @param {string} url - URL do YouTube
+ * @returns {{ videoId: string, playlistId: string } | null}
+ */
 function parseMixFromUrl(url) {
   try {
     const u = new URL(url);
     const list = u.searchParams.get("list");
     const videoId = u.searchParams.get("v");
-    // Mixes do YouTube: list começa com RD (Radio) ou RDMM
-    if (list && list.startsWith("RD") && videoId) {
-      return { videoId, playlistId: list };
-    }
-    return null;
+
+    if (!list) return null;
+
+    // Ignora listas de histórico/watch later internas do YouTube
+    if (list === "WL" || list === "LL" || list.startsWith("FL")) return null;
+
+    return { videoId: videoId ?? null, playlistId: list };
   } catch {
     return null;
   }
 }
 
-export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
+// ============================================================================
+// Hook principal
+// ============================================================================
+
+/**
+ * Hook para gerenciar navegação, busca, download e autenticação do YouTube
+ * @param {Object} options
+ * @param {Function} options.setSearchUrl - Atualiza URL de busca externa
+ * @param {Function} options.setScreen - Alterna entre telas (opcional)
+ */
+export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
+  // --------------------------------------------------------------------------
+  // Refs
+  // --------------------------------------------------------------------------
   const webviewRef = useRef(null);
   const inputRef = useRef(null);
+  const queryRef = useRef("");
 
-  // ─── Navegação ──────────────────────────────────────────────────────────────
+  // --------------------------------------------------------------------------
+  // Estados de Navegação
+  // --------------------------------------------------------------------------
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // Estados de Busca
+  // --------------------------------------------------------------------------
+  const [query, setQuery] = useState("");
+
+  // --------------------------------------------------------------------------
+  // Estados de Download
+  // --------------------------------------------------------------------------
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [videoFormats, setVideoFormats] = useState([]);
+  const [audioFormats, setAudioFormats] = useState([]);
+  const [selectedFormatId, setSelectedFormatId] = useState(null);
+  const [downloadType, setDownloadType] = useState(DOWNLOAD_TYPES.VIDEO);
+  const [fetchingFormats, setFetchingFormats] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [currentVideoId, setCurrentVideoId] = useState("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState("");
+
+  // --------------------------------------------------------------------------
+  // Estados de Mix
+  // --------------------------------------------------------------------------
+  const [mixInfo, setMixInfo] = useState(null); // { playlistId, title, count } | null
+  const [mixMode, setMixMode] = useState("single"); // 'single' ou 'mix'
+  const [mixVideos, setMixVideos] = useState([]); // Array de { id, title, selected }
+  const [loadingMixVideos, setLoadingMixVideos] = useState(false);
+  const [mixQuality, setMixQuality] = useState(MIX_VIDEO_QUALITIES[0].value); // qualidade para mix
+
+  // --------------------------------------------------------------------------
+  // Estados de Autenticação
+  // --------------------------------------------------------------------------
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // ==========================================================================
+  // Helpers síncronos
+  // ==========================================================================
+
+  const YT_SEARCH_BASE = "https://www.youtube.com/results";
+
+  /**
+   * Mantém queryRef sincronizado com o estado query
+   */
+  const setQuerySynced = useCallback((val) => {
+    queryRef.current = val;
+    setQuery(val);
+  }, []);
+
+  /**
+   * Extrai o ID do vídeo da URL atual do webview
+   */
+  const extractVideoId = useCallback(() => {
+    const wv = webviewRef.current;
+    if (!wv) return null;
+    const currentUrl = wv.getURL();
+    if (!currentUrl) return null;
+    const match = currentUrl.match(/[?&]v=([^&]+)/);
+    return match ? match[1] : null;
+  }, []);
+
+  // ==========================================================================
+  // Navegação do Webview
+  // ==========================================================================
 
   const updateNavState = useCallback(() => {
     const wv = webviewRef.current;
@@ -37,16 +155,21 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     setCanGoForward(wv.canGoForward());
   }, []);
 
-  // ─── Busca ──────────────────────────────────────────────────────────────────
-  const [query, setQuery] = useState("");
-  const queryRef = useRef(query);
-
-  const setQuerySynced = useCallback((val) => {
-    queryRef.current = val;
-    setQuery(val);
+  const handleGoBack = useCallback(() => {
+    if (webviewRef.current?.canGoBack()) webviewRef.current.goBack();
   }, []);
 
-  const YT_SEARCH_BASE = "https://www.youtube.com/results";
+  const handleGoForward = useCallback(() => {
+    if (webviewRef.current?.canGoForward()) webviewRef.current.goForward();
+  }, []);
+
+  const handleReload = useCallback(() => {
+    webviewRef.current?.reload();
+  }, []);
+
+  // ==========================================================================
+  // Busca
+  // ==========================================================================
 
   const handleSearch = useCallback(() => {
     const q = queryRef.current.trim();
@@ -74,57 +197,39 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     inputRef.current?.focus();
   }, []);
 
-  // ─── Navegação do webview ───────────────────────────────────────────────────
-  const handleGoBack = useCallback(() => {
-    if (webviewRef.current?.canGoBack()) webviewRef.current.goBack();
-  }, []);
+  // ==========================================================================
+  // Modal de Download - Abertura e fechamento
+  // ==========================================================================
 
-  const handleGoForward = useCallback(() => {
-    if (webviewRef.current?.canGoForward()) webviewRef.current.goForward();
-  }, []);
-
-  const handleReload = useCallback(() => {
-    webviewRef.current?.reload();
-  }, []);
-
-  // ─── Download ───────────────────────────────────────────────────────────────
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [videoFormats, setVideoFormats] = useState([]);
-  const [audioFormats, setAudioFormats] = useState([]);
-  const [selectedFormatId, setSelectedFormatId] = useState(null);
-  const [downloadType, setDownloadType] = useState(DOWNLOAD_TYPES.VIDEO);
-  const [fetchingFormats, setFetchingFormats] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [currentVideoId, setCurrentVideoId] = useState("");
-  const [currentVideoTitle, setCurrentVideoTitle] = useState("");
-
-  // ─── Estado de mix ──────────────────────────────────────────────────────────
-  // null = não é mix | { playlistId, title, count } = é mix
-  const [mixInfo, setMixInfo] = useState(null);
-  // 'single' = só o vídeo atual | 'mix' = playlist inteira
-  const [mixMode, setMixMode] = useState("single");
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const extractVideoId = useCallback(() => {
-    const wv = webviewRef.current;
-    if (!wv) return null;
-    const currentUrl = wv.getURL();
-    if (!currentUrl) return null;
-    const match = currentUrl.match(/[?&]v=([^&]+)/);
-    return match ? match[1] : null;
+  const closeDownloadModal = useCallback(() => {
+    setShowDownloadModal(false);
+    setVideoFormats([]);
+    setAudioFormats([]);
+    setSelectedFormatId(null);
+    setDownloadType(DOWNLOAD_TYPES.VIDEO);
+    setDownloading(false);
+    setMixInfo(null);
+    setMixMode("single");
+    setMixVideos([]);
+    setLoadingMixVideos(false);
+    setMixQuality(MIX_VIDEO_QUALITIES[0].value); // reseta qualidade padrão
   }, []);
 
   const openDownloadModal = useCallback(async () => {
     const videoId = extractVideoId();
     if (!videoId) {
-      alert("Navegue até um vídeo do YouTube primeiro.");
+      toast?.({
+        message: "Navegue até um vídeo do YouTube primeiro.",
+        type: "error",
+      });
       return;
     }
 
     const wv = webviewRef.current;
     const currentUrl = wv.getURL();
+    console.log("URL atual do webview:", currentUrl);
 
+    // Tenta obter título da página
     let title = "video";
     try {
       const pageTitle = await wv.executeJavaScript("document.title");
@@ -139,8 +244,9 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     setDownloadType(DOWNLOAD_TYPES.VIDEO);
     setMixInfo(null);
     setMixMode("single");
+    setMixVideos([]);
+    setMixQuality(MIX_VIDEO_QUALITIES[0].value); // padrão vídeo
 
-    // ── Detecta mix e busca metadados em paralelo com os formatos ──
     const mix = parseMixFromUrl(currentUrl);
 
     try {
@@ -156,7 +262,7 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
 
       const video = Array.isArray(formatsRes?.video) ? formatsRes.video : [];
       const audio = Array.isArray(formatsRes?.audio) ? formatsRes.audio : [];
-
+      console.log('toast disponível:', typeof toast);
       setVideoFormats(video);
       setAudioFormats(audio);
       if (video.length > 0) setSelectedFormatId(video[0].id);
@@ -167,39 +273,81 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
           title: mixRes.title ?? "Mix",
           count: mixRes.count ?? null,
         });
-        // Padrão: baixar só o vídeo atual — usuário escolhe no modal
-        setMixMode("single");
       }
     } catch (err) {
       console.error("Erro ao buscar formatos:", err);
-      alert("Erro ao buscar qualidades. Tente novamente.");
+      toast?.({
+        message: "Erro ao buscar qualidades. Tente novamente.",
+        type: "error",
+      });
     } finally {
       setFetchingFormats(false);
     }
-  }, [extractVideoId]);
+  }, [extractVideoId], toast);
 
-  const closeDownloadModal = useCallback(() => {
-    setShowDownloadModal(false);
-    setVideoFormats([]);
-    setAudioFormats([]);
-    setSelectedFormatId(null);
-    setDownloadType(DOWNLOAD_TYPES.VIDEO);
-    setDownloading(false);
-    setMixInfo(null);
-    setMixMode("single");
-  }, []);
+  // ==========================================================================
+  // Download - Seleção e ações
+  // ==========================================================================
 
   const handleChangeDownloadType = useCallback(
     (type) => {
       setDownloadType(type);
       if (type === DOWNLOAD_TYPES.VIDEO) {
         setSelectedFormatId(videoFormats[0]?.id ?? null);
+        setMixQuality(MIX_VIDEO_QUALITIES[0].value);
       } else {
         setSelectedFormatId(audioFormats[0]?.id ?? null);
+        setMixQuality(MIX_AUDIO_QUALITIES[0].value);
       }
     },
     [videoFormats, audioFormats],
   );
+
+  /**
+   * Altera o modo de download (vídeo único ou mix completa)
+   * Quando muda para "mix", carrega a lista de vídeos se ainda não estiver carregada.
+   */
+  const handleSetMixMode = useCallback(
+    async (mode) => {
+      setMixMode(mode);
+
+      if (mode === "mix" && mixInfo && mixVideos.length === 0) {
+        setLoadingMixVideos(true);
+        try {
+          const res = await window.electronAPI.youtube.getMixVideos({
+            videoId: currentVideoId,
+            playlistId: mixInfo.playlistId,
+          });
+
+          if (res.success) {
+            // Todos marcados por padrão
+            setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
+          }
+        } catch (err) {
+          console.error("Erro ao buscar vídeos da mix:", err);
+        } finally {
+          setLoadingMixVideos(false);
+        }
+      }
+    },
+    [mixInfo, mixVideos.length, currentVideoId],
+  );
+
+  /**
+   * Alterna seleção de um vídeo individual na mix
+   */
+  const toggleMixVideo = useCallback((id) => {
+    setMixVideos((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, selected: !v.selected } : v)),
+    );
+  }, []);
+
+  /**
+   * Marca/desmarca todos os vídeos da mix
+   */
+  const toggleAllMixVideos = useCallback((selected) => {
+    setMixVideos((prev) => prev.map((v) => ({ ...v, selected })));
+  }, []);
 
   const handleStartDownload = useCallback(async () => {
     if (!currentVideoId) return;
@@ -210,23 +358,38 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
       const isMixDownload = mixInfo && mixMode === "mix";
 
       if (isMixDownload) {
-        // ── Baixar mix inteira ──────────────────────────────────────
+        const selected = mixVideos.filter((v) => v.selected);
+        const selectedIds = selected.map((v) => v.id);
+        const selectedTitles = selected.map((v) => v.title);
+
+        if (selectedIds.length === 0) {
+          toast?.({
+            message: "Selecione pelo menos um vídeo da mix.",
+            type: "error",
+          });
+          setDownloading(false);
+          return;
+        }
+
         result = await window.electronAPI.youtube.downloadMix({
           videoId: currentVideoId,
           playlistId: mixInfo.playlistId,
           title: mixInfo.title,
           mode: "mix",
-          format: downloadType, // 'video' | 'audio'
+          format: downloadType,
+          formatString: mixQuality,
+          videoIds: selectedIds,
+          videoTitles: selectedTitles,
         });
       } else if (downloadType === DOWNLOAD_TYPES.AUDIO) {
-        // ── Áudio individual ────────────────────────────────────────
+        // --- Áudio individual ---
         result = await window.electronAPI.youtube.downloadAudio({
           videoId: currentVideoId,
           title: currentVideoTitle,
           formatId: selectedFormatId,
         });
       } else {
-        // ── Vídeo individual ────────────────────────────────────────
+        // --- Vídeo individual ---
         if (!selectedFormatId) return;
         result = await window.electronAPI.youtube.downloadVideo({
           videoId: currentVideoId,
@@ -236,17 +399,22 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
       }
 
       if (result.success) {
-        alert(
-          isMixDownload
+        toast?.({
+          message: isMixDownload
             ? `Download da mix iniciado!\nOs arquivos serão salvos em: ${downloadType === "audio" ? "audios" : "video"}`
-            : `Download concluído!\nSalvo em: ${result.path}`,
-        );
+            : `Download concluído!`,
+          type: "success",
+        });
         closeDownloadModal();
       } else {
-        alert("Falha no download: " + (result.error || "Erro desconhecido"));
+        toast?.({
+          message:
+            "Falha no download: " + (result.error || "Erro desconhecido"),
+          type: "error",
+        });
       }
     } catch (err) {
-      alert("Erro ao baixar: " + err.message);
+      toast?.({ message: "Erro ao baixar: " + err.message, type: "error" });
     } finally {
       setDownloading(false);
     }
@@ -257,20 +425,30 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     currentVideoTitle,
     mixInfo,
     mixMode,
+    mixVideos,
+    mixQuality,
     closeDownloadModal,
+    toast,
   ]);
 
-  // ─── Autenticação ───────────────────────────────────────────────────────────
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  // ==========================================================================
+  // Autenticação Google
+  // ==========================================================================
 
   const handleLogin = useCallback(async () => {
     try {
-      await window.electronAPI.googleLoginExternal();
+      const success = await window.electronAPI.googleLoginExternal();
+      if (!success) return; // usuário fechou a janela sem logar
+
       await window.electronAPI.googleImportCookies();
+
       if (webviewRef.current) {
-        await new Promise((r) => setTimeout(r, 500));
-        webviewRef.current.reload();
+        // Tempo para cookies serem persistidos antes do reload
+        await new Promise((r) => setTimeout(r, 1000));
+        webviewRef.current.loadURL("https://www.youtube.com");
       }
+
+      setIsLoggedIn(true);
     } catch (err) {
       if (!err?.message?.includes("ERR_ABORTED")) {
         console.error("Erro no login:", err);
@@ -279,8 +457,11 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
   }, []);
 
   const handleLoginDone = useCallback(async () => {
-    await window.electronAPI.googleImportCookies();
+    await window.electronAPI.googleImportCookies(); // já copia para cookies.txt
+
+    // Recarrega o webview — os cookies já estão na persist:youtube após o import
     setShowLoginModal(false);
+    await new Promise((r) => setTimeout(r, 300));
     webviewRef.current?.reload();
   }, []);
 
@@ -296,13 +477,16 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     }
   }, []);
 
-  // ─── Retorno ─────────────────────────────────────────────────────────────────
+  // ==========================================================================
+  // Retorno do hook
+  // ==========================================================================
+
   return {
-    // refs
+    // Refs
     webviewRef,
     inputRef,
 
-    // navegação
+    // Navegação
     canGoBack,
     canGoForward,
     updateNavState,
@@ -310,14 +494,14 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     handleGoForward,
     handleReload,
 
-    // busca
+    // Busca
     query,
     setQuery: setQuerySynced,
     clearQuery,
     handleSearch,
     handleKeyDown,
 
-    // download
+    // Download - Modal
     showDownloadModal,
     videoFormats,
     audioFormats,
@@ -331,12 +515,22 @@ export function useSearchHandlers({ setSearchUrl, setScreen } = {}) {
     closeDownloadModal,
     handleStartDownload,
 
-    // mix
-    mixInfo,       
-    mixMode,      
-    setMixMode,   
+    // Mix - informações e seleção
+    mixInfo,
+    mixMode,
+    setMixMode: handleSetMixMode,
+    mixVideos,
+    loadingMixVideos,
+    toggleMixVideo,
+    toggleAllMixVideos,
+    mixQuality,
+    setMixQuality,
+    MIX_VIDEO_QUALITIES,
+    MIX_AUDIO_QUALITIES,
+    mixQuality, 
+    setMixQuality,
 
-    // autenticação
+    // Autenticação
     isLoggedIn,
     setIsLoggedIn,
     showLoginModal,

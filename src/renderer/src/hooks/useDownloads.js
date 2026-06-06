@@ -1,14 +1,32 @@
 // hooks/useDownloads.js
 import { useState, useEffect, useCallback, useRef } from "react";
-
-export function useDownloads() {
+export function useDownloads({
+  activeDownloads,
+  dismissDownload,
+  clearFinished,
+  queueCount,
+  onFilesChanged,
+}) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // "all" | "video" | "audio"
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [activeDownloads, setActiveDownloads] = useState([]);
-  const listenersRef = useRef(false);
+  const [activeTab, setActiveTab] = useState("files");
+  const [confirmDeleteMulti, setConfirmDeleteMulti] = useState(false);
+
+  const handleDeleteMultiple = useCallback(async (paths) => {
+    try {
+      await Promise.all(
+        paths.map((p) => window.electronAPI.downloads.deleteFile(p)),
+      );
+      setFiles((prev) => prev.filter((f) => !paths.includes(f.path)));
+    } catch (err) {
+      console.error("deleteMultiple erro:", err);
+    } finally {
+      setConfirmDeleteMulti(false);
+    }
+  }, []);
 
   const loadFiles = useCallback(async () => {
     setLoading(true);
@@ -16,7 +34,6 @@ export function useDownloads() {
       const result = await window.electronAPI.downloads.listFiles();
       setFiles(Array.isArray(result) ? result : []);
     } catch (err) {
-      console.error("downloads:listFiles erro:", err);
       setFiles([]);
     } finally {
       setLoading(false);
@@ -27,44 +44,7 @@ export function useDownloads() {
     loadFiles();
   }, [loadFiles]);
 
-  // Escuta eventos de progresso dos downloads
-  useEffect(() => {
-    if (listenersRef.current) return;
-    listenersRef.current = true;
-
-    const onProgress = (_, { id, title, type, percent, speed, eta }) => {
-      setActiveDownloads((prev) => {
-        const exists = prev.find((d) => d.id === id);
-        if (exists) {
-          return prev.map((d) =>
-            d.id === id ? { ...d, percent, speed, eta } : d,
-          );
-        }
-        return [
-          ...prev,
-          { id, title, type, percent: percent ?? 0, speed, eta },
-        ];
-      });
-    };
-
-    const onDone = (_, { id }) => {
-      setActiveDownloads((prev) => prev.filter((d) => d.id !== id));
-      loadFiles(); // recarrega a lista
-    };
-
-    const onError = (_, { id }) => {
-      setActiveDownloads((prev) => prev.filter((d) => d.id !== id));
-    };
-
-    window.electronAPI.downloads.onProgress(onProgress);
-    window.electronAPI.downloads.onDone(onDone); // ← corrigido (antes estava onError)
-    window.electronAPI.downloads.onError(onError);
-
-    return () => {
-      window.electronAPI.downloads.removeListeners?.();
-      listenersRef.current = false;
-    };
-  }, [loadFiles]);
+  // ── sem useEffect de listeners aqui ──
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!confirmDelete) return;
@@ -78,22 +58,17 @@ export function useDownloads() {
     }
   }, [confirmDelete]);
 
-  // Filtragem e ordenação
   const filtered = files
     .filter((f) => {
-      const type = f.type; // "video" | "audio" | "radio"
       if (filter === "all") return true;
-      if (filter === "video") return type === "video";
-      if (filter === "audio") return type === "audio"; 
-      if (filter === "radio") return type === "radio"; 
-      return false;
+      return f.type === filter;
     })
+    .filter((f) =>
+      search.trim()
+        ? f.name.toLowerCase().includes(search.toLowerCase())
+        : true,
+    )
     .sort((a, b) => (b.modifiedAt || 0) - (a.modifiedAt || 0));
-
-  const totalVideo = files.filter((f) => f.type === "video").length;
-  const totalAudio = files.filter(
-    (f) => f.type === "audio" || f.type === "radio",
-  ).length;
 
   return {
     files,
@@ -105,10 +80,19 @@ export function useDownloads() {
     confirmDelete,
     setConfirmDelete,
     activeDownloads,
+    activeTab,
+    setActiveTab,
+    queueCount,
+    dismissDownload,
+    clearFinished,
     loadFiles,
     handleDeleteConfirm,
+    confirmDeleteMulti,
+    setConfirmDeleteMulti,
+    handleDeleteMultiple,
     filtered,
-    totalVideo,
-    totalAudio,
+    totalVideo: files.filter((f) => f.type === "video").length,
+    totalAudio: files.filter((f) => f.type === "audio").length,
+    totalRadio: files.filter((f) => f.type === "radio").length,
   };
 }

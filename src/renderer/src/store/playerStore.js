@@ -94,6 +94,16 @@ export const usePlayerStore = create((set, get) => ({
   seekSignal: 0,
   seekTarget: 0,
 
+  toasts: [],
+  
+  toast: ({ message, type = "info", duration = 4000 }) => {
+    const id = Math.random().toString(36).slice(2);
+    set((s) => ({ toasts: [...s.toasts, { id, message, type, duration }] }));
+  },
+
+  dismissToast: (id) => {
+    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+  },
   // ─── Ações ───────────────────────────────────────────
 
   // ────────── Preferências ──────────
