@@ -68,7 +68,7 @@ export const usePlayerStore = create((set, get) => ({
   repeat: false,
   shuffleQueue: [],
   shufflePos: 0,
-  restartSignal: 0, // usado para forçar reinício no player
+  restartSignal: 0, 
 
   // ─── Rádio ───────────────────────────────────────────
   currentRadio: null,
@@ -90,7 +90,7 @@ export const usePlayerStore = create((set, get) => ({
   lyricsLines: [],
   lyricsStatus: "idle",
   lyricsOffset: 0,
-  lyricsSource: "lrclib", // "lrclib" | "whisperx"
+  lyricsSource: "lrclib", 
   seekSignal: 0,
   seekTarget: 0,
 

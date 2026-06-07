@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import styles from "./style.module.css";
 import { randomCover } from "../../utils/randomCover";
 import { usePlayerStore } from "../../store/playerStore";
+import { MdOutlinePlaylistAdd } from "react-icons/md";
 
 export function PlaylistScreen() {
   const [playlists, setPlaylists] = useState([]);
@@ -160,7 +161,7 @@ export function PlaylistScreen() {
       <div className={styles.playlistsHeader}>
         <h1 className={styles.playlistsTitle}>Playlists</h1>
         <button className={styles.createPlaylistButton} onClick={() => setShowCreate((v) => !v)}>
-          +
+          <MdOutlinePlaylistAdd/>
         </button>
       </div>
 
