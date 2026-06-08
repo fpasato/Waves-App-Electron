@@ -7,7 +7,7 @@ import {
   splitArtistTitle,
   removeYoutubeChannel,
   removeEmojis,
-} from "../../renderer/src/lib/titleUtils";
+} from "../../renderer/lib/titleUtils";
 
 export async function extractTitleArtist(filePath) {
   const fileName = path.basename(filePath, path.extname(filePath));

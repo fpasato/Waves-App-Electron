@@ -1,0 +1,150 @@
+.playerControls {
+  display: flex;
+  justify-content: center;
+  background-color: transparent;
+  gap: 1rem;
+}
+
+.songsButtonContainer{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.1rem, 1vw, 1rem);
+}
+
+.button {
+  background-color: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  filter: drop-shadow(0 0 5px var(--grey-shadow));
+
+  &:hover {
+    filter: brightness(1.2) drop-shadow(0 0 5px var(--accent));
+    transform: translateX(1px) translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.buttonSecondary {
+  & svg {
+    width: clamp(0.4rem, 2vw, 1.5rem);
+    height: clamp(0.4rem, 2vw, 1.5rem);
+  }
+}
+
+.buttonPrimary {
+  padding: clamp(0.2rem, 1vw, 0.8rem);
+
+  & svg {
+    width: clamp(1.2rem, 2.5vw, 1.4rem);
+    height: clamp(1.2rem, 2.5vw, 1.4rem);
+  }
+}
+
+.buttonTertiary {
+  padding: 0.5rem;
+  
+  & svg {
+    width: clamp(0.4rem, 3vw, 1rem);
+    height: clamp(0.4rem, 3vw, 1rem);
+  }
+}
+
+.controlsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-row: 2;
+  row-gap: -2.3em;
+}
+
+.outButton {
+  background-color: transparent;
+
+  & svg {
+    width: clamp(0.6rem, 3vw, 1rem);
+    height: clamp(0.6rem, 3vw, 1rem);
+  }
+}
+
+
+
+/* Gravação ativa — pulsa em vermelho */
+.recordingActive {
+  animation: recordPulse 1s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+
+.lyricsActive {
+  color: var(--text) !important;
+  opacity: 1 !important;
+}
+
+.lyricsActive svg {
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+
+/* ── Offset Controls ── */
+.offsetControls {
+  grid-column: 1 / -1;              /* ocupa toda a largura do grid */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  height: 20px;
+  padding: 4px 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.offsetControls .button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.offsetControls .button:hover {
+  background: rgba(140, 200, 255, 0.15);
+  border-color: rgba(140, 200, 255, 0.4);
+  box-shadow: 0 0 8px rgba(140, 200, 255, 0.3);
+}
+
+.offsetLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 45px;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
