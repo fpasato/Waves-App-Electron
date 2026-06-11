@@ -2,9 +2,8 @@
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "node:url";
-import { extractTitleArtist } from './metadataParser.js';
-
-const AUDIO_EXTENSIONS = [".mp3", ".wav", ".flac", ".ogg", ".m4a"];
+import { extractTitleArtist } from "./metadataParser.js";
+const AUDIO_EXTENSIONS = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".webm"];
 
 export async function scanFolder(folderPath) {
   const results = [];

@@ -1,0 +1,10 @@
+.header {
+  background-color: var(--background);
+  color: #000; /* pra mim */
+  width: 100%;
+  padding: 0.2rem;
+  text-align: center;
+
+  position: relative;
+  z-index: 10;
+}

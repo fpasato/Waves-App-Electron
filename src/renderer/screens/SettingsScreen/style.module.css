@@ -1,0 +1,68 @@
+.settingsScreen {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: clamp(200px, 20%, 300px) 1fr;
+
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--player-bg);
+  min-height: 0;
+  padding: 1rem;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #111118;
+  z-index: -1;
+}
+
+.content {
+  padding: 1rem;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sidebar {
+
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  height: 90%;
+  border-radius: 0.6rem;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.backButton {
+  background-color: #00000064;
+  transition: all 0.2s ease-in-out;
+  padding: 0.6rem;
+}
+
+.content {
+  padding: 1rem;
+}
+
+
+.topOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.topOptions button {
+  padding: 0.6rem;
+}

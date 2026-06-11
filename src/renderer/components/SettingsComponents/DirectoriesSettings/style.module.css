@@ -1,0 +1,206 @@
+/* Variáveis (caso não estejam definidas globalmente) */
+:root {
+  --glass-bg: rgba(20, 20, 30, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-light: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --accent: #6c5ce7;
+  --accent-hover: #8273e8;
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --warning-bg: rgba(255, 193, 7, 0.15);
+  --warning-border: rgba(255, 193, 7, 0.3);
+  --status-bg: rgba(108, 92, 231, 0.15);
+}
+
+.DirectoriesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  height: 90%;
+  overflow-y: auto;
+  padding: 1rem;
+  color: var(--text);
+  border-radius: 1.2rem;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  filter: drop-shadow(0 0 10px black);
+}
+
+/* Cabeçalho com glass */
+.headerSection {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.2rem;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  padding: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerContent {
+  flex: 1;
+}
+
+.headerContent h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.3rem 0;
+  background: linear-gradient(120deg, #fff, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.3px;
+}
+
+.headerContent p {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+/* Botões com glass – reutilizando padrão do sistema */
+.headerActions button {
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+/* Aviso com glass diferenciado */
+.warning {
+  display: block;
+  background: var(--warning-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--warning-border);
+  border-radius: 0.8rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.75rem;
+  color: #ffd966;
+  text-align: center;
+}
+
+/* Status message */
+.status {
+  background: var(--status-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 0.8rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Lista de diretórios */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Cada item da lista com glass */
+.dirItem {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.dirItem:hover {
+  background: rgba(108, 92, 231, 0.1);
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.dirItem span {
+  font-size: 0.9rem;
+  word-break: break-all;
+  color: var(--text);
+  flex: 1;
+}
+
+.dirActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dirActions button {
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Estado vazio / carregando */
+.empty {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Scrollbar personalizada */
+.DirectoriesContainer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.DirectoriesContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.DirectoriesContainer::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+  .headerSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    justify-content: center;
+  }
+
+  .dirItem {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dirActions {
+    justify-content: flex-end;
+  }
+}

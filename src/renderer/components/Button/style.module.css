@@ -1,0 +1,28 @@
+.buttonpattern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #615e5e4c;
+    border-radius: 0.6rem 0 0.6rem 0;
+    color: var(--text);
+
+    outline: none;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    transition: 0.3s;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.682);
+}
+
+
+.buttonpattern:hover {
+    filter: brightness(0.9);
+    border-radius: 0 0.6rem 0 0.6rem ;
+    background-color: var(--accent);
+    color: #000;
+    transform: scale(1.03);
+}
+
+.buttonpattern:active{
+    transform: scale(0.9);
+}
