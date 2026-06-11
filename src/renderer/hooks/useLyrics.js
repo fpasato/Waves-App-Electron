@@ -171,7 +171,7 @@ async function fetchLyrics(rawTitle, rawArtist, filePath, duration, signal) {
 
 let lastFetchedSongId = null;
 
-const MIN_GAP_SECONDS = 4;
+const MIN_GAP_SECONDS = 5;
 
 export function useLyrics(enabled) {
   const currentSong = usePlayerStore((state) => state.currentSong);

@@ -1,6 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import styles from "./style.module.css";
 
+/*
+ * Abordagem: CSS transitions puras, sem estados de animação paralelos.
+ * Dois slots fixos (current + next). Quando o índice muda, apenas
+ * trocamos o conteúdo e deixamos o CSS fazer o fade/slide.
+ * O piscar era causado por múltiplos estados de animação em conflito.
+ */
 export function LyricsDisplay({
   enabled,
   status,
@@ -10,143 +16,96 @@ export function LyricsDisplay({
   isGap,
   activeIndex,
 }) {
-  const [displayCurrent, setDisplayCurrent] = useState(null);
-  const [displayNext, setDisplayNext] = useState(null);
-  const [animating, setAnimating] = useState(false);
-  const [animCurrent, setAnimCurrent] = useState(null);
-  const [animNext, setAnimNext] = useState(null);
-  const [incomingNext, setIncomingNext] = useState(null);  // NOVO: próxima da próxima
+  const [current, setCurrent] = useState(null);
+  const [next, setNext]       = useState(null);
+  const [visible, setVisible] = useState(false);
 
-  const lastIndexRef = useRef(-2);
-  const displayCurrentRef = useRef(displayCurrent);
-  const displayNextRef = useRef(displayNext);
-  useEffect(() => { displayCurrentRef.current = displayCurrent; }, [displayCurrent]);
-  useEffect(() => { displayNextRef.current = displayNext; }, [displayNext]);
+  const prevIndexRef = useRef(-2);
+  const timerRef     = useRef(null);
 
+  // Reseta ao mudar status
   useEffect(() => {
     if (status !== "found") {
-      setDisplayCurrent(null);
-      setDisplayNext(null);
-      setAnimating(false);
-      setIncomingNext(null);
-      lastIndexRef.current = -2;
-      return;
+      clearTimeout(timerRef.current);
+      setCurrent(null);
+      setNext(null);
+      setVisible(false);
+      prevIndexRef.current = -2;
     }
+  }, [status]);
 
-    const desiredCurrent = isGap
-      ? { text: "♫ instrumental ♫", isInstrumental: true }
+  // Atualiza slots quando o índice muda
+  useEffect(() => {
+    if (status !== "found") return;
+
+    const effectiveIndex = isGap ? -1 : activeIndex;
+
+    const wantCurrent = isGap
+      ? { text: "♫", isInstrumental: true }
       : currentLine
         ? { text: currentLine.text }
         : null;
-    const desiredNext = nextLine ? { text: nextLine.text } : null;
-    const effectiveIndex = isGap ? -1 : activeIndex;
 
-    if (lastIndexRef.current === -2) {
-      setDisplayCurrent(desiredCurrent);
-      setDisplayNext(desiredNext);
-      lastIndexRef.current = effectiveIndex;
+    // Next só existe quando há linha atual real (não gap, não null)
+    const wantNext = (!isGap && currentLine && nextLine)
+      ? { text: nextLine.text }
+      : null;
+
+    // Primeira renderização — sem animação
+    if (prevIndexRef.current === -2) {
+      setCurrent(wantCurrent);
+      setNext(wantNext);
+      timerRef.current = setTimeout(() => setVisible(true), 32);
+      prevIndexRef.current = effectiveIndex;
       return;
     }
 
-    if (effectiveIndex === lastIndexRef.current) {
-      setDisplayNext(desiredNext);
+    // Índice não mudou — só atualiza next silenciosamente
+    if (effectiveIndex === prevIndexRef.current) {
+      setNext(wantNext);
       return;
     }
 
-    // Congela os conteúdos antigos para animar
-    const oldCurrent = displayCurrentRef.current;
-    const oldNext = displayNextRef.current;
-    setAnimCurrent(oldCurrent);
-    setAnimNext(oldNext);
-
-    // Define a nova próxima (C) para aparecer imediatamente durante a animação
-    setIncomingNext(desiredNext);
-
-    setAnimating(true);
-
-    const timer = setTimeout(() => {
-      setDisplayCurrent(desiredCurrent);
-      setDisplayNext(desiredNext);
-      setAnimating(false);
-      setAnimCurrent(null);
-      setAnimNext(null);
-      setIncomingNext(null);
-    }, 280);
-
-    lastIndexRef.current = effectiveIndex;
-    return () => clearTimeout(timer);
-  }, [currentLine, nextLine, isGap, activeIndex, status]);
+    // Índice mudou — troca conteúdo, CSS transition faz o resto
+    clearTimeout(timerRef.current);
+    setCurrent(wantCurrent);
+    setNext(wantNext);
+    prevIndexRef.current = effectiveIndex;
+  }, [status, isGap, activeIndex, currentLine, nextLine]);
 
   if (!enabled) return null;
 
-  const showCurrent = animating ? animCurrent : displayCurrent;
-  const showNext = animating ? animNext : displayNext;
-
-  const currentWrapperClass = animating
-    ? styles.currentExit
-    : styles.currentIdle;
-  const nextWrapperClass = animating
-    ? styles.nextPromote
-    : styles.nextIdle;
-
-  const nextTextClass = animating
-    ? styles.nextLinePromoted
-    : styles.nextLine;
-
   return (
     <div
-      className={`${styles.lyricsWrapper} ${isFading ? styles.fading : ""}`}
+      className={`${styles.wrapper} ${isFading ? styles.fading : ""}`}
       aria-live="polite"
     >
       {status === "loading" && (
-        <p className={styles.statusText}>
-          <span className={styles.dot} />
-          <span className={styles.dot} />
-          <span className={styles.dot} />
-        </p>
+        <div className={styles.dots}>
+          <span /><span /><span />
+        </div>
       )}
+
       {status === "notfound" && (
-        <p className={`${styles.statusText} ${styles.notFound}`}>
-          letra não encontrada
-        </p>
+        <p className={styles.notFound}>letra não encontrada</p>
       )}
+
       {status === "error" && (
-        <p className={`${styles.statusText} ${styles.notFound}`}>
-          falha ao buscar letra
-        </p>
+        <p className={styles.notFound}>falha ao buscar letra</p>
       )}
+
       {status === "found" && (
-        <div className={styles.karaokeView}>
-          {/* Slot atual (ou instrumental) */}
-          <div className={`${styles.currentWrapper} ${currentWrapperClass}`}>
-            {showCurrent && (
+        <div className={`${styles.stage} ${visible ? styles.stageVisible : ""}`}>
+          <div className={styles.currentSlot}>
+            {current && (
               <p
-                className={
-                  showCurrent.isInstrumental
-                    ? styles.instrumental
-                    : styles.activeText
-                }
+                key={current.text}
+                className={current.isInstrumental ? styles.instrumental : styles.currentText}
               >
-                {showCurrent.text}
+                {current.text}
               </p>
             )}
           </div>
-
-          {/* Slot da próxima linha (sobe durante animação) */}
-          <div className={`${styles.nextWrapper} ${nextWrapperClass}`}>
-            {showNext && (
-              <p className={nextTextClass}>
-                {showNext.text}
-              </p>
-            )}
-          </div>
-
-          {/* Slot extra: nova próxima (aparece embaixo durante a animação) */}
-          {animating && incomingNext && (
-            <div className={styles.incomingWrapper}>
-              <p className={styles.nextLine}>{incomingNext.text}</p>
-            </div>
-          )}
         </div>
       )}
     </div>

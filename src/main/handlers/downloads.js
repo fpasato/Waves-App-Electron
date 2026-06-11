@@ -382,94 +382,69 @@ export function registerDownloadHandlers({
 
   // ── youtube:getMixVideos ─────────────────────────────────
   ipcMain.handle("youtube:getMixVideos", async (_, { videoId, playlistId }) => {
-    try {
-      const isRegularPlaylist = !playlistId.startsWith("RD");
-      const url = isRegularPlaylist
-        ? `https://www.youtube.com/playlist?list=${playlistId}`
-        : `https://www.youtube.com/watch?v=${videoId}&list=${playlistId}`;
+    // Mix dinâmica — YouTube gera server-side, yt-dlp retorna lista diferente da UI
+    // Frontend deve usar os videoIds já visíveis ao invés de chamar este handler
+    if (playlistId.startsWith("RD")) {
+      console.warn(
+        "getMixVideos chamado para mix dinâmica — resultado pode divergir da UI",
+      );
+    }
 
-      console.log("getMixVideos url:", url);
-      console.log("baseFlagsPlaylist:", baseFlagsPlaylist());
+    const isRegularPlaylist = !playlistId.startsWith("RD");
+    const url = isRegularPlaylist
+      ? `https://www.youtube.com/playlist?list=${playlistId}`
+      : `https://www.youtube.com/watch?v=${videoId}&list=${playlistId}`;
 
-      const args = [
-        url,
-        "--flat-playlist",
-        "--yes-playlist",
-        "--print",
-        "%(id)s|||%(title)s",
-        "--no-warnings",
-        "--playlist-items",
-        "1-200", // busca até 200 itens
-      ];
+    const args = [
+      url,
+      "--flat-playlist",
+      "--yes-playlist",
+      "--print",
+      "%(id)s|||%(title)s",
+      "--no-warnings",
+      "--playlist-end",
+      "25",
+      ...baseFlagsPlaylist(),
+    ];
 
-      // Para mixes RD*, força o extractor a expandir a lista completa
-      if (!isRegularPlaylist) {
-        args.push("--extractor-args", "youtube:max_comments=0");
-      }
-
-      args.push(...baseFlagsPlaylist());
-
+    return new Promise((resolve) => {
       const proc = spawn(ytDlpPath, args, {
         stdio: ["ignore", "pipe", "pipe"],
       });
-
       let stdout = "";
       let stderr = "";
-      proc.stdout.on("data", (d) => (stdout += d.toString()));
-      proc.stderr.on("data", (d) => (stderr += d.toString()));
 
-      return await new Promise((resolve) => {
-        proc.on("close", (code) => {
-          if (code !== 0) {
-            console.error("getMixVideos stderr:", stderr);
-            return resolve({ success: false, videos: [] });
-          }
+      proc.stdout.on("data", (d) => (stdout += d));
+      proc.stderr.on("data", (d) => (stderr += d));
 
-          const videos = stdout
-            .trim()
-            .split("\n")
-            .filter(Boolean)
-            .map((line, index) => {
-              const [id, ...titleParts] = line.split("|||");
-              return {
-                index: index + 1,
-                id: id.trim(),
-                title: titleParts.join("|||").trim() || `Vídeo ${index + 1}`,
-              };
-            });
-
-          function normalizeTitle(title) {
-            return title
-              .toLowerCase()
-              .replace(
-                /\(.*?(official|video|audio|lyric|live|remaster|remix|hd|4k|mv|ft\.|feat\.).*?\)/gi,
-                "",
-              )
-              .replace(/\[.*?\]/g, "")
-              .replace(/official\s*(video|audio|music video|lyric)/gi, "")
-              .replace(/\s{2,}/g, " ")
-              .trim();
-          }
-
-          const seen = new Set();
-          const deduplicated = videos
-            .filter((v) => {
-              const key = normalizeTitle(v.title);
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            })
-            .map((v, i) => ({ ...v, index: i + 1 }));
-
-          console.log(
-            `getMixVideos: ${deduplicated.length} vídeos encontrados`,
-          );
-          resolve({ success: true, videos: deduplicated });
-        });
+      proc.on("error", (err) => {
+        console.error("getMixVideos spawn error:", err);
+        resolve({ success: false, videos: [] });
       });
-    } catch (err) {
-      console.error("❌ getMixVideos erro:", err);
-      return { success: false, videos: [] };
-    }
+
+      proc.on("close", (code) => {
+        if (code !== 0) {
+          console.error("getMixVideos stderr:", stderr);
+          return resolve({ success: false, videos: [] });
+        }
+
+        const videos = stdout
+          .trim()
+          .split("\n")
+          .filter(Boolean)
+          .map((line, idx) => {
+            const sep = line.indexOf("|||");
+            return {
+              index: idx + 1,
+              id: sep !== -1 ? line.slice(0, sep).trim() : line.trim(),
+              title:
+                sep !== -1 ? line.slice(sep + 3).trim() : `Vídeo ${idx + 1}`,
+            };
+          });
+
+        console.log(`getMixVideos: ${videos.length} vídeos (ordem original)`);
+        resolve({ success: true, videos });
+      });
+    });
   });
 }
