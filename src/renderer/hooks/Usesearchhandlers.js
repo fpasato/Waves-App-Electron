@@ -215,75 +215,81 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
     setMixQuality(MIX_VIDEO_QUALITIES[0].value); // reseta qualidade padrão
   }, []);
 
-  const openDownloadModal = useCallback(async () => {
-    const videoId = extractVideoId();
-    if (!videoId) {
-      toast?.({
-        message: "Navegue até um vídeo do YouTube primeiro.",
-        type: "error",
-      });
-      return;
-    }
-
-    const wv = webviewRef.current;
-    const currentUrl = wv.getURL();
-    console.log("URL atual do webview:", currentUrl);
-
-    // Tenta obter título da página
-    let title = "video";
-    try {
-      const pageTitle = await wv.executeJavaScript("document.title");
-      title = pageTitle.replace(/ - YouTube$/, "").trim();
-    } catch {}
-
-    setCurrentVideoId(videoId);
-    setCurrentVideoTitle(title);
-    setShowDownloadModal(true);
-    setFetchingFormats(true);
-    setSelectedFormatId(null);
-    setDownloadType(DOWNLOAD_TYPES.VIDEO);
-    setMixInfo(null);
-    setMixMode("single");
-    setMixVideos([]);
-    setMixQuality(MIX_VIDEO_QUALITIES[0].value); // padrão vídeo
-
-    const mix = parseMixFromUrl(currentUrl);
-
-    try {
-      const [formatsRes, mixRes] = await Promise.all([
-        window.electronAPI.youtube.getVideoFormats(videoId),
-        mix
-          ? window.electronAPI.youtube.getMixInfo({
-              videoId: mix.videoId,
-              playlistId: mix.playlistId,
-            })
-          : Promise.resolve(null),
-      ]);
-
-      const video = Array.isArray(formatsRes?.video) ? formatsRes.video : [];
-      const audio = Array.isArray(formatsRes?.audio) ? formatsRes.audio : [];
-      console.log('toast disponível:', typeof toast);
-      setVideoFormats(video);
-      setAudioFormats(audio);
-      if (video.length > 0) setSelectedFormatId(video[0].id);
-
-      if (mix && mixRes) {
-        setMixInfo({
-          playlistId: mix.playlistId,
-          title: mixRes.title ?? "Mix",
-          count: mixRes.count ?? null,
+  const openDownloadModal = useCallback(
+    async () => {
+      const videoId = extractVideoId();
+      if (!videoId) {
+        toast?.({
+          message: "Navegue até um vídeo do YouTube primeiro.",
+          type: "error",
         });
+        return;
       }
-    } catch (err) {
-      console.error("Erro ao buscar formatos:", err);
-      toast?.({
-        message: "Erro ao buscar qualidades. Tente novamente.",
-        type: "error",
-      });
-    } finally {
-      setFetchingFormats(false);
-    }
-  }, [extractVideoId], toast);
+
+      const wv = webviewRef.current;
+      const currentUrl = wv.getURL();
+      console.log("URL atual do webview:", currentUrl);
+
+      // Tenta obter título da página
+      let title = "video";
+      try {
+        const pageTitle = await wv.executeJavaScript("document.title");
+        title = pageTitle.replace(/ - YouTube$/, "").trim();
+      } catch {}
+
+      setCurrentVideoId(videoId);
+      setCurrentVideoTitle(title);
+      setShowDownloadModal(true);
+      setFetchingFormats(true);
+      setSelectedFormatId(null);
+      setDownloadType(DOWNLOAD_TYPES.VIDEO);
+      setMixInfo(null);
+      setMixMode("single");
+      setMixVideos([]);
+      setMixQuality(MIX_VIDEO_QUALITIES[0].value); // padrão vídeo
+
+      const mix = parseMixFromUrl(currentUrl);
+
+      try {
+        const [formatsRes, mixRes] = await Promise.all([
+          window.electronAPI.youtube.getVideoFormats(videoId),
+          mix
+            ? window.electronAPI.youtube.getMixInfo({
+                videoId: mix.videoId,
+                playlistId: mix.playlistId,
+              })
+            : Promise.resolve(null),
+        ]);
+
+        const video = Array.isArray(formatsRes?.video) ? formatsRes.video : [];
+        const audio = Array.isArray(formatsRes?.audio) ? formatsRes.audio : [];
+        console.log("toast disponível:", typeof toast);
+        setVideoFormats(video);
+        setAudioFormats(audio);
+        if (video.length > 0) setSelectedFormatId(video[0].id);
+
+        if (mix && mixRes) {
+          setMixInfo({
+            playlistId: mix.playlistId,
+            title: mixRes.title ?? "Mix",
+            count: mix.playlistId.startsWith("RD")
+              ? null
+              : (mixRes.count ?? null),
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar formatos:", err);
+        toast?.({
+          message: "Erro ao buscar qualidades. Tente novamente.",
+          type: "error",
+        });
+      } finally {
+        setFetchingFormats(false);
+      }
+    },
+    [extractVideoId],
+    toast,
+  );
 
   // ==========================================================================
   // Download - Seleção e ações
@@ -314,23 +320,55 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
       if (mode === "mix" && mixInfo && mixVideos.length === 0) {
         setLoadingMixVideos(true);
         try {
-          const res = await window.electronAPI.youtube.getMixVideos({
-            videoId: currentVideoId,
-            playlistId: mixInfo.playlistId,
-          });
+          const isMix = mixInfo.playlistId?.startsWith("RD");
 
-          if (res.success) {
-            // Todos marcados por padrão
-            setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
+          if (isMix) {
+            // Mix: só extrai do webview, sem fallback pro IPC
+            const extracted = await webviewRef.current.executeJavaScript(`
+            (() => {
+              const allItems = document.querySelectorAll('ytd-playlist-panel-video-renderer');
+              return Array.from(allItems).map((el, index) => {
+                const titleEl = el.querySelector('#video-title');
+                const linkEl = el.querySelector('a#wc-endpoint');
+                const href = linkEl?.href || '';
+                const urlParams = new URLSearchParams(href.split('?')[1] || '');
+                return {
+                  index: index + 1,
+                  id: urlParams.get('v') || '',
+                  title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
+                };
+              }).filter(v => v.id);
+            })()
+          `);
+
+            if (extracted?.length > 0) {
+              setMixVideos(extracted.map((v) => ({ ...v, selected: true })));
+              setMixInfo((prev) => ({ ...prev, count: extracted.length }));
+            } else {
+              toast?.({
+                message: "Não foi possível carregar os vídeos da Mix.",
+                type: "error",
+              });
+            }
+          } else {
+            // Playlist normal: usa yt-dlp via IPC
+            const res = await window.electronAPI.youtube.getMixVideos({
+              videoId: currentVideoId,
+              playlistId: mixInfo.playlistId,
+            });
+            if (res.success) {
+              setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
+            }
           }
         } catch (err) {
           console.error("Erro ao buscar vídeos da mix:", err);
+          toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
         } finally {
           setLoadingMixVideos(false);
         }
       }
     },
-    [mixInfo, mixVideos.length, currentVideoId],
+    [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
   );
 
   /**
@@ -527,7 +565,7 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
     setMixQuality,
     MIX_VIDEO_QUALITIES,
     MIX_AUDIO_QUALITIES,
-    mixQuality, 
+    mixQuality,
     setMixQuality,
 
     // Autenticação

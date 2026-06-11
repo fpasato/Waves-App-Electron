@@ -382,18 +382,14 @@ export function registerDownloadHandlers({
 
   // ── youtube:getMixVideos ─────────────────────────────────
   ipcMain.handle("youtube:getMixVideos", async (_, { videoId, playlistId }) => {
-    // Mix dinâmica — YouTube gera server-side, yt-dlp retorna lista diferente da UI
-    // Frontend deve usar os videoIds já visíveis ao invés de chamar este handler
-    if (playlistId.startsWith("RD")) {
-      console.warn(
-        "getMixVideos chamado para mix dinâmica — resultado pode divergir da UI",
-      );
+    const isMix = playlistId?.startsWith("RD");
+
+    // Mix é tratada pelo webview no renderer, não pelo yt-dlp
+    if (isMix) {
+      return { success: true, videos: [] };
     }
 
-    const isRegularPlaylist = !playlistId.startsWith("RD");
-    const url = isRegularPlaylist
-      ? `https://www.youtube.com/playlist?list=${playlistId}`
-      : `https://www.youtube.com/watch?v=${videoId}&list=${playlistId}`;
+    const url = `https://www.youtube.com/playlist?list=${playlistId}`;
 
     const args = [
       url,
@@ -401,9 +397,9 @@ export function registerDownloadHandlers({
       "--yes-playlist",
       "--print",
       "%(id)s|||%(title)s",
-      "--no-warnings",
       "--playlist-end",
       "25",
+      "--no-warnings",
       ...baseFlagsPlaylist(),
     ];
 
@@ -411,39 +407,61 @@ export function registerDownloadHandlers({
       const proc = spawn(ytDlpPath, args, {
         stdio: ["ignore", "pipe", "pipe"],
       });
+
       let stdout = "";
       let stderr = "";
 
-      proc.stdout.on("data", (d) => (stdout += d));
-      proc.stderr.on("data", (d) => (stderr += d));
+      proc.stdout.on("data", (chunk) => {
+        stdout += chunk.toString();
+      });
+
+      proc.stderr.on("data", (chunk) => {
+        stderr += chunk.toString();
+      });
 
       proc.on("error", (err) => {
-        console.error("getMixVideos spawn error:", err);
-        resolve({ success: false, videos: [] });
+        console.error("youtube:getMixVideos:", err);
+        resolve({
+          success: false,
+          videos: [],
+        });
       });
 
       proc.on("close", (code) => {
         if (code !== 0) {
-          console.error("getMixVideos stderr:", stderr);
-          return resolve({ success: false, videos: [] });
+          console.error(
+            "youtube:getMixVideos failed:",
+            stderr || `Exit code ${code}`,
+          );
+
+          return resolve({
+            success: false,
+            videos: [],
+          });
         }
 
         const videos = stdout
-          .trim()
-          .split("\n")
+          .split(/\r?\n/)
+          .map((line) => line.trim())
           .filter(Boolean)
-          .map((line, idx) => {
-            const sep = line.indexOf("|||");
+          .map((line, index) => {
+            const [id, title] = line.split("|||");
+
             return {
-              index: idx + 1,
-              id: sep !== -1 ? line.slice(0, sep).trim() : line.trim(),
-              title:
-                sep !== -1 ? line.slice(sep + 3).trim() : `Vídeo ${idx + 1}`,
+              index: index + 1,
+              id: id?.trim(),
+              title: title?.trim() || `Vídeo ${index + 1}`,
             };
           });
 
-        console.log(`getMixVideos: ${videos.length} vídeos (ordem original)`);
-        resolve({ success: true, videos });
+        console.log(
+          `youtube:getMixVideos -> ${videos.length} vídeos encontrados`,
+        );
+
+        resolve({
+          success: true,
+          videos,
+        });
       });
     });
   });

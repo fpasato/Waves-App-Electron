@@ -65,7 +65,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     setMixQuality,
     setQuery: setQuerySynced,
   } = useSearchHandlers({ setSearchUrl, setScreen, toast });
-  
+
   useEffect(() => {
     const wv = webviewRef.current;
     if (!wv) return;
@@ -276,11 +276,19 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                     {mixInfo && (
                       <div className={styles.mixBanner}>
                         <div className={styles.mixBannerInfo}>
-                          <span><FaMusic/></span>
+                          <span>
+                            <FaMusic />
+                          </span>
                           <div>
                             <strong>{mixInfo.title}</strong>
                             {mixInfo.count && (
-                              <small>{mixInfo.count} vídeos</small>
+                              <small>
+                                {mixVideos.length > 0
+                                  ? `${mixVideos.length} vídeos carregados`
+                                  : mixInfo.count
+                                    ? `${mixInfo.count} vídeos`
+                                    : null}
+                              </small>
                             )}
                           </div>
                         </div>
