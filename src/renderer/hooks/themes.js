@@ -1,7 +1,7 @@
 import videoNeon from "../assets/neon.mp4";
 import videoSunset from "../assets/sunset.mp4";
 import videoOcean from "../assets/ocean.mp4";
-import videoForest from "../assets/forestVideo.mp4";
+import videoForest from "../assets/forest.mp4";
 import sand from "../assets/sand.mp4";
 import grafite from "../assets/grafite.mp4";
 import rainy from "../assets/rainy.mp4";
@@ -236,7 +236,7 @@ export const themes = [
     id: "bloodwood-forest",
     name: "Bloodwood Forest",
     accent: "#CC3F0C",
-    video: deep,
+    video: wood,
     glassBg: `
     linear-gradient(
       135deg,
@@ -256,7 +256,7 @@ export const themes = [
   {
     id: "deep-ocean-alert",
     name: "Deep Ocean",
-    video: wood,
+    video: deep,
     accent: "#EE2E31",
     glassBg: `
     linear-gradient(

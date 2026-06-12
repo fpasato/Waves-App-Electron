@@ -436,7 +436,6 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
                               );
                             })
                           )}
-                          <small>Será convertido para MP3</small>
                         </>
                       )}
 

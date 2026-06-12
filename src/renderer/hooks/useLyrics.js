@@ -130,42 +130,108 @@ async function fetchLyrics(rawTitle, rawArtist, filePath, duration, signal) {
   push(cleanFull(rawTitle), cleanArtist(rawArtist));
   push(cleanFull(rawTitle));
 
-  for (let i = 0; i < attempts.length; i++) {
-    const url = `${LRCLIB_BASE}/search?${new URLSearchParams(attempts[i])}`;
-    try {
-      const res = await fetch(url, { signal });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!Array.isArray(data) || !data.length) continue;
+  // ---- /api/get: match exato (track_name + artist_name [+ duration]) ----
+  const getAttempts = attempts.filter((p) => p.artist_name);
 
-      const withSynced = data.filter((r) => r.syncedLyrics);
-      if (!withSynced.length) continue;
+  const tryGet = async (params) => {
+    const qs = { ...params };
+    if (targetDuration) qs.duration = String(targetDuration);
 
-      const best = targetDuration
-        ? withSynced.reduce((a, b) =>
-            Math.abs(a.duration - targetDuration) <=
-            Math.abs(b.duration - targetDuration)
-              ? a
-              : b,
-          )
-        : withSynced[0];
+    const url = `${LRCLIB_BASE}/get?${new URLSearchParams(qs)}`;
+    const timeout = AbortSignal.timeout(12000);
+    const combined = AbortSignal.any
+      ? AbortSignal.any([signal, timeout])
+      : signal;
 
-      const diff = targetDuration
-        ? Math.abs(best.duration - targetDuration)
-        : 0;
-      if (diff > 10 && i < attempts.length - 1) continue;
+    const res = await fetch(url, { signal: combined });
+    if (!res.ok) return null; // 404 = sem match exato
 
-      const parsed = parseLRC(best.syncedLyrics);
-      if (!parsed.length) continue;
+    const data = await res.json();
+    if (!data?.syncedLyrics) return null;
 
-      console.log(
-        `[fetchLyrics] ✅ ${best.trackName} – ${best.artistName} (diff: ${diff}s)`,
-      );
-      return parsed;
-    } catch (err) {
-      if (err.name === "AbortError") throw err;
+    const parsed = parseLRC(data.syncedLyrics);
+    if (!parsed.length) return null;
+
+    console.log(
+      `[fetchLyrics] ✅ (get) ${data.trackName} – ${data.artistName}`,
+    );
+    return parsed;
+  };
+
+  // ---- /api/search: busca + filtro por diferença de duração ----
+  const trySearch = async (params) => {
+    const url = `${LRCLIB_BASE}/search?${new URLSearchParams(params)}`;
+    const timeout = AbortSignal.timeout(8000);
+    const combined = AbortSignal.any
+      ? AbortSignal.any([signal, timeout])
+      : signal;
+
+    const res = await fetch(url, { signal: combined });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return null;
+
+    const withSynced = data.filter((r) => r.syncedLyrics);
+    if (!withSynced.length) return null;
+
+    const best = targetDuration
+      ? withSynced.reduce((a, b) =>
+          Math.abs(a.duration - targetDuration) <=
+          Math.abs(b.duration - targetDuration)
+            ? a
+            : b,
+        )
+      : withSynced[0];
+
+    const diff = targetDuration ? Math.abs(best.duration - targetDuration) : 0;
+
+    const parsed = parseLRC(best.syncedLyrics);
+    if (!parsed.length) return null;
+
+    console.log(
+      `[fetchLyrics] ✅ (search) ${best.trackName} – ${best.artistName} (diff: ${diff}s)`,
+    );
+    return { parsed, diff };
+  };
+
+  // Roda tudo em paralelo: /get (match exato) e /search (com filtro)
+  const [getSettled, searchSettled] = await Promise.all([
+    Promise.allSettled(getAttempts.map((p) => tryGet(p))),
+    Promise.allSettled(attempts.map((p) => trySearch(p))),
+  ]);
+
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+  console.log("[fetchLyrics] attempts:", attempts);
+  console.log(
+    "[fetchLyrics] get results:",
+    getSettled.map((r) =>
+      r.status === "fulfilled" ? !!r.value : r.reason?.message,
+    ),
+  );
+  console.log(
+    "[fetchLyrics] search results:",
+    searchSettled.map((r) =>
+      r.status === "fulfilled"
+        ? r.value
+          ? { diff: r.value.diff }
+          : "no-match"
+        : r.reason?.message,
+    ),
+  );
+
+  // 1ª prioridade: match exato via /get
+  for (const r of getSettled) {
+    if (r.status === "fulfilled" && r.value) return r.value;
+  }
+
+  // 2ª prioridade: /search com duração próxima (tudo ou nada, diff <= 10s)
+  for (const r of searchSettled) {
+    if (r.status === "fulfilled" && r.value && r.value.diff <= 10) {
+      return r.value.parsed;
     }
   }
+
   return [];
 }
 
@@ -190,6 +256,7 @@ export function useLyrics(enabled) {
   const rafRef = useRef(null);
   const abortRef = useRef(null);
   const previousSongId = useRef(null);
+  const restartSignal = usePlayerStore((s) => s.restartSignal);
 
   // ── Reset quando a música muda (UMA VEZ SÓ) ──
   useEffect(() => {
@@ -220,16 +287,19 @@ export function useLyrics(enabled) {
       return;
     }
 
+    // Sempre reseta a posição ao (re)iniciar a música
+    setActiveIndex(-1);
+
     if (
       lastFetchedSongId === id &&
       (status === "found" || status === "notfound")
     ) {
+      // Letra já está no store, só resetou o índice acima — pode sair
       return;
     }
 
     lastFetchedSongId = id;
     setLyricsLines([]);
-    setActiveIndex(-1);
     setLyricsStatus("loading");
 
     const ctrl = new AbortController();
@@ -251,7 +321,7 @@ export function useLyrics(enabled) {
       });
 
     return () => ctrl.abort();
-  }, [enabled, currentSong]);
+  }, [enabled, currentSong, restartSignal]); // ← adicionar restartSignal
 
   // ── Sincronização por RAF ──
   useEffect(() => {
@@ -305,9 +375,10 @@ export function useLyrics(enabled) {
     status,
     isFading,
     currentLine: lines[activeIndex] ?? null,
-    nextLine: activeIndex >= 0 && activeIndex + 1 < lines.length
-      ? lines[activeIndex + 1]
-      : null,
+    nextLine:
+      activeIndex >= 0 && activeIndex + 1 < lines.length
+        ? lines[activeIndex + 1]
+        : null,
     isGap,
     offset,
     setOffset,

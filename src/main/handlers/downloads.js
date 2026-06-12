@@ -58,12 +58,17 @@ export function registerDownloadHandlers({
     }
   }
 
-  function runWithProgress({ args, id, title, type }) {
+  // downloads.js — função runWithProgress
+
+  function runWithProgress({ args, id, title, type, cwd }) {
     return new Promise((resolve, reject) => {
       const proc = spawn(ytDlpPath, args, {
         stdio: ["ignore", "pipe", "pipe"],
+        cwd: cwd ?? app.getPath("temp"), // ← adiciona isso
       });
+
       let buffer = "";
+      let stderrBuffer = ""; // ← captura stderr separado para logs
 
       const handleChunk = (chunk) => {
         buffer += chunk.toString();
@@ -76,11 +81,22 @@ export function registerDownloadHandlers({
       };
 
       proc.stdout.on("data", handleChunk);
-      proc.stderr.on("data", handleChunk);
+      proc.stderr.on("data", (chunk) => {
+        stderrBuffer += chunk.toString(); // ← acumula stderr
+        handleChunk(chunk);
+      });
 
       proc.on("close", (code) => {
         if (code === 0 || code === null) resolve();
-        else reject(new Error(`yt-dlp saiu com código ${code}`));
+        else {
+          // ← agora o erro mostra a causa real
+          console.error(`yt-dlp stderr:\n${stderrBuffer}`);
+          reject(
+            new Error(
+              `yt-dlp saiu com código ${code}\n${stderrBuffer.slice(-500)}`,
+            ),
+          );
+        }
       });
 
       proc.on("error", reject);
@@ -168,6 +184,7 @@ export function registerDownloadHandlers({
         id,
         title,
         type: "video",
+        cwd: savePath,
         args: [
           `https://www.youtube.com/watch?v=${videoId}`,
           "-f",
@@ -210,6 +227,7 @@ export function registerDownloadHandlers({
         id,
         title,
         type: "audio",
+        cwd: savePath,
         args: [
           `https://www.youtube.com/watch?v=${videoId}`,
           "-f",
@@ -267,6 +285,7 @@ export function registerDownloadHandlers({
             id,
             title: childTitle,
             type,
+            cwd: savePath,
             args: [
               `https://www.youtube.com/watch?v=${vid}`,
               ...formatArgs,
@@ -308,6 +327,7 @@ export function registerDownloadHandlers({
             id: parentId,
             title: title ?? "Playlist",
             type,
+            cwd: savePath,
             args: [
               url,
               ...formatArgs,

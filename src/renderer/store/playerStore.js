@@ -759,4 +759,59 @@ export const usePlayerStore = create((set, get) => ({
   stopRadio: () => {
     get().clearRadio();
   },
+
+  isRecording: false,
+  _mediaRecorder: null,
+  _recordingChunks: [],
+
+  // Nas ações:
+  startRecording: () => {
+    const state = get();
+    const audioEl = state._radioAudio;
+    if (!audioEl || state.isRecording) return;
+
+    const stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
+    if (!stream) return;
+
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/webm";
+
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const arrayBuffer = await blob.arrayBuffer();
+      const radioName = get().currentRadio?.name ?? "radio";
+      try {
+        const savedPath = await window.api.radio.saveRecording(
+          arrayBuffer,
+          radioName,
+        );
+        console.log("✅ Gravação salva em:", savedPath);
+      } catch (e) {
+        console.error("❌ Erro ao salvar gravação:", e);
+      }
+      set({ isRecording: false, _mediaRecorder: null, _recordingChunks: [] });
+    };
+
+    recorder.start(1000);
+    set({
+      isRecording: true,
+      _mediaRecorder: recorder,
+      _recordingChunks: chunks,
+    });
+  },
+
+  stopRecording: () => {
+    const { _mediaRecorder, isRecording } = get();
+    if (!isRecording || !_mediaRecorder) return;
+    _mediaRecorder.stop();
+    // isRecording vira false no onstop acima
+  },
 }));
