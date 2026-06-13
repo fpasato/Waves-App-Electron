@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import styles from "./style.module.css";
 
 import { Header } from "../../components/Header";
@@ -26,7 +26,6 @@ export function PlayerScreen({ setScreen, file }) {
   const lyricsEnabled = usePlayerStore((state) => state.lyricsEnabled);
   const toggleLyrics = usePlayerStore((state) => state.toggleLyrics);
   const activeTheme = usePlayerStore((state) => state.activeTheme);
-  const prevSongIdRef = useRef(null);
   const {
     lines,
     activeIndex,
@@ -39,27 +38,19 @@ export function PlayerScreen({ setScreen, file }) {
   } = useLyrics(lyricsEnabled);
 
   useEffect(() => {
-    const id = currentSong?.id ?? null;
-    if (prevSongIdRef.current !== null && prevSongIdRef.current !== id) {
-      setOffset(0);
-    }
-    prevSongIdRef.current = id;
-  }, [currentSong?.id, setOffset]);
-
-  useEffect(() => {
     if (file) {
       playSong(file, [file]);
     }
   }, [file, playSong]);
 
   console.log(
-    "🖥️ [PlayerScreen] re-renderizou, currentSong:",
+    "[PlayerScreen] re-renderizou, currentSong:",
     currentSong?.title,
   );
 
   return (
     <div className={styles.playerScreen}>
-      <Header title="Vibe Player" />
+      <Header title="Waves" />
 
       <div className={styles.content}>
         <SideBar setScreen={setScreen} />

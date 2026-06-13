@@ -32,7 +32,7 @@ export function registerDownloadHandlers({
     audio: path.join(app.getPath("documents"), "Vibe", "audios"),
     radio: path.join(app.getPath("documents"), "Vibe", "gravações de radio"),
   };
-
+  const activeProcesses = new Map();
   // ── Helpers de comunicação ──────────────────────────────
   function sendProgress(payload) {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -64,11 +64,24 @@ export function registerDownloadHandlers({
     return new Promise((resolve, reject) => {
       const proc = spawn(ytDlpPath, args, {
         stdio: ["ignore", "pipe", "pipe"],
-        cwd: cwd ?? app.getPath("temp"), // ← adiciona isso
+        cwd: cwd ?? app.getPath("temp"),
+      });
+
+      let cancelled = false;
+      activeProcesses.set(id, {
+        proc,
+        cancel: () => {
+          cancelled = true;
+          try {
+            spawn("taskkill", ["/pid", proc.pid.toString(), "/f", "/t"]);
+          } catch {
+            proc.kill();
+          }
+        },
       });
 
       let buffer = "";
-      let stderrBuffer = ""; // ← captura stderr separado para logs
+      let stderrBuffer = "";
 
       const handleChunk = (chunk) => {
         buffer += chunk.toString();
@@ -82,14 +95,15 @@ export function registerDownloadHandlers({
 
       proc.stdout.on("data", handleChunk);
       proc.stderr.on("data", (chunk) => {
-        stderrBuffer += chunk.toString(); // ← acumula stderr
+        stderrBuffer += chunk.toString();
         handleChunk(chunk);
       });
 
       proc.on("close", (code) => {
+        activeProcesses.delete(id);
+        if (cancelled) return resolve(); // ← cancelamento intencional
         if (code === 0 || code === null) resolve();
         else {
-          // ← agora o erro mostra a causa real
           console.error(`yt-dlp stderr:\n${stderrBuffer}`);
           reject(
             new Error(
@@ -99,7 +113,11 @@ export function registerDownloadHandlers({
         }
       });
 
-      proc.on("error", reject);
+      proc.on("error", (err) => {
+        activeProcesses.delete(id);
+        if (cancelled) return resolve(); // ← idem
+        reject(err);
+      });
     });
   }
 
@@ -484,5 +502,15 @@ export function registerDownloadHandlers({
         });
       });
     });
+  });
+
+  ipcMain.handle("downloads:cancel", (_, id) => {
+    console.log("cancel recebido:", id);
+    console.log("processos ativos:", [...activeProcesses.keys()]);
+    const entry = activeProcesses.get(id);
+    if (entry) {
+      entry.cancel();
+      activeProcesses.delete(id);
+    }
   });
 }

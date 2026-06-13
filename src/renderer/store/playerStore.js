@@ -89,7 +89,7 @@ export const usePlayerStore = create((set, get) => ({
   lyricsEnabled: false,
   lyricsLines: [],
   lyricsStatus: "idle",
-  lyricsOffset: 0,
+  lyricsOffset: parseFloat(localStorage.getItem("lyrics-offset")) || 0,
   lyricsSource: "lrclib",
   seekSignal: 0,
   seekTarget: 0,
@@ -186,7 +186,10 @@ export const usePlayerStore = create((set, get) => ({
   toggleLyrics: () => set((s) => ({ lyricsEnabled: !s.lyricsEnabled })),
   setLyricsEnabled: (value) => set({ lyricsEnabled: value }),
   setLyricsSource: (source) => set({ lyricsSource: source }),
-  setLyricsOffset: (offset) => set({ lyricsOffset: offset }),
+  setLyricsOffset: (offset) => {
+    localStorage.setItem("lyrics-offset", offset);
+    set({ lyricsOffset: offset });
+  },
   setLyricsLines: (lines) => set({ lyricsLines: lines }),
   setLyricsStatus: (status) => set({ lyricsStatus: status }),
   clearLyrics: () => set({ lyricsLines: [], lyricsStatus: "idle" }),

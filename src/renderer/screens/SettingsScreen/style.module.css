@@ -66,3 +66,10 @@
 .topOptions button {
   padding: 0.6rem;
 }
+
+.topOptions button:hover {
+  background-color: #0000002c;
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+  font-weight: 900;
+}

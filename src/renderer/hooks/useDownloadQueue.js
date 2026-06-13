@@ -20,23 +20,43 @@ export function useDownloadQueue() {
         const exists = prev.find((d) => d.id === id);
         if (exists) {
           return prev.map((d) =>
-            d.id === id ? { ...d, percent, speed, eta, status: "downloading" } : d
+            d.id === id
+              ? { ...d, percent, speed, eta, status: "downloading" }
+              : d,
           );
         }
-        return [...prev, { id, title, type, percent: percent ?? 0, speed, eta, status: "downloading" }];
+        return [
+          ...prev,
+          {
+            id,
+            title,
+            type,
+            percent: percent ?? 0,
+            speed,
+            eta,
+            status: "downloading",
+          },
+        ];
       });
     };
 
     const onDone = (_, { id }) => {
-      setActiveDownloads((prev) =>
-        prev.map((d) => d.id === id ? { ...d, percent: 100, status: "done" } : d)
-      );
+      setActiveDownloads((prev) => {
+        if (!prev.find((d) => d.id === id)) return prev;
+        return prev.map((d) =>
+          d.id === id ? { ...d, percent: 100, status: "done" } : d,
+        );
+      });
     };
 
     const onError = (_, { id, error }) => {
-      setActiveDownloads((prev) =>
-        prev.map((d) => d.id === id ? { ...d, status: "error", error } : d)
-      );
+      setActiveDownloads((prev) => {
+        const exists = prev.find((d) => d.id === id);
+        if (!exists) return prev; // ← já foi removido pelo cancel
+        return prev.map((d) =>
+          d.id === id ? { ...d, status: "error", error } : d,
+        );
+      });
     };
 
     window.electronAPI.downloads.onQueued(onQueued);
@@ -56,13 +76,19 @@ export function useDownloadQueue() {
 
   const clearFinished = useCallback(() => {
     setActiveDownloads((prev) =>
-      prev.filter((d) => d.status === "downloading" || d.status === "pending")
+      prev.filter((d) => d.status === "downloading" || d.status === "pending"),
     );
   }, []);
 
   const queueCount = activeDownloads.filter(
-    (d) => d.status === "downloading" || d.status === "pending"
+    (d) => d.status === "downloading" || d.status === "pending",
   ).length;
 
-  return { activeDownloads, setActiveDownloads, queueCount, dismissDownload, clearFinished };
+  return {
+    activeDownloads,
+    setActiveDownloads,
+    queueCount,
+    dismissDownload,
+    clearFinished,
+  };
 }

@@ -2,6 +2,23 @@
 import { ipcMain } from "electron";
 import { withAudioSrc } from "../utils.js";
 import fs from "fs";
+
+/**
+ * Retorna a data/hora local do sistema em formato ISO para o SQLite
+ * Isso garante que o timezone local seja usado automaticamente
+ */
+function getLocalDateTime() {
+  const now = new Date();
+  // Formato ISO: YYYY-MM-DD HH:MM:SS
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 /**
  * Registra todos os handlers relacionados ao banco de dados local.
  * @param {import('better-sqlite3').Database} db - Instância do banco
@@ -95,8 +112,8 @@ export function registerDbHandlers(db) {
   ipcMain.handle("db:songs:recordPlay", (_, songId) => {
     db.prepare(
       `UPDATE songs SET play_count = COALESCE(play_count, 0) + 1,
-       last_played = datetime('now') WHERE id = ?`,
-    ).run(songId);
+       last_played = ? WHERE id = ?`,
+    ).run(getLocalDateTime(), songId);
     return true;
   });
 
@@ -105,8 +122,8 @@ export function registerDbHandlers(db) {
   // =========================
   ipcMain.handle("db:recents:add", (_, songId) => {
     db.prepare(
-      "INSERT INTO recents (song_id, played_at) VALUES (?, datetime('now'))",
-    ).run(songId);
+      "INSERT INTO recents (song_id, played_at) VALUES (?, ?)",
+    ).run(songId, getLocalDateTime());
     return true;
   });
 

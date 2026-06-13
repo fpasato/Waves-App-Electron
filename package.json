@@ -1,5 +1,5 @@
 {
-  "name": "VIBE",
+  "name": "Waves",
   "version": "1.0.0",
   "description": "Um programa de músicas",
   "main": "./out/main/main.js",
@@ -18,8 +18,8 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.vibe.app",
-    "productName": "Vibe",
+    "appId": "com.waves.app",
+    "productName": "Waves",
     "asar": false,
     "win": {
       "target": "nsis",

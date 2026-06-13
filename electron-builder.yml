@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: meu-projeto
+appId: com.waves.app
+productName: Waves
 directories:
   buildResources: build
 files:
@@ -11,7 +11,8 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: meu-projeto
+  executableName: Waves
+  icon: build/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

@@ -69,9 +69,10 @@
 }
 
 .sidebarButton:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.123);
   color: white;
-  transform: translateX(4px);
+  font-weight: bolder;
+  transform: translateY(-2px);
 }
 
 .sidebarButton:active {
@@ -80,9 +81,6 @@
 
 /* Remove qualquer outra regra conflitante que pudesse existir */
 .optionsGroup button:not(.sidebarButton) {
-  /* Este seletor garante que apenas botões sem a classe sidebarButton
-     não sejam afetados. Como todos os botões nos grupos agora têm a classe,
-     este bloco pode ficar vazio. */
 }
 
 /* ============================================

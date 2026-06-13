@@ -97,7 +97,7 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS recents (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       song_id INTEGER NOT NULL,
-      played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      played_at DATETIME,
 
       FOREIGN KEY(song_id)
         REFERENCES songs(id)

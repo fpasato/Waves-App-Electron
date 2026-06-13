@@ -11,6 +11,7 @@ export async function createWindow(userAgent) {
     minHeight: 670,
     autoHideMenuBar: true,
     show: false,
+    icon: join(__dirname, "../../build/icon.ico"),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,

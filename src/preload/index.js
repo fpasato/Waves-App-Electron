@@ -130,6 +130,7 @@ const electronAPIBridge = {
       ipcRenderer.removeAllListeners("download:done");
       ipcRenderer.removeAllListeners("download:error");
     },
+    cancelDownload: (id) => ipcRenderer.invoke("downloads:cancel", id),
   },
 
   renameSong: (oldPath, newPath) =>

@@ -255,7 +255,7 @@ export function useLyrics(enabled) {
 
   const rafRef = useRef(null);
   const abortRef = useRef(null);
-  const previousSongId = useRef(null);
+  const previousSongId = useRef(currentSong?.id ?? null);
   const restartSignal = usePlayerStore((s) => s.restartSignal);
 
   // ── Reset quando a música muda (UMA VEZ SÓ) ──
