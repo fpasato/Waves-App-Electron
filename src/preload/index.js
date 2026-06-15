@@ -120,15 +120,17 @@ const electronAPIBridge = {
     revealFile: (filePath) =>
       ipcRenderer.invoke("downloads:revealFile", filePath),
     // Eventos de progresso
-    onQueued: (callback) => ipcRenderer.on("download:queued", callback), 
+    onQueued: (callback) => ipcRenderer.on("download:queued", callback),
     onProgress: (callback) => ipcRenderer.on("download:progress", callback),
     onDone: (callback) => ipcRenderer.on("download:done", callback),
     onError: (callback) => ipcRenderer.on("download:error", callback),
+    onCancelled: (callback) => ipcRenderer.on("download:cancelled", callback),
     removeListeners: () => {
-      ipcRenderer.removeAllListeners("download:queued"); 
+      ipcRenderer.removeAllListeners("download:queued");
       ipcRenderer.removeAllListeners("download:progress");
       ipcRenderer.removeAllListeners("download:done");
       ipcRenderer.removeAllListeners("download:error");
+      ipcRenderer.removeAllListeners("download:cancelled");
     },
     cancelDownload: (id) => ipcRenderer.invoke("downloads:cancel", id),
   },

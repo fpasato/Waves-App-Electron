@@ -97,6 +97,7 @@ export function registerDbHandlers(db) {
   ipcMain.handle("fs:exists", (_, filePath) => {
     return fs.existsSync(filePath);
   });
+  
   // dbHandlers.js
   ipcMain.handle("db:songs:removeInvalid", () => {
     const songs = db.prepare("SELECT id, path FROM songs").all();
@@ -109,6 +110,7 @@ export function registerDbHandlers(db) {
     }
     return removed;
   });
+
   ipcMain.handle("db:songs:recordPlay", (_, songId) => {
     db.prepare(
       `UPDATE songs SET play_count = COALESCE(play_count, 0) + 1,

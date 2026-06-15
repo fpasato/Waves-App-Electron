@@ -28,7 +28,7 @@ function PlayerApp() {
   const dismissToast = usePlayerStore((s) => s.dismissToast);
 
   useEffect(() => {
-    const handleDone = () => {
+    const handleDone = (_, { id }) => {
       toast({ message: "Download concluído!", type: "success" });
     };
     const handleError = (_, { error }) => {
@@ -39,7 +39,8 @@ function PlayerApp() {
     window.electronAPI.downloads.onError(handleError);
 
     return () => {
-      window.electronAPI.downloads.removeListeners();
+      ipcRenderer.removeListener("download:done", handleDone);
+      ipcRenderer.removeListener("download:error", handleError);
     };
   }, [toast]);
 

@@ -34,7 +34,7 @@ export function registerMiscHandlers() {
 
   ipcMain.handle('radio:saveRecording', async (_, { buffer, radioName }) => {
     const docsPath = app.getPath('documents');
-    const saveDir = path.join(docsPath, 'Vibe', 'gravações de radio');
+    const saveDir = path.join(docsPath, 'Waves', 'gravações de radio');
     fs.mkdirSync(saveDir, { recursive: true });
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

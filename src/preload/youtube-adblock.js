@@ -61,7 +61,7 @@
     if (document.querySelector('.ad-showing, .ytp-ad-skip-button')) {
       skipAd();
     }
-  }, 300);
+  }, 50);
 
   function init() {
     observer.observe(document.body, { childList: true, subtree: true });

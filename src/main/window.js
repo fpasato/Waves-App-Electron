@@ -1,5 +1,5 @@
 // src/main/window.js
-import { BrowserWindow, shell } from "electron";
+import { BrowserWindow, shell, Menu } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 
@@ -24,7 +24,7 @@ export async function createWindow(userAgent) {
   });
 
   mainWindow.webContents.setUserAgent(userAgent);
-
+  Menu.setApplicationMenu(null);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.includes("youtube.com")) return { action: "allow" };
     shell.openExternal(url);

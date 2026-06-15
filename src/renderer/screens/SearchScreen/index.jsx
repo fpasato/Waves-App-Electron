@@ -20,6 +20,8 @@ import { ImExit } from "react-icons/im";
 import { LuLogIn } from "react-icons/lu";
 import { usePlayerStore } from "../../store/playerStore";
 
+import { TbCookieOff, TbCookie } from "react-icons/tb";
+
 export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
   const toast = usePlayerStore((s) => s.toast);
 
@@ -91,6 +93,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
       if (destroyed || !wv.isConnected) return;
       const url = wv.getURL?.();
       if (!url || url === "about:blank") return;
+      setSearchUrl(url);
       await injectScripts();
       setTimeout(async () => {
         if (destroyed || !wv.isConnected) return;
@@ -108,6 +111,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
       if (destroyed || !wv.isConnected) return;
       const url = wv.getURL?.();
       if (!url || url === "about:blank") return;
+      setSearchUrl(url);
       try {
         await injectScripts();
       } catch (e) {}
@@ -162,24 +166,9 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
         </button>
 
         <div className={styles.searchInputWrapper}>
-          <input
-            ref={inputRef}
-            className={styles.searchInput}
-            type="text"
-            placeholder="Buscar no YouTube..."
-            value={query}
-            onChange={(e) => setQuerySynced(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          {query && (
-            <button
-              className={styles.clearBtn}
-              onClick={clearQuery}
-              aria-label="Limpar"
-            >
-              ✕
-            </button>
-          )}
+          <span className={styles.searchInput} title={searchUrl}>
+            {searchUrl}
+          </span>
         </div>
 
         <button
@@ -189,15 +178,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
         >
           <BsSearch />
         </button>
-        <button
-          className={`${styles.navBtn} ${isLoggedIn ? styles.navBtnActive : ""}`}
-          onClick={handleLogin}
-          title={
-            isLoggedIn ? "Logado no Google" : "Fazer login com Google (cookies)"
-          }
-        >
-          🍪
-        </button>
+
         <button
           className={styles.navBtn}
           onClick={openDownloadModal}
@@ -207,18 +188,17 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
         </button>
 
         <div className={styles.authWrapper}>
-          {isLoggedIn ? (
-            <button
-              className={`${styles.authBtn} ${styles.logoutBtn}`}
-              onClick={handleLogout}
-            >
-              <ImExit />
-            </button>
-          ) : (
-            <button className={styles.authBtn} onClick={handleLogin}>
-              <LuLogIn />
-            </button>
-          )}
+          <button
+            className={styles.authBtn}
+            onClick={isLoggedIn ? handleLogout : handleLogin}
+            title={
+              isLoggedIn
+                ? "Deslogar e limpar cookies"
+                : "Fazer login com Google"
+            }
+          >
+            {isLoggedIn ? <TbCookie /> : <TbCookieOff />}
+          </button>
 
           {showLoginModal && (
             <div className={styles.modalOverlay}>

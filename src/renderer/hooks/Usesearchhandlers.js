@@ -51,11 +51,12 @@ function parseMixFromUrl(url) {
     const videoId = u.searchParams.get("v");
 
     if (!list) return null;
+    if (list.startsWith("FL")) return null; // favoritos antigos, sem suporte
 
-    // Ignora listas de histórico/watch later internas do YouTube
-    if (list === "WL" || list === "LL" || list.startsWith("FL")) return null;
+    // WL = Assistir mais tarde, LL = Vídeos curtidos — são privadas, scraping via webview
+    const isPrivate = list === "WL" || list === "LL" || list.startsWith("RD");
 
-    return { videoId: videoId ?? null, playlistId: list };
+    return { videoId: videoId ?? null, playlistId: list, isPrivate };
   } catch {
     return null;
   }
@@ -271,6 +272,7 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
         if (mix && mixRes) {
           setMixInfo({
             playlistId: mix.playlistId,
+            isPrivate: mix.isPrivate,  
             title: mixRes.title ?? "Mix",
             count: mix.playlistId.startsWith("RD")
               ? null
@@ -320,56 +322,73 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
       if (mode === "mix" && mixInfo && mixVideos.length === 0) {
         setLoadingMixVideos(true);
         try {
-          const isMix = mixInfo.playlistId?.startsWith("RD");
+          const isPrivate = mixInfo.isPrivate; // RD, WL, LL
 
-          if (isMix) {
-            // Mix: só extrai do webview, sem fallback pro IPC
+          if (isPrivate) {
+            // Extrai vídeos do painel lateral do webview
             const extracted = await webviewRef.current.executeJavaScript(`
-            (() => {
-              const allItems = document.querySelectorAll('ytd-playlist-panel-video-renderer');
-              return Array.from(allItems).map((el, index) => {
-                const titleEl = el.querySelector('#video-title');
-                const linkEl = el.querySelector('a#wc-endpoint');
-                const href = linkEl?.href || '';
-                const urlParams = new URLSearchParams(href.split('?')[1] || '');
-                return {
-                  index: index + 1,
-                  id: urlParams.get('v') || '',
-                  title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
-                };
-              }).filter(v => v.id);
-            })()
-          `);
+              (() => {
+                // Tenta painel lateral (Mix/RD) primeiro
+                const panelItems = document.querySelectorAll('ytd-playlist-panel-video-renderer');
+                if (panelItems.length > 0) {
+                  return Array.from(panelItems).map((el, index) => {
+                    const titleEl = el.querySelector('#video-title');
+                    const linkEl = el.querySelector('a#wc-endpoint');
+                    const href = linkEl?.href || '';
+                    const urlParams = new URLSearchParams(href.split('?')[1] || '');
+                    return {
+                      index: index + 1,
+                      id: urlParams.get('v') || '',
+                      title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
+                    };
+                  }).filter(v => v.id);
+                }
+
+                // Fallback: página de playlist (WL, LL) — ytd-playlist-video-renderer
+                const pageItems = document.querySelectorAll('ytd-playlist-video-renderer');
+                return Array.from(pageItems).map((el, index) => {
+                  const titleEl = el.querySelector('#video-title');
+                  const linkEl = el.querySelector('a#wc-endpoint, a[href*="watch"]');
+                  const href = linkEl?.href || '';
+                  const urlParams = new URLSearchParams(href.split('?')[1] || '');
+                  return {
+                    index: index + 1,
+                    id: urlParams.get('v') || '',
+                    title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
+                  };
+                }).filter(v => v.id);
+              })()
+            `);
 
             if (extracted?.length > 0) {
               setMixVideos(extracted.map((v) => ({ ...v, selected: true })));
               setMixInfo((prev) => ({ ...prev, count: extracted.length }));
             } else {
               toast?.({
-                message: "Não foi possível carregar os vídeos da Mix.",
+                message: "Não foi possível carregar os vídeos. Abra a playlist no YouTube primeiro.",
                 type: "error",
               });
             }
           } else {
-            // Playlist normal: usa yt-dlp via IPC
-            const res = await window.electronAPI.youtube.getMixVideos({
-              videoId: currentVideoId,
-              playlistId: mixInfo.playlistId,
-            });
-            if (res.success) {
-              setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
-            }
+          // Playlist pública normal: usa yt-dlp via IPC
+          const res = await window.electronAPI.youtube.getMixVideos({
+            videoId: currentVideoId,
+            playlistId: mixInfo.playlistId,
+          });
+          if (res.success) {
+            setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
           }
-        } catch (err) {
-          console.error("Erro ao buscar vídeos da mix:", err);
-          toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
-        } finally {
-          setLoadingMixVideos(false);
         }
+      } catch (err) {
+        console.error("Erro ao buscar vídeos da mix:", err);
+        toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
+      } finally {
+        setLoadingMixVideos(false);
       }
-    },
-    [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
-  );
+    }
+  },
+  [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
+);
 
   /**
    * Alterna seleção de um vídeo individual na mix

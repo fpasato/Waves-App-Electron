@@ -38,7 +38,7 @@ function formatDate(ms) {
   });
 }
 
-function QueueItem({ item, onDismiss , onCancel }) {
+function QueueItem({ item, onDismiss, onCancel }) {
   const isPending = item.status === "pending";
   const isActive = item.status === "downloading";
   const isDone = item.status === "done";
@@ -86,7 +86,7 @@ function QueueItem({ item, onDismiss , onCancel }) {
         )}
       </div>
 
-      {(isDone || isError || isPending) && (
+      {(isDone || isError) && (
         <button
           className={styles.queueDismiss}
           onClick={() => onDismiss(item.id)}
@@ -95,7 +95,7 @@ function QueueItem({ item, onDismiss , onCancel }) {
           <FaTimes />
         </button>
       )}
-      {isActive && (
+      {(isActive || isPending) && (
         <button
           className={styles.queueDismiss}
           onClick={() => onCancel(item.id)}
@@ -210,8 +210,13 @@ const FILTER_TABS = [
 ];
 
 export function DownloadScreen({ setScreen, downloadQueue }) {
-  const { activeDownloads, dismissDownload, clearFinished, queueCount } =
-    downloadQueue;
+  const {
+    activeDownloads,
+    dismissDownload,
+    clearFinished,
+    queueCount,
+    cancelDownload,
+  } = downloadQueue;
   const [selected, setSelected] = useState(new Set());
   const [selectMode, setSelectMode] = useState(false);
 
@@ -473,10 +478,7 @@ export function DownloadScreen({ setScreen, downloadQueue }) {
                     key={item.id}
                     item={item}
                     onDismiss={dismissDownload}
-                    onCancel={(id) => {
-                      window.electronAPI.downloads.cancelDownload(id);
-                      dismissDownload(id);
-                    }}
+                    onCancel={cancelDownload} 
                   />
                 ))}
               </div>
