@@ -7,7 +7,6 @@ import { randomUUID } from "crypto";
 import { execSync } from "child_process";
 import { StringDecoder } from "string_decoder";
 
-
 const PROGRESS_RE =
   /\[download\]\s+([\d.]+)%(?:.*?at\s+([\d.]+\s*[\w/]+))?(?:.*?ETA\s+([\d:]+))?/;
 
@@ -281,6 +280,19 @@ export function registerDownloadHandlers({
     return results;
   });
 
+  ipcMain.handle("downloads:listVideos", async () => {
+    const dir = path.join(app.getPath("documents"), "Waves", "video");
+    await fs.promises.mkdir(dir, { recursive: true }); // garante que a pasta existe
+    const files = await fs.promises.readdir(dir).catch(() => []);
+    return files
+      .filter((f) => /\.(mp4|webm|mkv|mov)$/i.test(f))
+      .map((f) => ({
+        filename: f,
+        title: f.replace(/\.[^.]+$/, "").replace(/_/g, " "),
+        path: path.join(dir, f),
+      }));
+  });
+
   // ── download:video ──────────────────────────────────────
   ipcMain.handle("download:video", async (_, { videoId, title, formatId }) => {
     const id = `video-${videoId}-${randomUUID()}`;
@@ -526,7 +538,15 @@ export function registerDownloadHandlers({
 
       const PRIVATE_LISTS = ["WL", "LL"];
       if (PRIVATE_LISTS.includes(playlistId) || playlistId?.startsWith("RD")) {
-        return { title: playlistId === "WL" ? "Assistir mais tarde" : playlistId === "LL" ? "Vídeos curtidos" : "Mix", count: null };
+        return {
+          title:
+            playlistId === "WL"
+              ? "Assistir mais tarde"
+              : playlistId === "LL"
+                ? "Vídeos curtidos"
+                : "Mix",
+          count: null,
+        };
       }
       const proc = spawn(
         ytDlpPath,

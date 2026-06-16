@@ -24,7 +24,7 @@ export async function createWindow(userAgent) {
   });
 
   mainWindow.webContents.setUserAgent(userAgent);
-  Menu.setApplicationMenu(null);
+  // Menu.setApplicationMenu(null);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.includes("youtube.com")) return { action: "allow" };
     shell.openExternal(url);

@@ -456,12 +456,6 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
       }
 
       if (result.success) {
-        toast?.({
-          message: isMixDownload
-            ? `Download da mix iniciado!\nOs arquivos serão salvos em: ${downloadType === "audio" ? "audios" : "video"}`
-            : `Download concluído!`,
-          type: "success",
-        });
         closeDownloadModal();
       } else {
         toast?.({
