@@ -275,6 +275,8 @@ export function DownloadScreen({ setScreen, downloadQueue }) {
     setSelected(new Set());
   };
 
+  const toFileUrl = (path) => `file:///${path.replace(/\\/g, "/")}`;
+
   const handleOpen = useCallback(
     (file) => {
       if (file.type === "audio" || file.type === "radio") {
@@ -283,11 +285,18 @@ export function DownloadScreen({ setScreen, downloadQueue }) {
             id: file.path,
             title: file.name,
             path: file.path,
-            src: `file://${file.path}`,
+            src: toFileUrl(file.path),
           },
         });
-      } else {
-        window.electronAPI.downloads.openFile(file.path).catch(console.error);
+      } else if (file.type === "video") {
+        setScreen("videoplayer", {
+          video: {
+            id: file.path,
+            title: file.name,
+            path: file.path,
+            src: toFileUrl(file.path),
+          },
+        });
       }
     },
     [setScreen],
@@ -478,7 +487,7 @@ export function DownloadScreen({ setScreen, downloadQueue }) {
                     key={item.id}
                     item={item}
                     onDismiss={dismissDownload}
-                    onCancel={cancelDownload} 
+                    onCancel={cancelDownload}
                   />
                 ))}
               </div>

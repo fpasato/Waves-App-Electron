@@ -24,10 +24,20 @@
 }
 
 /* Fullscreen via CSS — sem requestFullscreen, sem controles nativos */
-.playerFullscreen {
+.hubFullscreen {
   position: fixed;
   inset: 0;
   z-index: 9999;
+}
+
+/* Em fullscreen, esconde a sidebar */
+.hubFullscreen .sidebar {
+  display: none;
+}
+
+/* Em fullscreen, o player ocupa tudo */
+.hubFullscreen .container {
+  grid-template-columns: 1fr;
 }
 
 /* O wrapper agora ocupa todo o espaço e esconde/mostra os controles */
@@ -240,6 +250,31 @@
   justify-content: space-between;
 }
 
+.sidebarActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.openFileBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.openFileBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
 .sidebarTitle {
   font-size: 14px;
   font-weight: 600;
@@ -333,6 +368,7 @@
   text-align: center;
 }
 
-.ButtonBack{
-  padding: 0.4rem;
+
+.backButton {
+padding: 0.4rem;
 }

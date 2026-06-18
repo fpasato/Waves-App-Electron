@@ -150,7 +150,11 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("musicAPI", musicAPI);
-    contextBridge.exposeInMainWorld("electronAPI", electronAPIBridge);
+    contextBridge.exposeInMainWorld("electronAPI", {
+      ...electronAPIBridge,
+      openFileDialog: () => ipcRenderer.invoke("dialog:openFile"),
+      setFullscreen: (flag) => ipcRenderer.invoke("window:setFullscreen", flag),
+    });
   } catch (error) {
     console.error(error);
   }

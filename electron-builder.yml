@@ -10,6 +10,45 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
+
+# ── Associações de arquivo ─────────────────────────────────
+fileAssociations:
+  # Vídeo
+  - ext: mp4
+    name: Vídeo MP4
+    mimeType: video/mp4
+  - ext: mkv
+    name: Vídeo MKV
+    mimeType: video/x-matroska
+  - ext: avi
+    name: Vídeo AVI
+    mimeType: video/x-msvideo
+  - ext: mov
+    name: Vídeo MOV
+    mimeType: video/quicktime
+  - ext: webm
+    name: Vídeo WebM
+    mimeType: video/webm
+  # Áudio
+  - ext: mp3
+    name: Áudio MP3
+    mimeType: audio/mpeg
+  - ext: flac
+    name: Áudio FLAC
+    mimeType: audio/flac
+  - ext: wav
+    name: Áudio WAV
+    mimeType: audio/wav
+  - ext: ogg
+    name: Áudio OGG
+    mimeType: audio/ogg
+  - ext: m4a
+    name: Áudio M4A
+    mimeType: audio/mp4
+  - ext: aac
+    name: Áudio AAC
+    mimeType: audio/aac
+
 win:
   executableName: Waves
   icon: build/icon.ico
@@ -18,6 +57,7 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
@@ -28,15 +68,17 @@ mac:
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
+
 linux:
   target:
     - AppImage
     - snap
     - deb
   maintainer: electronjs.org
-  category: Utility
+  category: AudioVideo  # era Utility — AudioVideo é a categoria correta para players
 appImage:
   artifactName: ${name}-${version}.${ext}
+
 npmRebuild: false
 publish:
   provider: generic

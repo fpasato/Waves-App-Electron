@@ -114,7 +114,7 @@ function PlayerApp() {
         <SettingsScreen setScreen={setScreen} setTheme={setTheme} />
       )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
-      {screen === "videoplayer" && <VideoPlayerScreen setScreen={setScreen} />}
+      {screen === "videoplayer" && <VideoPlayerScreen setScreen={setScreen} video={screenData?.video} />}
       {screen === "recents" && <RecentScreen setScreen={setScreen} />}
       {screen === "downloads" && (
         <DownloadScreen setScreen={setScreen} downloadQueue={downloadQueue} />

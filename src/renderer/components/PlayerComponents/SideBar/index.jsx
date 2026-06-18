@@ -4,7 +4,8 @@ import { PlaylistScreen } from "../PlaylistScreen";
 import { IoOptionsSharp } from "react-icons/io5";
 import { IoLibrarySharp } from "react-icons/io5";
 import { FaYoutube, FaHistory } from "react-icons/fa";
-import { FaRadio, FaDownload } from "react-icons/fa6";
+import { FaRadio, FaDownload  } from "react-icons/fa6";
+import { FaPhotoVideo } from "react-icons/fa";
 
 export function SideBar({ setScreen }) {
   return (
@@ -36,8 +37,8 @@ export function SideBar({ setScreen }) {
             className={styles.sidebarButton}
             onClick={() => setScreen("videoplayer")}
           >
-            <IoLibrarySharp size={18} />
-            <span>Biblioteca</span>
+            <FaPhotoVideo size={18} />
+            <span>Video Player</span>
           </button>
         </div>
 
