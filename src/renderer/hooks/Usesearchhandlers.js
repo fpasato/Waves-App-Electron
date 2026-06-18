@@ -51,8 +51,12 @@ function parseMixFromUrl(url) {
     const videoId = u.searchParams.get("v");
 
     if (!list) return null;
+    if (list.startsWith("FL")) return null; // favoritos antigos, sem suporte
 
-    return { videoId: videoId ?? null, playlistId: list };
+    // WL = Assistir mais tarde, LL = Vídeos curtidos — são privadas, scraping via webview
+    const isPrivate = list === "WL" || list === "LL" || list.startsWith("RD");
+
+    return { videoId: videoId ?? null, playlistId: list, isPrivate };
   } catch {
     return null;
   }
@@ -61,42 +65,7 @@ function parseMixFromUrl(url) {
 // ============================================================================
 // Hook principal
 // ============================================================================
-// ── helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Extrai os vídeos visíveis da mix direto do DOM do webview.
- * Funciona enquanto o usuário está na página da mix (RD...).
- */
-async function extractMixVideosFromDom(wv) {
-  try {
-    return await wv.executeJavaScript(`
-      (function() {
-        const items = document.querySelectorAll(
-          'ytd-playlist-panel-video-renderer, ytd-compact-video-renderer'
-        );
-        const videos = [];
-        items.forEach((el, idx) => {
-          const anchor = el.querySelector('a#wc-endpoint, a#thumbnail, a.ytd-playlist-panel-video-renderer');
-          const titleEl = el.querySelector('#video-title, span#video-title');
-          if (!anchor || !titleEl) return;
-          const href = anchor.getAttribute('href') || '';
-          const match = href.match(/[?&]v=([^&]+)/);
-          if (!match) return;
-          videos.push({
-            index: idx + 1,
-            id: match[1],
-            title: titleEl.textContent.trim() || ('Vídeo ' + (idx + 1)),
-            selected: true,
-          });
-        });
-        return videos;
-      })()
-    `);
-  } catch (err) {
-    console.error("extractMixVideosFromDom erro:", err);
-    return [];
-  }
-}
 /**
  * Hook para gerenciar navegação, busca, download e autenticação do YouTube
  * @param {Object} options
@@ -303,8 +272,11 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
         if (mix && mixRes) {
           setMixInfo({
             playlistId: mix.playlistId,
+            isPrivate: mix.isPrivate,  
             title: mixRes.title ?? "Mix",
-            count: mixRes.count ?? null,
+            count: mix.playlistId.startsWith("RD")
+              ? null
+              : (mixRes.count ?? null),
           });
         }
       } catch (err) {
@@ -343,51 +315,81 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
    * Altera o modo de download (vídeo único ou mix completa)
    * Quando muda para "mix", carrega a lista de vídeos se ainda não estiver carregada.
    */
-  // ── handleSetMixMode (substitui a versão anterior) ────────────────────────────
-
   const handleSetMixMode = useCallback(
     async (mode) => {
       setMixMode(mode);
-      if (mode !== "mix" || !mixInfo || mixVideos.length > 0) return;
 
-      setLoadingMixVideos(true);
-      try {
-        const isDynamic =
-          mixInfo.playlistId.startsWith("RD") ||
-          mixInfo.playlistId === "WL" ||
-          mixInfo.playlistId === "LL" ||
-          mixInfo.playlistId.startsWith("FL");
-        const wv = webviewRef.current;
+      if (mode === "mix" && mixInfo && mixVideos.length === 0) {
+        setLoadingMixVideos(true);
+        try {
+          const isPrivate = mixInfo.isPrivate; // RD, WL, LL
 
-        if (isDynamic && wv) {
-          // Mix dinâmica → extrai do DOM (mesma lista que o usuário vê)
-          const videos = await extractMixVideosFromDom(wv);
+          if (isPrivate) {
+            // Extrai vídeos do painel lateral do webview
+            const extracted = await webviewRef.current.executeJavaScript(`
+              (() => {
+                // Tenta painel lateral (Mix/RD) primeiro
+                const panelItems = document.querySelectorAll('ytd-playlist-panel-video-renderer');
+                if (panelItems.length > 0) {
+                  return Array.from(panelItems).map((el, index) => {
+                    const titleEl = el.querySelector('#video-title');
+                    const linkEl = el.querySelector('a#wc-endpoint');
+                    const href = linkEl?.href || '';
+                    const urlParams = new URLSearchParams(href.split('?')[1] || '');
+                    return {
+                      index: index + 1,
+                      id: urlParams.get('v') || '',
+                      title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
+                    };
+                  }).filter(v => v.id);
+                }
 
-          if (videos.length > 0) {
-            setMixVideos(videos);
-            return;
+                // Fallback: página de playlist (WL, LL) — ytd-playlist-video-renderer
+                const pageItems = document.querySelectorAll('ytd-playlist-video-renderer');
+                return Array.from(pageItems).map((el, index) => {
+                  const titleEl = el.querySelector('#video-title');
+                  const linkEl = el.querySelector('a#wc-endpoint, a[href*="watch"]');
+                  const href = linkEl?.href || '';
+                  const urlParams = new URLSearchParams(href.split('?')[1] || '');
+                  return {
+                    index: index + 1,
+                    id: urlParams.get('v') || '',
+                    title: titleEl?.textContent?.trim() || 'Vídeo ' + (index + 1),
+                  };
+                }).filter(v => v.id);
+              })()
+            `);
+
+            if (extracted?.length > 0) {
+              setMixVideos(extracted.map((v) => ({ ...v, selected: true })));
+              setMixInfo((prev) => ({ ...prev, count: extracted.length }));
+            } else {
+              toast?.({
+                message: "Não foi possível carregar os vídeos. Abra a playlist no YouTube primeiro.",
+                type: "error",
+              });
+            }
+          } else {
+          // Playlist pública normal: usa yt-dlp via IPC
+          const res = await window.electronAPI.youtube.getMixVideos({
+            videoId: currentVideoId,
+            playlistId: mixInfo.playlistId,
+          });
+          if (res.success) {
+            setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
           }
-          // DOM vazio (página diferente) → cai no fallback abaixo
-          console.warn("DOM vazio, fallback para yt-dlp");
-        }
-
-        // Playlist regular PL... ou fallback
-        const res = await window.electronAPI.youtube.getMixVideos({
-          videoId: currentVideoId,
-          playlistId: mixInfo.playlistId,
-        });
-
-        if (res.success && res.videos.length > 0) {
-          setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
         }
       } catch (err) {
         console.error("Erro ao buscar vídeos da mix:", err);
+        toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
       } finally {
         setLoadingMixVideos(false);
       }
-    },
-    [mixInfo, mixVideos.length, currentVideoId, webviewRef],
-  );
+    }
+  },
+  [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
+);
+
   /**
    * Alterna seleção de um vídeo individual na mix
    */
@@ -454,12 +456,6 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
       }
 
       if (result.success) {
-        toast?.({
-          message: isMixDownload
-            ? `Download da mix iniciado!\nOs arquivos serão salvos em: ${downloadType === "audio" ? "audios" : "video"}`
-            : `Download concluído!`,
-          type: "success",
-        });
         closeDownloadModal();
       } else {
         toast?.({

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import styles from "./style.module.css";
 
 import { Header } from "../../components/Header";
@@ -11,7 +11,7 @@ import { VolumeControls } from "../../components/PlayerComponents/VolumeControls
 
 import { FaExplosion } from "react-icons/fa6";
 import { randomCover } from "../../utils/randomCover";
-import { usePlayerStore } from "../../store/playerStore";
+import { usePlayerStore } from "../../store/playerStore"; 
 import { useAnalyser } from "../../hooks/useAnalyser";
 import { useLyrics } from "../../hooks/useLyrics";
 
@@ -26,7 +26,6 @@ export function PlayerScreen({ setScreen, file }) {
   const lyricsEnabled = usePlayerStore((state) => state.lyricsEnabled);
   const toggleLyrics = usePlayerStore((state) => state.toggleLyrics);
   const activeTheme = usePlayerStore((state) => state.activeTheme);
-  const prevSongIdRef = useRef(null);
   const {
     lines,
     activeIndex,
@@ -36,17 +35,7 @@ export function PlayerScreen({ setScreen, file }) {
     nextLine,
     offset,
     setOffset,
-    nextNextLine,
-    isGap,
   } = useLyrics(lyricsEnabled);
-
-  useEffect(() => {
-    const id = currentSong?.id ?? null;
-    if (prevSongIdRef.current !== null && prevSongIdRef.current !== id) {
-      setOffset(0);
-    }
-    prevSongIdRef.current = id;
-  }, [currentSong?.id, setOffset]);
 
   useEffect(() => {
     if (file) {
@@ -55,13 +44,13 @@ export function PlayerScreen({ setScreen, file }) {
   }, [file, playSong]);
 
   console.log(
-    "🖥️ [PlayerScreen] re-renderizou, currentSong:",
+    "[PlayerScreen] re-renderizou, currentSong:",
     currentSong?.title,
   );
 
   return (
     <div className={styles.playerScreen}>
-      <Header title="Vibe Player" />
+      <Header title="Waves" />
 
       <div className={styles.content}>
         <SideBar setScreen={setScreen} />
@@ -74,8 +63,6 @@ export function PlayerScreen({ setScreen, file }) {
           isFading={isFading}
           currentLine={currentLine}
           nextLine={nextLine}
-          nextNextLine={nextNextLine} 
-          isGap={isGap}
         />
         <SongsArea />
       </div>

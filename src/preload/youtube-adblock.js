@@ -1,91 +1,71 @@
+// src/preload/youtube-adblock.js  ← injeta no webview via preload
+
 (function () {
   'use strict';
 
-  // ── Skip e ocultação ────────────────────────────────────────────────────────
+  const SELECTORS = {
+    skipButton: '.ytp-skip-ad-button, .ytp-ad-skip-button, button[class*="skip"]',
+    adOverlay: '.ytp-ad-overlay-container',
+    adBanner: '.ytd-banner-promo-renderer, #masthead-ad',
+    adContainer: 'ytd-ad-slot-renderer, #player-ads, .ytd-promoted-sparkles-web-renderer',
+    adVideoContainer: '.ad-showing',
+  };
 
-  function trySkipAd() {
-    const skipBtn = document.querySelector(
-      '.ytp-skip-ad-button, .ytp-ad-skip-button, button[class*="skip"]'
-    );
-    if (skipBtn) { skipBtn.click(); return true; }
+  function skipAd() {
+    // Clicar no botão de pular se existir
+    const skipBtn = document.querySelector(SELECTORS.skipButton);
+    if (skipBtn) {
+      skipBtn.click();
+      return;
+    }
 
+    // Se estiver em um anúncio de vídeo, avançar para o fim
     const video = document.querySelector('video');
     const adShowing = document.querySelector('.ad-showing');
+
     if (video && adShowing) {
-      const dur = video.duration;
-      if (Number.isFinite(dur) && dur > 0) {
-        video.currentTime = dur - 0.1;
-        video.muted = true;
-        return true;
-      }
+      // Avançar o vídeo para o final força o skip
+      video.currentTime = video.duration;
+      video.muted = true; // garante que não conta como "assistido"
     }
-    return false;
   }
 
-  const HIDE_SELECTORS = [
-    'ytd-ad-slot-renderer',
-    'ytd-banner-promo-renderer',
-    '#masthead-ad',
-    'ytd-promoted-sparkles-web-renderer',
-    'ytd-statement-banner-renderer',
-    'ytd-in-feed-ad-layout-renderer',
-    '.ytp-ad-overlay-container',
-  ];
-
-  function hideAdElements() {
-    document.querySelectorAll(HIDE_SELECTORS.join(',')).forEach(el => {
-      el.style.display = 'none';
-      el.hidden = true;
+  function removeAdElements() {
+    Object.values(SELECTORS).forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        if (!el.closest('ytd-watch-flexy') || el.classList.contains('ad-showing')) {
+          // só remove se não for o player principal
+        }
+        el.remove();
+      });
     });
+
+    // Remover banners e overlays de ad
+    document.querySelectorAll(
+      'ytd-ad-slot-renderer, ytd-banner-promo-renderer, ' +
+      '#masthead-ad, ytd-promoted-sparkles-web-renderer, ' +
+      'ytd-statement-banner-renderer, ytd-in-feed-ad-layout-renderer'
+    ).forEach(el => el.remove());
   }
 
-  function trySkipAndHide() { trySkipAd(); hideAdElements(); }
-
-  // ── Navegação ───────────────────────────────────────────────────────────────
-
-  let aggressiveUntil = 0;
-
-  function onNavigation() {
-    aggressiveUntil = Date.now() + 5000;
-    setTimeout(trySkipAndHide, 100);
-    setTimeout(trySkipAndHide, 600);
-    setTimeout(trySkipAndHide, 1500);
-    setTimeout(trySkipAndHide, 3000);
-  }
-
-  // Eventos nativos do YouTube
-  window.addEventListener('yt-navigate-finish', onNavigation);
-  document.addEventListener('yt-page-data-updated', onNavigation);
-
-  // Fix para sessões longas: intercepta navegações SPA que não disparam os eventos acima
-  const _push = history.pushState.bind(history);
-  const _replace = history.replaceState.bind(history);
-  history.pushState = (...args) => { _push(...args); onNavigation(); };
-  history.replaceState = (...args) => { _replace(...args); onNavigation(); };
-  window.addEventListener('popstate', onNavigation);
-
-  // ── Polling adaptativo ──────────────────────────────────────────────────────
-
-  let debounceTimer = null;
+  // Observer para detectar ads assim que aparecem
   const observer = new MutationObserver(() => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(trySkipAndHide, 50);
+    if (document.querySelector('.ad-showing')) {
+      skipAd();
+    }
+    removeAdElements();
   });
 
-  function fallbackPolling() {
-    const hasAd = !!document.querySelector('.ad-showing, .ytp-ad-skip-button');
-    const isAggressive = Date.now() < aggressiveUntil;
-    if (hasAd || isAggressive) trySkipAndHide();
-    setTimeout(fallbackPolling, hasAd || isAggressive ? 300 : 2000);
-  }
-
-  // ── Init ────────────────────────────────────────────────────────────────────
+  // Polling como fallback (YouTube às vezes escapa do MutationObserver)
+  setInterval(() => {
+    if (document.querySelector('.ad-showing, .ytp-ad-skip-button')) {
+      skipAd();
+    }
+  }, 50);
 
   function init() {
     observer.observe(document.body, { childList: true, subtree: true });
-    trySkipAndHide();
-    fallbackPolling();
-    onNavigation(); // trata a página já carregada
+    removeAdElements();
   }
 
   if (document.readyState === 'loading') {

@@ -29,8 +29,13 @@ export const ytDlpPath = app.isPackaged
 
 export const ffmpegPath = ffmpegStatic;
 
+// utils.js — troca o cookiesPath para bater com authHandlers.js
 const cookiesPath = path.join(
-  os.homedir(), 'AppData', 'Roaming', 'meu-projeto', 'cookies.txt'
+  os.homedir(),
+  "AppData",
+  "Roaming",
+  "meu-projeto",
+  "cookies.txt",
 );
 
 // Instância única do yt-dlp (compartilhada)
@@ -40,11 +45,15 @@ export const ytDlp = new YTDlpWrap(ytDlpPath);
 export function getAuthFlags() {
   try {
     const stat = fs.statSync(cookiesPath);
-    if (stat.size > 100) return ["--cookies", cookiesPath];
+    if (stat.size > 100) {
+      console.log("🍪 Usando cookies:", cookiesPath);
+      return ["--cookies", cookiesPath];
+    }
+    console.warn("🍪 cookies.txt vazio ou muito pequeno");
   } catch {
-    // arquivo não existe
+    console.warn("🍪 cookies.txt não encontrado em:", cookiesPath);
   }
-  return ["--cookies-from-browser", "chrome"];
+  return []; // sem fallback — deixa o yt-dlp falhar com mensagem clara
 }
 
 export function baseFlags() {

@@ -10,8 +10,8 @@
     outline: none;
     border: none;
     border-bottom: 1px solid var(--accent);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transition: 0.3s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.682);
 }
 
 
@@ -21,6 +21,7 @@
     background-color: var(--accent);
     color: #000;
     transform: scale(1.03);
+    cursor: pointer;
 }
 
 .buttonpattern:active{

@@ -29,7 +29,10 @@
     font-size: 1.4rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: var(--text);
+    background: linear-gradient(135deg, var(--accent), #ffffff 30%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: 0.2px;
 }
 
@@ -54,7 +57,10 @@
 .section h2 {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text);
+    background: linear-gradient(135deg, var(--accent), #ffffff 30%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 0.2rem;
 }
 
@@ -62,6 +68,26 @@
     font-size: 0.9rem;
     line-height: 1.4rem;
     color: var(--text);
+}
+
+.section ul {
+    list-style: disc;
+    padding-left: 1.6rem;
+    margin: 0.2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.section li {
+    font-size: 0.9rem;
+    line-height: 1.4rem;
+    color: var(--text);
+    padding-left: 0.2rem;
+}
+
+.section li::marker {
+    color: var(--accent);
 }
 
 /* bloco de código (ex: padrão de nome) */

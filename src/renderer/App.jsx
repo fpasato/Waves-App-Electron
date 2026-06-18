@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { PlayerScreen } from "./screens/PlayerScreen";
 import { PlayerProvider } from "./store/PlayerContext";
@@ -6,6 +6,7 @@ import { SettingsScreen } from "./screens/SettingsScreen";
 import { LibraryScreen } from "./screens/LibraryScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 import { RadioScreen } from "./screens/RadioScreen";
+import { VideoPlayerScreen } from "./screens/VideoPlayerScreen";
 import { RecentScreen } from "./screens/RecentScreen";
 import { useAudio } from "./hooks/useAudio";
 import { usePlayerStore } from "./store/playerStore";
@@ -27,8 +28,14 @@ function PlayerApp() {
   const toasts = usePlayerStore((s) => s.toasts);
   const dismissToast = usePlayerStore((s) => s.dismissToast);
 
+  const downloadListenersRef = useRef(null);
+
   useEffect(() => {
-    const handleDone = () => {
+    if (downloadListenersRef.current) {
+      return;
+    }
+
+    const handleDone = (_, { id }) => {
       toast({ message: "Download concluído!", type: "success" });
     };
     const handleError = (_, { error }) => {
@@ -38,9 +45,7 @@ function PlayerApp() {
     window.electronAPI.downloads.onDone(handleDone);
     window.electronAPI.downloads.onError(handleError);
 
-    return () => {
-      window.electronAPI.downloads.removeListeners();
-    };
+    downloadListenersRef.current = { handleDone, handleError };
   }, [toast]);
 
   // Função que substitui setScreen, agora aceita (name, data)
@@ -109,6 +114,7 @@ function PlayerApp() {
         <SettingsScreen setScreen={setScreen} setTheme={setTheme} />
       )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
+      {screen === "videoplayer" && <VideoPlayerScreen setScreen={setScreen} video={screenData?.video} />}
       {screen === "recents" && <RecentScreen setScreen={setScreen} />}
       {screen === "downloads" && (
         <DownloadScreen setScreen={setScreen} downloadQueue={downloadQueue} />

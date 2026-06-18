@@ -12,11 +12,10 @@ export const BackgroundVideo = memo(function BackgroundVideo({
   isFading,
   currentLine,
   nextLine,
-  nextNextLine,
-  isGap,
 }) {
   const activeTheme = usePlayerStore((state) => state.activeTheme);
   const particlesEnabled = usePlayerStore((state) => state.particlesEnabled);
+
 
   return (
     <div className={styles.backgroundVideo}>
@@ -41,8 +40,6 @@ export const BackgroundVideo = memo(function BackgroundVideo({
             isFading={isFading}
             currentLine={currentLine}
             nextLine={nextLine}
-            nextNextLine={nextNextLine}
-            isGap={isGap}
           />
         </div>
       </div>

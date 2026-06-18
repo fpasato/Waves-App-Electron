@@ -1,10 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Righteous&display=swap');
+
 .header {
   background-color: var(--background);
-  color: #000; /* pra mim */
+  color: var(--accent);
   width: 100%;
   padding: 0.2rem;
   text-align: center;
 
   position: relative;
   z-index: 10;
+
+}
+
+.header h1 {
+  font-family: "Righteous", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }

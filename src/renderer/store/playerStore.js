@@ -89,7 +89,7 @@ export const usePlayerStore = create((set, get) => ({
   lyricsEnabled: false,
   lyricsLines: [],
   lyricsStatus: "idle",
-  lyricsOffset: 0,
+  lyricsOffset: parseFloat(localStorage.getItem("lyrics-offset")) || 0,
   lyricsSource: "lrclib",
   seekSignal: 0,
   seekTarget: 0,
@@ -116,7 +116,6 @@ export const usePlayerStore = create((set, get) => ({
     localStorage.setItem("active-theme-id", theme.id);
     document.documentElement.style.setProperty("--accent", theme.accent);
     document.documentElement.style.setProperty("--player-bg", theme.gradient);
-    document.documentElement.style.setProperty("--contrast", theme.contrast);
     document.documentElement.style.setProperty(
       "--glass-bg",
       theme.glassBg ?? "",
@@ -187,7 +186,10 @@ export const usePlayerStore = create((set, get) => ({
   toggleLyrics: () => set((s) => ({ lyricsEnabled: !s.lyricsEnabled })),
   setLyricsEnabled: (value) => set({ lyricsEnabled: value }),
   setLyricsSource: (source) => set({ lyricsSource: source }),
-  setLyricsOffset: (offset) => set({ lyricsOffset: offset }),
+  setLyricsOffset: (offset) => {
+    localStorage.setItem("lyrics-offset", offset);
+    set({ lyricsOffset: offset });
+  },
   setLyricsLines: (lines) => set({ lyricsLines: lines }),
   setLyricsStatus: (status) => set({ lyricsStatus: status }),
   clearLyrics: () => set({ lyricsLines: [], lyricsStatus: "idle" }),
@@ -759,5 +761,60 @@ export const usePlayerStore = create((set, get) => ({
 
   stopRadio: () => {
     get().clearRadio();
+  },
+
+  isRecording: false,
+  _mediaRecorder: null,
+  _recordingChunks: [],
+
+  // Nas ações:
+  startRecording: () => {
+    const state = get();
+    const audioEl = state._radioAudio;
+    if (!audioEl || state.isRecording) return;
+
+    const stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
+    if (!stream) return;
+
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/webm";
+
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const arrayBuffer = await blob.arrayBuffer();
+      const radioName = get().currentRadio?.name ?? "radio";
+      try {
+        const savedPath = await window.api.radio.saveRecording(
+          arrayBuffer,
+          radioName,
+        );
+        console.log("✅ Gravação salva em:", savedPath);
+      } catch (e) {
+        console.error("❌ Erro ao salvar gravação:", e);
+      }
+      set({ isRecording: false, _mediaRecorder: null, _recordingChunks: [] });
+    };
+
+    recorder.start(1000);
+    set({
+      isRecording: true,
+      _mediaRecorder: recorder,
+      _recordingChunks: chunks,
+    });
+  },
+
+  stopRecording: () => {
+    const { _mediaRecorder, isRecording } = get();
+    if (!isRecording || !_mediaRecorder) return;
+    _mediaRecorder.stop();
+    // isRecording vira false no onstop acima
   },
 }));

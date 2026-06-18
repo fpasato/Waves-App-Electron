@@ -5,143 +5,122 @@ import fs from "fs/promises";
 import { ElectronBlocker } from "@ghostery/adblocker-electron";
 import fetch from "cross-fetch";
 
-// ----------------------------------------------------------------------
-// Listas de filtro essenciais
-// ----------------------------------------------------------------------
+// Listas de filtro essenciais para bloquear anúncios no YouTube e rastreadores
 const FILTER_LISTS = [
+  // Listas essenciais
   "https://easylist.to/easylist/easylist.txt",
   "https://easylist.to/easylist/easyprivacy.txt",
+
+  // Listas do uBlock Origin (focam em anti-adblock e correções rápidas)
   "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
   "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/quick-fixes.txt",
   "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt",
+
+  // Lista complementar de hosts (Peter Lowe)
   "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext",
+
+  // ===== NOVAS LISTAS (muito eficazes contra anúncios do YouTube) =====
   "https://filters.adtidy.org/extension/ublock/filters/2.txt", // AdGuard Base
   "https://filters.adtidy.org/extension/ublock/filters/14.txt", // AdGuard Annoyances
-  "https://filters.adtidy.org/extension/ublock/filters/17.txt", // AdGuard Tracking Protection
+  "https://filters.adtidy.org/extension/ublock/filters/17.txt", // AdGuard Tracking Protection (opcional)
 ];
 
-// ----------------------------------------------------------------------
-// Configuração de cache e atualizações
-// ----------------------------------------------------------------------
+// Configuração do cache em disco
+const CACHE_PATH = path.join(app.getPath("userData"), "adblocker-cache.bin");
 const UPDATE_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 horas
+
 let engine = null;
 let updateTimer = null;
-let updateInProgress = false;
 
-// Evita erro caso app.getPath seja chamado antes de app estar pronto
-function getCachePath() {
-  if (!app.isReady()) {
-    throw new Error(
-      "app ainda não está pronto – chame somente após app.whenReady()",
-    );
-  }
-  return path.join(app.getPath("userData"), "adblocker-cache.bin");
-}
-
-// Escrita atômica: grava em arquivo temporário e depois renomeia
+/**
+ * Salva o estado serializado do motor de bloqueio no arquivo de cache.
+ */
 async function saveEngineToCache(engineInstance) {
-  const cachePath = getCachePath();
-  const tmpPath = `${cachePath}.tmp`;
   try {
     const serialized = await engineInstance.serialize();
-    await fs.writeFile(tmpPath, serialized);
-    await fs.rename(tmpPath, cachePath);
-    console.log("[Adblock] Cache salvo:", cachePath);
+    await fs.writeFile(CACHE_PATH, serialized);
+    console.log("[Adblock] Cache salvo em:", CACHE_PATH);
   } catch (err) {
     console.error("[Adblock] Erro ao salvar cache:", err);
-    // Tenta remover arquivo temporário em caso de falha
-    try {
-      await fs.unlink(tmpPath);
-    } catch (_) {}
   }
 }
 
-// ----------------------------------------------------------------------
-// Criação / carregamento do motor com suporte a cache
-// ----------------------------------------------------------------------
+/**
+ * Cria ou carrega o motor a partir do cache, usando as listas de filtro.
+ */
 async function createOrLoadEngine() {
-  const cachePath = getCachePath();
+  const cacheOptions = {
+    path: CACHE_PATH,
+    read: fs.readFile,
+    write: fs.writeFile,
+  };
 
-  // Tenta carregar do cache
+  // Tenta carregar do cache primeiro
   try {
-    await fs.access(cachePath);
-    const serialized = await fs.readFile(cachePath);
+    await fs.access(CACHE_PATH);
+    console.log("[Adblock] Cache encontrado, tentando carregar...");
+    const serialized = await fs.readFile(CACHE_PATH);
     engine = await ElectronBlocker.deserialize(serialized);
+    // O motor deserializado pode não estar associado a nenhuma sessão ainda, tudo bem.
     console.log("[Adblock] Motor carregado do cache.");
-    // Atualiza em segundo plano (não bloqueia a inicialização)
-    updateEngineIncremental().catch((err) =>
-      console.warn(
-        "[Adblock] Atualização inicial em segundo plano falhou:",
-        err,
-      ),
-    );
+    // Atualiza as listas em segundo plano (não bloqueia a inicialização)
+    updateEngineFromLists();
     return engine;
-  } catch {
+  } catch (err) {
     console.log(
-      "[Adblock] Cache não encontrado ou inválido, criando motor do zero...",
+      "[Adblock] Cache não encontrado ou inválido, baixando listas...",
     );
   }
 
-  // Se não havia cache, cria baixando todas as listas
+  // Se não havia cache, cria do zero baixando todas as listas
   engine = await ElectronBlocker.fromLists(fetch, FILTER_LISTS, {
     enableCompression: true,
+    ...cacheOptions,
   });
   console.log("[Adblock] Motor criado a partir das listas.");
   await saveEngineToCache(engine);
   return engine;
 }
 
-// ----------------------------------------------------------------------
-// Atualização incremental (usando engine.update)
-// ----------------------------------------------------------------------
-async function updateEngineIncremental() {
+/**
+ * Atualiza o motor com as listas mais recentes e recria o cache.
+ */
+async function updateEngineFromLists() {
   if (!engine) return;
-  if (updateInProgress) {
-    console.log("[Adblock] Atualização já em andamento, ignorando...");
-    return;
-  }
-  updateInProgress = true;
   try {
-    console.log("[Adblock] Iniciando atualização incremental das listas...");
-    // Constrói a configuração esperada pelo método update
-    const config = {
-      lists: FILTER_LISTS,
-      enableCompression: true,
-    };
-    await engine.update({ config, fetch });
-    console.log("[Adblock] Motor atualizado com sucesso.");
-    await saveEngineToCache(engine);
-  } catch (err) {
-    console.error("[Adblock] Falha na atualização incremental:", err);
-    // Fallback: recria o motor completamente
-    console.log("[Adblock] Tentando recriar o motor do zero...");
+    console.log("[Adblock] Atualizando listas de filtro...");
+
+    // updateFromLists não existe — recria o motor com as listas atualizadas
     engine = await ElectronBlocker.fromLists(fetch, FILTER_LISTS, {
       enableCompression: true,
     });
+
+    console.log("[Adblock] Listas atualizadas com sucesso.");
     await saveEngineToCache(engine);
-  } finally {
-    updateInProgress = false;
+  } catch (err) {
+    console.error("[Adblock] Falha ao atualizar listas:", err);
   }
 }
 
-// ----------------------------------------------------------------------
-// Agendamento de atualizações automáticas
-// ----------------------------------------------------------------------
+/**
+ * Inicia o temporizador de atualização periódica das listas.
+ */
 function scheduleUpdates() {
   if (updateTimer) clearInterval(updateTimer);
-  updateTimer = setInterval(updateEngineIncremental, UPDATE_INTERVAL_MS);
-  updateTimer.unref(); // não impede que o processo encerre
+  updateTimer = setInterval(() => {
+    updateEngineFromLists();
+  }, UPDATE_INTERVAL_MS);
   console.log(
-    `[Adblock] Atualizações automáticas configuradas a cada ${UPDATE_INTERVAL_MS / 3600000}h.`,
+    `[Adblock] Atualizações automáticas a cada ${UPDATE_INTERVAL_MS / 3600000}h.`,
   );
 }
 
-// ----------------------------------------------------------------------
-// setupAdBlocker – configura bloqueio na sessão e retorna o motor
-// ----------------------------------------------------------------------
+/**
+ * Configura o adblocker na sessão especificada (ex.: particionada para o webview do YouTube).
+ * @param {string} partition - Nome da partição (ex: 'persist:youtube')
+ * @returns {Promise<ElectronBlocker>} Instância do motor de bloqueio.
+ */
 export async function setupAdBlocker(partition) {
-  await app.whenReady();
-
   if (!engine) {
     engine = await createOrLoadEngine();
     scheduleUpdates();
@@ -150,40 +129,44 @@ export async function setupAdBlocker(partition) {
   const targetSession = session.fromPartition(partition);
   await engine.enableBlockingInSession(targetSession);
 
-  // Bloqueia só redes externas de anúncio — NÃO bloqueia endpoints internos do YouTube
-  // (bloquear log_event/qoe/ptracking causa loops de anúncio)
+  // ✅ Camada extra: bloqueia domínios de ad na rede antes de baixar
   targetSession.webRequest.onBeforeRequest(
     {
       urls: [
         "*://*.doubleclick.net/*",
         "*://*.googlesyndication.com/*",
         "*://*.googleadservices.com/*",
-        "*://*.googletagmanager.com/*",
-        "*://*.googletagservices.com/*",
-        "*://*.youtube.com/pagead/*",
       ],
     },
-    (_details, callback) => callback({ cancel: true }),
+    (details, callback) => {
+      const blocked = [
+        /youtube\.com\/pagead/,
+        /youtube\.com\/api\/stats\/ads/,
+        /youtube\.com\/get_midroll/,
+      ];
+      const shouldBlock = blocked.some((r) => r.test(details.url));
+      callback({ cancel: shouldBlock });
+    },
   );
 
-  console.log(`[Adblock] Bloqueio ativo na partição "${partition}".`);
+  console.log(`[Adblock] Bloqueio ativo na sessão "${partition}".`);
   return engine;
 }
 
-// ----------------------------------------------------------------------
-// API pública para forçar atualização manual
-// ----------------------------------------------------------------------
+/**
+ * Permite forçar uma atualização manual das listas.
+ */
 export async function forceUpdate() {
   if (!engine) {
     console.warn("[Adblock] Motor não inicializado. Inicie primeiro.");
     return;
   }
-  await updateEngineIncremental();
+  await updateEngineFromLists();
 }
 
-// ----------------------------------------------------------------------
-// API pública para parar atualizações automáticas (chamar no fechamento do app)
-// ----------------------------------------------------------------------
+/**
+ * Interrompe o temporizador de atualizações (útil ao fechar o app).
+ */
 export function stopAutoUpdates() {
   if (updateTimer) {
     clearInterval(updateTimer);

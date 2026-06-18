@@ -34,12 +34,11 @@ export const PlayerControls = memo(function PlayerControls({
     currentRadio,
     playRadio,
     pauseRadio,
+    isRecording,
+    startRecording,
+    stopRecording,
   } = usePlayerStore();
 
-  // ────────── Estado local ──────────
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
 
   // ────────── Derivados ──────────
   const isRadio = playerType === "radio";
@@ -53,47 +52,6 @@ export const PlayerControls = memo(function PlayerControls({
       togglePlay();
     }
   };
-
-  const handleRecord = useCallback(() => {
-    if (!isRecording) {
-      const audioEl = usePlayerStore.getState()._radioAudio;
-      if (!audioEl) return;
-
-      const stream = audioEl.captureStream?.() ?? audioEl.mozCaptureStream?.();
-      if (!stream) return;
-
-      chunksRef.current = [];
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
-      const recorder = new MediaRecorder(stream, { mimeType });
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        const arrayBuffer = await blob.arrayBuffer();
-        const radioName = currentRadio?.name ?? "radio";
-
-        try {
-          const savedPath = await window.api.radio.saveRecording(arrayBuffer, radioName);
-          console.log("✅ Gravação salva em:", savedPath);
-        } catch (e) {
-          console.error("❌ Erro ao salvar gravação:", e);
-        }
-      };
-
-      recorder.start(1000);
-      mediaRecorderRef.current = recorder;
-      setIsRecording(true);
-    } else {
-      mediaRecorderRef.current?.stop();
-      mediaRecorderRef.current = null;
-      setIsRecording(false);
-    }
-  }, [isRecording, currentRadio]);
 
   // ────────── Render ──────────
   return (
@@ -168,7 +126,7 @@ export const PlayerControls = memo(function PlayerControls({
 
         <button
           className={`${styles.button} ${styles.outButton} ${isRecording ? styles.recordingActive : ""}`}
-          onClick={handleRecord}
+          onClick={isRecording ? stopRecording : startRecording}
           disabled={!isRadio || !radioPlaying}
           title={
             !isRadio

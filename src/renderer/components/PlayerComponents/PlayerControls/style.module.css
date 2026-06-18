@@ -5,7 +5,7 @@
   gap: 1rem;
 }
 
-.songsButtonContainer {
+.songsButtonContainer{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,7 +14,7 @@
 
 .button {
   background-color: var(--accent);
-  color: var(--contrast);
+  color: #fff;
   border: none;
   padding: 0.5rem;
   border-radius: 50%;
@@ -54,7 +54,7 @@
 
 .buttonTertiary {
   padding: 0.5rem;
-
+  
   & svg {
     width: clamp(0.4rem, 3vw, 1rem);
     height: clamp(0.4rem, 3vw, 1rem);
@@ -108,8 +108,7 @@
 
 /* ── Offset Controls ── */
 .offsetControls {
-  grid-column: 1 / -1;
-  /* ocupa toda a largura do grid */
+  grid-column: 1 / -1;              /* ocupa toda a largura do grid */
   display: flex;
   align-items: center;
   justify-content: center;

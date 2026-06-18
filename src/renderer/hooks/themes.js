@@ -1,7 +1,7 @@
 import videoNeon from "../assets/neon.mp4";
 import videoSunset from "../assets/sunset.mp4";
 import videoOcean from "../assets/ocean.mp4";
-import videoForest from "../assets/forestVideo.mp4";
+import videoForest from "../assets/forest.mp4";
 import sand from "../assets/sand.mp4";
 import grafite from "../assets/grafite.mp4";
 import rainy from "../assets/rainy.mp4";
@@ -11,13 +11,13 @@ import wood from "../assets/wood.mp4";
 import deep from "../assets/deep.mp4";
 import ambar from "../assets/ambar.mp4";
 
+
 export const themes = [
   // Neon Theme
   {
     id: "neon",
     name: "Neon",
     accent: "#6a00ff",
-    contrast: "#fff",
     video: videoNeon,
 
     glassBg: `
@@ -41,7 +41,6 @@ export const themes = [
     id: "sakura",
     name: "Sakura",
     accent: "#ff6b9d",
-    contrast: "#fff",
     video: sakura,
 
     glassBg: `
@@ -65,7 +64,6 @@ export const themes = [
     id: "rainy",
     name: "Rainy",
     accent: "#3b82f6",
-    contrast: "#fff",
     video: rainy,
 
     glassBg: `
@@ -89,7 +87,6 @@ export const themes = [
     id: "sand",
     name: "Sand",
     accent: "#ad9770ff",
-    contrast: "#fff",
     video: sand,
 
     glassBg: `
@@ -113,7 +110,6 @@ export const themes = [
     id: "yellow",
     name: "Yellow",
     accent: "#fbbf24",
-    contrast: "#ffffffff",
     video: yellow,
 
     glassBg: `
@@ -137,7 +133,6 @@ export const themes = [
     id: "graphite",
     name: "Graphite",
     accent: "#757c87ff",
-    contrast: "#fff",
     video: grafite,
 
     glassBg: `
@@ -160,7 +155,6 @@ export const themes = [
     id: "sunset",
     name: "Sunset",
     accent: "#ff1500",
-    contrast: "#fff",
     video: videoSunset,
 
     glassBg: `
@@ -184,7 +178,6 @@ export const themes = [
     id: "ocean",
     name: "Ocean",
     accent: "#00aeffff",
-    contrast: "#fff",
     video: videoOcean,
     gradient: `
       radial-gradient(circle at 20% 30%, #00d4ff 0%, transparent 35%),
@@ -199,7 +192,7 @@ export const themes = [
     id: "forest",
     name: "Forest",
     accent: "#1DB954",
-    contrast: "#fff",
+
     glassBg: `
     linear-gradient(
       135deg,
@@ -217,13 +210,11 @@ export const themes = [
     `,
   },
 
-  // Amber Night Theme
   {
     id: "amber-night",
     name: "Amber Night",
     accent: "#E0D68A",
     video: ambar,
-    contrast: "#751e44ff",
     glassBg: `
     linear-gradient(
       135deg,
@@ -241,13 +232,11 @@ export const themes = [
   `,
   },
 
-  // Bloodwood Forest Theme
   {
     id: "bloodwood-forest",
     name: "Bloodwood Forest",
     accent: "#CC3F0C",
-    contrast: "#D8CBC7",
-    video: deep,
+    video: wood,
     glassBg: `
     linear-gradient(
       135deg,
@@ -264,14 +253,11 @@ export const themes = [
   `,
   },
 
-  // Deep Ocean Alert Theme
   {
     id: "deep-ocean-alert",
     name: "Deep Ocean",
-    video: wood,
+    video: deep,
     accent: "#EE2E31",
-    contrast: "#fff",
-
     glassBg: `
     linear-gradient(
       135deg,

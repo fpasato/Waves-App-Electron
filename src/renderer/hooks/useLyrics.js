@@ -1,13 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
+import { usePlayer } from "../store/PlayerContext";
 import { usePlayerStore } from "../store/playerStore";
-import { shallow } from "zustand/shallow";
-
-/* ================================================================== */
-/*  Constantes e funções de limpeza (inalteradas)                      */
-/* ================================================================== */
 
 const LRCLIB_BASE = "https://lrclib.net/api";
-const DURATION_TOLERANCE = 10;
 
 const VERSION_SUFFIXES = [
   /\(slowed[\s+&]*reverb\)/gi,
@@ -135,129 +130,257 @@ async function fetchLyrics(rawTitle, rawArtist, filePath, duration, signal) {
   push(cleanFull(rawTitle), cleanArtist(rawArtist));
   push(cleanFull(rawTitle));
 
-  for (let i = 0; i < attempts.length; i++) {
-    const url = `${LRCLIB_BASE}/search?${new URLSearchParams(attempts[i])}`;
-    try {
-      const res = await fetch(url, { signal });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!Array.isArray(data) || !data.length) continue;
+  // ---- /api/get: match exato (track_name + artist_name [+ duration]) ----
+  const getAttempts = attempts.filter((p) => p.artist_name);
 
-      const withSynced = data.filter((r) => r.syncedLyrics);
-      if (!withSynced.length) continue;
+  const tryGet = async (params) => {
+    const qs = { ...params };
+    if (targetDuration) qs.duration = String(targetDuration);
 
-      const best = targetDuration
-        ? withSynced.reduce((a, b) =>
-            Math.abs(a.duration - targetDuration) <=
-            Math.abs(b.duration - targetDuration)
-              ? a
-              : b,
-          )
-        : withSynced[0];
+    const url = `${LRCLIB_BASE}/get?${new URLSearchParams(qs)}`;
+    const timeout = AbortSignal.timeout(12000);
+    const combined = AbortSignal.any
+      ? AbortSignal.any([signal, timeout])
+      : signal;
 
-      const diff = targetDuration
-        ? Math.abs(best.duration - targetDuration)
-        : 0;
-      if (diff > DURATION_TOLERANCE && i < attempts.length - 1) continue;
+    const res = await fetch(url, { signal: combined });
+    if (!res.ok) return null; // 404 = sem match exato
 
-      const parsed = parseLRC(best.syncedLyrics);
-      if (!parsed.length) continue;
+    const data = await res.json();
+    if (!data?.syncedLyrics) return null;
 
-      return parsed;
-    } catch (err) {
-      if (err.name === "AbortError") throw err;
+    const parsed = parseLRC(data.syncedLyrics);
+    if (!parsed.length) return null;
+
+    console.log(
+      `[fetchLyrics] ✅ (get) ${data.trackName} – ${data.artistName}`,
+    );
+    return parsed;
+  };
+
+  // ---- /api/search: busca + filtro por diferença de duração ----
+  const trySearch = async (params) => {
+    const url = `${LRCLIB_BASE}/search?${new URLSearchParams(params)}`;
+    const timeout = AbortSignal.timeout(8000);
+    const combined = AbortSignal.any
+      ? AbortSignal.any([signal, timeout])
+      : signal;
+
+    const res = await fetch(url, { signal: combined });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return null;
+
+    const withSynced = data.filter((r) => r.syncedLyrics);
+    if (!withSynced.length) return null;
+
+    const best = targetDuration
+      ? withSynced.reduce((a, b) =>
+          Math.abs(a.duration - targetDuration) <=
+          Math.abs(b.duration - targetDuration)
+            ? a
+            : b,
+        )
+      : withSynced[0];
+
+    const diff = targetDuration ? Math.abs(best.duration - targetDuration) : 0;
+
+    const parsed = parseLRC(best.syncedLyrics);
+    if (!parsed.length) return null;
+
+    console.log(
+      `[fetchLyrics] ✅ (search) ${best.trackName} – ${best.artistName} (diff: ${diff}s)`,
+    );
+    return { parsed, diff };
+  };
+
+  // Roda tudo em paralelo: /get (match exato) e /search (com filtro)
+  const [getSettled, searchSettled] = await Promise.all([
+    Promise.allSettled(getAttempts.map((p) => tryGet(p))),
+    Promise.allSettled(attempts.map((p) => trySearch(p))),
+  ]);
+
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+  console.log("[fetchLyrics] attempts:", attempts);
+  console.log(
+    "[fetchLyrics] get results:",
+    getSettled.map((r) =>
+      r.status === "fulfilled" ? !!r.value : r.reason?.message,
+    ),
+  );
+  console.log(
+    "[fetchLyrics] search results:",
+    searchSettled.map((r) =>
+      r.status === "fulfilled"
+        ? r.value
+          ? { diff: r.value.diff }
+          : "no-match"
+        : r.reason?.message,
+    ),
+  );
+
+  // 1ª prioridade: match exato via /get
+  for (const r of getSettled) {
+    if (r.status === "fulfilled" && r.value) return r.value;
+  }
+
+  // 2ª prioridade: /search com duração próxima (tudo ou nada, diff <= 10s)
+  for (const r of searchSettled) {
+    if (r.status === "fulfilled" && r.value && r.value.diff <= 10) {
+      return r.value.parsed;
     }
   }
+
   return [];
 }
 
-/* ================================================================== */
-/*  Hook useLyrics – busca e expõe apenas os dados necessários         */
-/* ================================================================== */
+let lastFetchedSongId = null;
+
+const MIN_GAP_SECONDS = 5;
 
 export function useLyrics(enabled) {
-  // Extrai apenas os campos necessários, evitando re-renderizações desnecessárias
-  const title = usePlayerStore((s) => s.currentSong?.title);
-  const artist = usePlayerStore((s) => s.currentSong?.artist);
-  const filePath = usePlayerStore((s) => s.currentSong?.path);
-  const duration = usePlayerStore((s) => s.currentSong?.duration);
-  const songId = usePlayerStore((s) => s.currentSong?.id);
+  const currentSong = usePlayerStore((state) => state.currentSong);
+  const { audioRef, activeAudioRef, fadingRef } = usePlayer();
+
   const offset = usePlayerStore((s) => s.lyricsOffset);
   const setOffset = usePlayerStore((s) => s.setLyricsOffset);
+  const setLyricsLines = usePlayerStore((s) => s.setLyricsLines);
+  const setLyricsStatus = usePlayerStore((s) => s.setLyricsStatus);
+  const lines = usePlayerStore((s) => s.lyricsLines);
+  const status = usePlayerStore((s) => s.lyricsStatus);
 
-  const [lines, setLines] = useState([]);
-  const [status, setStatus] = useState("idle"); // idle|loading|found|notfound|error
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [isFading, setIsFading] = useState(false);
 
-  const fetchControllerRef = useRef(null);
-  const lastFetchedIdRef = useRef(null);
+  const rafRef = useRef(null);
+  const abortRef = useRef(null);
+  const previousSongId = useRef(currentSong?.id ?? null);
+  const restartSignal = usePlayerStore((s) => s.restartSignal);
 
-  const abortFetch = useCallback(() => {
-    if (fetchControllerRef.current) {
-      fetchControllerRef.current.abort();
-      fetchControllerRef.current = null;
-    }
-  }, []);
-
+  // ── Reset quando a música muda (UMA VEZ SÓ) ──
   useEffect(() => {
-    if (!enabled || !songId || !title) {
-      setLines([]);
-      setStatus("notfound");
-      abortFetch();
+    const songId = currentSong?.id;
+    if (songId && songId !== previousSongId.current) {
+      setOffset(0);
+      previousSongId.current = songId;
+      setActiveIndex(-1);
+    }
+  }, [currentSong?.id, setOffset]);
+
+  // ── Busca da letra ──
+  useEffect(() => {
+    abortRef.current?.abort();
+
+    if (!enabled) {
+      setLyricsStatus("idle");
+      setActiveIndex(-1);
       return;
     }
 
-    // Se já buscamos para este id, não repete
-    if (lastFetchedIdRef.current === songId && (status === "found" || status === "notfound")) {
+    const { title, artist, path: filePath, duration, id } = currentSong ?? {};
+
+    if (!title) {
+      setLyricsLines([]);
+      setActiveIndex(-1);
+      setLyricsStatus("notfound");
       return;
     }
 
-    abortFetch();
-    setLines([]);
-    setStatus("loading");
-    lastFetchedIdRef.current = songId;
+    // Sempre reseta a posição ao (re)iniciar a música
+    setActiveIndex(-1);
+
+    if (
+      lastFetchedSongId === id &&
+      (status === "found" || status === "notfound")
+    ) {
+      // Letra já está no store, só resetou o índice acima — pode sair
+      return;
+    }
+
+    lastFetchedSongId = id;
+    setLyricsLines([]);
+    setLyricsStatus("loading");
 
     const ctrl = new AbortController();
-    fetchControllerRef.current = ctrl;
+    abortRef.current = ctrl;
 
     fetchLyrics(title, artist, filePath, duration, ctrl.signal)
       .then((parsed) => {
-        if (ctrl.signal.aborted) return;
-        if (parsed.length) {
-          setLines(parsed);
-          setStatus("found");
-        } else {
-          setStatus("notfound");
+        if (!parsed.length) setLyricsStatus("notfound");
+        else {
+          setLyricsLines(parsed);
+          setLyricsStatus("found");
         }
       })
       .catch((err) => {
-        if (err.name === "AbortError") return;
-        console.error("[useLyrics] Erro ao buscar letra:", err);
-        setStatus("error");
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setLyricsStatus("error");
+        }
       });
 
-    return () => {
-      abortFetch();
-    };
-  }, [enabled, songId, title, artist, filePath, duration]);
+    return () => ctrl.abort();
+  }, [enabled, currentSong, restartSignal]); // ← adicionar restartSignal
 
-  // Limpa quando desabilitado
+  // ── Sincronização por RAF ──
   useEffect(() => {
-    if (!enabled) {
-      abortFetch();
-      setLines([]);
-      setStatus("idle");
-    }
-  }, [enabled]);
+    cancelAnimationFrame(rafRef.current);
+    if (!enabled) return;
 
-  const setOffsetStable = useCallback(
-    (value) => setOffset(value),
-    [setOffset]
-  );
+    const tick = () => {
+      const el = activeAudioRef?.current ?? audioRef?.current;
+      if (!el || el.readyState < 2 || !lines.length) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      setIsFading(fadingRef?.current ?? false);
+
+      const currentTime = el.currentTime + offset;
+      let idx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].time <= currentTime) idx = i;
+        else break;
+      }
+
+      // Lógica de gap: só entra em instrumental se estiver bem depois da última linha
+      if (idx >= 0) {
+        const nextTime =
+          idx + 1 < lines.length ? lines[idx + 1].time : Infinity;
+        const gap = nextTime - lines[idx].time;
+        const elapsed = currentTime - lines[idx].time;
+
+        // Só considera gap se a próxima linha estiver realmente longe (> MIN_GAP_SECONDS)
+        // e já tiver passado pelo menos MIN_GAP_SECONDS desde o início da linha atual
+        // (evita que uma linha demorada seja tratada como instrumental prematuramente)
+        if (gap > MIN_GAP_SECONDS && elapsed > MIN_GAP_SECONDS) {
+          idx = -1;
+        }
+      }
+
+      setActiveIndex((prev) => (prev !== idx ? idx : prev));
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [enabled, lines, audioRef, activeAudioRef, fadingRef, offset]);
+
+  const isGap = lines.length > 0 && activeIndex === -1 && status === "found";
 
   return {
     lines,
+    activeIndex,
     status,
+    isFading,
+    currentLine: lines[activeIndex] ?? null,
+    nextLine:
+      activeIndex >= 0 && activeIndex + 1 < lines.length
+        ? lines[activeIndex + 1]
+        : null,
+    isGap,
     offset,
-    setOffset: setOffsetStable,
+    setOffset,
   };
 }
