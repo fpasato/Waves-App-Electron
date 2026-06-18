@@ -1,34 +1,46 @@
-# meu-projeto
+# Waves
 
-An Electron application with React
+Um player de música e mídia para desktop feito com Electron e React.
 
-## Recommended IDE Setup
+O Waves permite organizar e reproduzir músicas e vídeos locais, com recursos como biblioteca de mídia, downloads, rádios online e personalização visual.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+---
 
-## Project Setup
+## ✨ Recursos
 
-### Install
+- 🎵 Player de música e vídeo
+- 📂 Biblioteca de mídia local
+- ⬇️ Downloads de músicas e vídeos
+- 📻 Rádio online
+- 🕘 Histórico de reprodução
+- 🎨 Temas e personalização visual
+- 🌊 Backgrounds animados
+- 🔎 Busca de músicas
+- 🛡️ Bloqueio de anúncios no YouTube
 
-```bash
-$ npm install
-```
+---
 
-### Development
+## 🛠️ Tecnologias
 
-```bash
-$ npm run dev
-```
+- Electron
+- React
+- Vite
+- Zustand
+- SQLite
+- Three.js
+- yt-dlp
+- FFmpeg
 
-### Build
+---
 
-```bash
-# For windows
-$ npm run build:win
+## 📦 Download
 
-# For macOS
-$ npm run build:mac
+A versão mais recente do Waves está disponível na aba **Releases**.
 
-# For Linux
-$ npm run build:linux
-```
+---
+
+## 📌 Sobre
+
+O Waves é um projeto pessoal criado para explorar o desenvolvimento de aplicativos desktop modernos usando tecnologias web.
+
+A proposta é unir um player de mídia tradicional com recursos de organização, personalização e integração com serviços online.
