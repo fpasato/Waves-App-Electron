@@ -33,9 +33,9 @@ O Waves permite organizar e reproduzir músicas e vídeos locais, com recursos c
 
 ---
 
-## 📦 Download
+## Projeto em desenvolvimento
 
-A versão mais recente do Waves está disponível na aba **Releases**.
+O Waves ainda não está finalizado.
 
 ---
 
