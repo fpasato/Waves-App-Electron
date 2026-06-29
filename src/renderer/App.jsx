@@ -28,7 +28,7 @@ function PlayerApp() {
   const toast = usePlayerStore((s) => s.toast);
   const toasts = usePlayerStore((s) => s.toasts);
   const dismissToast = usePlayerStore((s) => s.dismissToast);
-
+  const activeTheme = usePlayerStore((s) => s.activeTheme);
   const downloadListenersRef = useRef(null);
 
   useEffect(() => {
@@ -60,32 +60,12 @@ function PlayerApp() {
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
-
-  // cor também vai pra um useEffect
+  
   useEffect(() => {
-    const applyTheme = () => {
-      const themeId = localStorage.getItem("active-theme-id");
-      const activeTheme = themes.find((t) => t.id === themeId) || themes[0];
-
-      document.documentElement.style.setProperty(
-        "--accent",
-        activeTheme.accent,
-      );
-      document.documentElement.style.setProperty(
-        "--player-bg",
-        activeTheme.gradient,
-      );
-      document.documentElement.style.setProperty(
-        "--glass-bg",
-        activeTheme.glassBg ?? "",
-      );
-    };
-
-    applyTheme(); // aplica na montagem
-    window.addEventListener("theme-changed", applyTheme);
-
-    return () => window.removeEventListener("theme-changed", applyTheme);
-  }, []);
+    const root = document.querySelector(".dark") ?? document.documentElement;
+    root.style.setProperty("--accent1", activeTheme.accent1);
+    root.style.setProperty("--accent2", activeTheme.accent2);
+  }, [activeTheme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,7 +95,9 @@ function PlayerApp() {
         <SettingsScreen setScreen={setScreen} setTheme={setTheme} />
       )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
-      {screen === "videoplayer" && <VideoPlayerScreen setScreen={setScreen} video={screenData?.video} />}
+      {screen === "videoplayer" && (
+        <VideoPlayerScreen setScreen={setScreen} video={screenData?.video} />
+      )}
       {screen === "playlist" && <PlaylistScreen setScreen={setScreen} />}
       {screen === "recents" && <RecentScreen setScreen={setScreen} />}
       {screen === "downloads" && (

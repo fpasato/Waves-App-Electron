@@ -37,7 +37,7 @@
 
 .card.current {
   background: rgba(255, 255, 255, 0.06);
-  border-color: var(--accent);
+  border-color: var(--accent2);
 }
 
 .cardInner {
@@ -79,7 +79,7 @@
 }
 
 .badgeCurrent {
-  background: var(--accent);
+  background: var(--accent1);
   color: #fff;
 }
 

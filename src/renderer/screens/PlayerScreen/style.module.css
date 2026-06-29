@@ -142,7 +142,7 @@
 
 
   &:hover {
-    color: var(--accent);
+    color: var(--accent1);
   }
 
   & svg {

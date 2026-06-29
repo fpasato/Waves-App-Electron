@@ -1,6 +1,11 @@
 /* style.module.css */
 
-/* Variáveis locais (limpas, sem vermelho) */
+/* 
+  Espera-se que estas variáveis sejam definidas no escopo pai (ex.: :root ou .app):
+  --accent1: #<cor-primária>;
+  --accent2: #<cor-secundária>;
+*/
+
 .radioScreen {
   --surface: rgba(255, 255, 255, 0.03);
   --surface-hover: rgba(255, 255, 255, 0.06);
@@ -73,12 +78,12 @@
 }
 
 .tabActive {
-  background: var(--accent);
+  background: var(--accent1);
   color: #fff;
 }
 
 .tabActive:hover {
-  background: var(--accent);
+  background: var(--accent1);
   filter: brightness(1.05);
 }
 
@@ -117,7 +122,7 @@
 }
 
 .searchArea input[type="search"]:focus {
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 
 .searchArea input[type="search"]::placeholder {
@@ -141,7 +146,7 @@
 }
 
 .searchBtn {
-  background: var(--accent);
+  background: var(--accent1);
   border: none;
   color: #fff;
   padding: 10px 18px;
@@ -198,7 +203,7 @@
 
 .radioCardActive {
   background: var(--surface);
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 
 .cardMain {
@@ -239,7 +244,7 @@
 .cardInitial {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent1);
   text-transform: uppercase;
 }
 
@@ -302,7 +307,7 @@
 }
 
 .playBtn {
-  background: var(--accent);
+  background: var(--accent1);
   border: none;
   color: #fff;
   width: 34px;
@@ -321,6 +326,7 @@
   transform: scale(1.05);
 }
 
+/* Favorito: usa accent2 */
 .favBtn {
   background: transparent;
   border: 1px solid var(--border);
@@ -337,18 +343,18 @@
 }
 
 .favBtn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--accent2);
+  color: var(--accent2);
 }
 
 .favBtnActive {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(255, 85, 0, 0.1);
+  border-color: var(--accent2);
+  color: var(--accent2);
+  background: color-mix(in srgb, var(--accent2) 10%, transparent);
 }
 
 .favBtnActive:hover {
-  background: rgba(255, 85, 0, 0.2);
+  background: color-mix(in srgb, var(--accent2) 20%, transparent);
 }
 
 /* ========== WAVE ========== */
@@ -361,7 +367,7 @@
 
 .waveIcon span {
   width: 2.5px;
-  background: var(--accent);
+  background: var(--accent1);
   border-radius: 1px;
   animation: wave 1.2s ease-in-out infinite;
 }
@@ -387,12 +393,10 @@
 }
 
 @keyframes wave {
-
   0%,
   100% {
     transform: scaleY(1);
   }
-
   50% {
     transform: scaleY(0.3);
   }
@@ -403,7 +407,7 @@
   width: 18px;
   height: 18px;
   border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border-top-color: var(--accent1);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -493,7 +497,7 @@
 }
 
 .playerBtn {
-  background: var(--accent);
+  background: var(--accent1);
   border: none;
   color: #fff;
   width: 36px;

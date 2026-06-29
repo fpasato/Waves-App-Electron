@@ -2,7 +2,6 @@
    Variáveis (compartilhadas com o resto da aplicação)
    ================================================================ */
 :root {
-  --accent: #3b82f6;
   --accent-rgb: 59, 130, 246;
 
   --bg: #0a0a0a;
@@ -123,7 +122,7 @@
 }
 
 .searchInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 
 .clearBtn {
@@ -253,7 +252,7 @@
 }
 
 .modalConfirmBtn {
-  background: var(--accent);
+  background: var(--accent1);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -335,7 +334,7 @@
 
 .mixToggleActive {
   background: rgba(var(--accent-rgb), 0.2);
-  color: var(--accent);
+  color: var(--accent1);
   font-weight: 600;
 }
 
@@ -446,8 +445,8 @@
 }
 
 .mixCheckbox:checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent1);
+  border-color: var(--accent1);
 }
 
 .mixCheckbox:checked::after {
@@ -504,7 +503,7 @@
 }
 
 .mixQualitySelect:focus {
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 
 /* ── Abas de download (Vídeo / Áudio) ────────────────────────── */
@@ -534,7 +533,7 @@
 
 .tabActive {
   color: #fff;
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent1);
 }
 
 /* ── Botões de formato ──────────────────────────────────────── */
@@ -557,7 +556,7 @@
 }
 
 .formatButtonSelected {
-  border-color: var(--accent);
+  border-color: var(--accent1);
   background: rgba(var(--accent-rgb), 0.1);
   color: #fff;
   font-weight: 500;
@@ -592,9 +591,9 @@
 }
 
 .downloadBtn {
-  background: var(--accent);
+  background: var(--accent1);
   color: #fff;
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 
 .downloadBtn:hover:not(:disabled) {

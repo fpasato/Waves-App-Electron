@@ -87,7 +87,7 @@
   transition: border-color var(--transition);
 }
 .searchInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent1);
 }
 .searchInput::placeholder {
   color: var(--text-dim);
@@ -100,7 +100,7 @@
 }
 
 .headerActions button {
-  background: var(--accent);
+  background: var(--accent1);
   border: none;
   color: #fff;
   padding: 8px 18px;
@@ -128,7 +128,7 @@
   width: 24px;
   height: 24px;
   border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border-top-color: var(--accent1);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   margin-bottom: 12px;
@@ -180,7 +180,7 @@
   height: 72px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.06);
-  color: var(--accent);
+  color: var(--accent1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,7 +235,7 @@
 }
 
 .libraryItem .libraryItemActions button {
-  background: var(--accent);
+  background: var(--accent1);
   border: none;
   color: #fff;
   padding: 4px 10px;

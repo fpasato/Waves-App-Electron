@@ -13,7 +13,7 @@
 }
 
 .button {
-  background-color: var(--accent);
+  background: transparent;
   color: #fff;
   border: none;
   padding: 0.5rem;
@@ -27,7 +27,7 @@
   filter: drop-shadow(0 0 5px var(--grey-shadow));
 
   &:hover {
-    filter: brightness(1.2) drop-shadow(0 0 5px var(--accent));
+    filter: brightness(1.2) drop-shadow(0 0 5px var(--accent2));
     transform: translateX(1px) translateY(-1px);
   }
 
@@ -37,6 +37,7 @@
 }
 
 .buttonSecondary {
+  background: linear-gradient(var(--accent1), var(--accent2));
   & svg {
     width: clamp(0.4rem, 2vw, 1.5rem);
     height: clamp(0.4rem, 2vw, 1.5rem);
@@ -44,6 +45,7 @@
 }
 
 .buttonPrimary {
+  background: linear-gradient(var(--accent1), var(--accent2));
   padding: clamp(0.2rem, 1vw, 0.8rem);
 
   & svg {
@@ -53,6 +55,7 @@
 }
 
 .buttonTertiary {
+  background: linear-gradient(var(--accent1), var(--accent2));
   padding: 0.5rem;
   
   & svg {
@@ -103,7 +106,7 @@
 }
 
 .lyricsActive svg {
-  filter: drop-shadow(0 0 5px var(--accent));
+  filter: drop-shadow(0 0 5px var(--accent2));
 }
 
 /* ── Offset Controls ── */

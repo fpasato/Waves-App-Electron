@@ -70,6 +70,10 @@ export const ProgressBar = memo(function ProgressBar() {
     };
 
     const draw = () => {
+      const { activeTheme } = usePlayerStore.getState();
+      const accent1 = activeTheme?.accent1 || "#1db954";
+      const accent2 = activeTheme?.accent2 || "#1db954";
+
       const analyser = analyserRef.current;
       const w = canvas.width;
       const h = canvas.height;
@@ -78,24 +82,18 @@ export const ProgressBar = memo(function ProgressBar() {
         return;
       }
 
-      const accent = getComputedStyle(document.body)
-        .getPropertyValue("--accent")
-        .trim();
-
       ctx.clearRect(0, 0, w, h);
-
       let dataArray = null;
       if (analyser) {
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(dataArray);
       }
-
-      const grad = ctx.createLinearGradient(0, h, 0, 0);
-      grad.addColorStop(0, accent);
-      grad.addColorStop(1, accent);
+      
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      grad.addColorStop(0, accent1);
+      grad.addColorStop(1, accent2);
       ctx.fillStyle = grad;
-      ctx.shadowColor = accent;
-      ctx.shadowBlur = Math.max(8, Math.min(18, w * 0.02));
+      ctx.shadowColor = accent2;
 
       const barWidth = w / totalBars;
 

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import styles from "./style.module.css";
 import { usePlayer } from "../../../store/PlayerContext";
+import { usePlayerStore } from "../../../store/playerStore";
 
 // ==================== TEXTURA DE BRILHO (GLOW) ====================
 const createGlowTexture = () => {
@@ -38,12 +39,13 @@ const trailVertexShader = `
 
 const trailFragmentShader = `
   uniform sampler2D uTexture;
+  uniform vec3 uColor;   
   varying float vAlpha;
 
   void main() {
     vec4 tex = texture2D(uTexture, gl_PointCoord);
     if (tex.a < 0.01) discard;
-    gl_FragColor = vec4(tex.rgb, tex.a * vAlpha);
+    gl_FragColor = vec4(tex.rgb * uColor, tex.a * vAlpha);
   }
 `;
 
@@ -53,7 +55,28 @@ export function ParticlesEffect() {
   const { analyserRef } = usePlayer();
   const overlayCanvasRef = useRef(null);
 
+  const getRgbFromCss = (cssColor) => {
+    const c = document.createElement("canvas");
+    c.width = 1;
+    c.height = 1;
+    const ctx2 = c.getContext("2d");
+    ctx2.fillStyle = cssColor;
+    ctx2.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx2.getImageData(0, 0, 1, 1).data;
+    return { r, g, b };
+  };
+
   useEffect(() => {
+    const { activeTheme } = usePlayerStore.getState();
+    const accent1Raw = activeTheme?.accent1 || "rgb(93,131,79)";
+    const accent2Raw = activeTheme?.accent2 || "rgb(79,204,34)";
+
+    const { r: r1, g: g1, b: b1 } = getRgbFromCss(accent1Raw);
+    const { r: r2, g: g2, b: b2 } = getRgbFromCss(accent2Raw);
+
+    const accent1High = `rgba(${r1}, ${g1}, ${b1}, 0.9)`;
+    const accent2High = `rgba(${r2}, ${g2}, ${b2}, 0.9)`;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -63,9 +86,9 @@ export function ParticlesEffect() {
       75,
       container.clientWidth / container.clientHeight,
       0.1,
-      1000
+      1000,
     );
-    camera.position.z = 5;
+    camera.position.set(0, 0, 5);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -79,7 +102,7 @@ export function ParticlesEffect() {
 
     // ========== PARTÍCULAS PRINCIPAIS ==========
     const COUNT = 1000;
-    const TRAIL_LENGTH = 30; // rastro bem mais longo
+    const TRAIL_LENGTH = 30;
 
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(COUNT * 3);
@@ -87,24 +110,28 @@ export function ParticlesEffect() {
 
     for (let i = 0; i < COUNT; i++) {
       const i3 = i * 3;
-      positions[i3]     = basePositions[i3]     = (Math.random() - 0.5) * 25;
+      positions[i3] = basePositions[i3] = (Math.random() - 0.5) * 25;
       positions[i3 + 1] = basePositions[i3 + 1] = (Math.random() - 0.5) * 25;
       positions[i3 + 2] = basePositions[i3 + 2] = Math.random() * -100;
     }
-    particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, 3),
+    );
 
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
+      color: new THREE.Color(r1 / 255, g1 / 255, b1 / 255),
       size: 0.25,
       map: GLOW_TEXTURE,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
+
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
-    // ========== RASTRO 3D (longo e fino) ==========
+    // ========== RASTRO 3D ==========
     const trailHistory = new Float32Array(COUNT * TRAIL_LENGTH * 3);
     const trailIndex = new Uint16Array(COUNT);
 
@@ -113,12 +140,24 @@ export function ParticlesEffect() {
     const trailSizes = new Float32Array(COUNT * TRAIL_LENGTH);
     const trailAlphas = new Float32Array(COUNT * TRAIL_LENGTH);
 
-    trailGeometry.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
-    trailGeometry.setAttribute("aSize",    new THREE.BufferAttribute(trailSizes, 1));
-    trailGeometry.setAttribute("aAlpha",   new THREE.BufferAttribute(trailAlphas, 1));
+    trailGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(trailPositions, 3),
+    );
+    trailGeometry.setAttribute(
+      "aSize",
+      new THREE.BufferAttribute(trailSizes, 1),
+    );
+    trailGeometry.setAttribute(
+      "aAlpha",
+      new THREE.BufferAttribute(trailAlphas, 1),
+    );
 
     const trailMaterial = new THREE.ShaderMaterial({
-      uniforms: { uTexture: { value: GLOW_TEXTURE } },
+      uniforms: {
+        uTexture: { value: GLOW_TEXTURE },
+        uColor: { value: new THREE.Color(r1 / 255, g1 / 255, b1 / 255) },
+      },
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       transparent: true,
@@ -143,7 +182,12 @@ export function ParticlesEffect() {
 
     const waves = [];
     let lastWaveSpawn = 0;
-    let beatFlash = 0; // controle de flash nas batidas
+    let beatFlash = 0;
+
+    // Estados do movimento de câmera
+    let zoomImpact = 0;
+    let lissTime = 0;
+    let lissRot = 0;
 
     // ========== 3. OVERLAY 2D ==========
     const overlayCanvas = overlayCanvasRef.current;
@@ -157,7 +201,7 @@ export function ParticlesEffect() {
     overlayCanvas.style.zIndex = "2";
     container.appendChild(overlayCanvas);
 
-    const BAR_COUNT = 150;
+    const BAR_COUNT = 160;
     const smoothedHeights = new Array(BAR_COUNT).fill(0);
     const smoothing = 0.04;
     const maxFreqIndex = 80;
@@ -177,7 +221,6 @@ export function ParticlesEffect() {
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
-
       renderer.clear();
 
       // --- Áudio ---
@@ -195,46 +238,76 @@ export function ParticlesEffect() {
         mid /= midCount * 255;
       }
       smoothedBass = smoothedBass * 0.82 + bass * 0.18;
-      smoothedMid  = smoothedMid  * 0.85 + mid  * 0.15;
+      smoothedMid = smoothedMid * 0.85 + mid * 0.15;
+
+      const mixFactor = Math.min(1, smoothedBass * 2);
+      const rParticle = r1 + (r2 - r1) * mixFactor;
+      const gParticle = g1 + (g2 - g1) * mixFactor;
+      const bParticle = b1 + (b2 - b1) * mixFactor;
+      particleMaterial.color.setRGB(
+        rParticle / 255,
+        gParticle / 255,
+        bParticle / 255,
+      );
+      trailMaterial.uniforms.uColor.value.setRGB(
+        rParticle / 255,
+        gParticle / 255,
+        bParticle / 255,
+      );
 
       const midDiff = mid - smoothedMid;
-      const isBeat  = midDiff > beatThreshold && midDiff > lastMidDiff * 0.8;
+      const isBeat = midDiff > beatThreshold && midDiff > lastMidDiff * 0.8;
       lastMidDiff = midDiff;
 
-      // Flash de batida: dispara e decai
       if (isBeat) beatFlash = 1.0;
-      beatFlash *= 0.92; // decaimento rápido
+      beatFlash *= 0.92;
+
+      // --- Movimento de câmera (única atualização por frame) ---
+      if (isBeat) {
+        zoomImpact = 1.8; // intensidade do zoom na batida
+      }
+      zoomImpact *= 0.88;      // decaimento exponencial
+      lissTime += 0.03;        // velocidade da figura em 8
+      lissRot += 0.0018 + smoothedBass * 0.004; // rotação suave do plano do 8
 
       const force = smoothedBass * 5;
-      const time  = performance.now() * 0.001;
+      const time = performance.now() * 0.001;
 
-      // --- Atualiza partículas e alimenta histórico do rastro ---
+      // --- Atualiza partículas ---
       const posAttr = particleGeometry.attributes.position.array;
       for (let i = 0; i < COUNT; i++) {
         const i3 = i * 3;
-
         posAttr[i3 + 2] += 0.02 + force * 0.07;
         if (posAttr[i3 + 2] > 5) posAttr[i3 + 2] = -100;
-        posAttr[i3]     = basePositions[i3]     + Math.sin(time + i * 0.06) * force;
+        posAttr[i3] = basePositions[i3] + Math.sin(time + i * 0.06) * force;
         posAttr[i3 + 1] = basePositions[i3 + 1] + Math.cos(time + i * 0.06) * force;
 
-        // Grava posição atual no buffer circular
-        const idx  = trailIndex[i];
+        const idx = trailIndex[i];
         const base = i * TRAIL_LENGTH * 3 + idx * 3;
-        trailHistory[base]     = posAttr[i3];
+        trailHistory[base] = posAttr[i3];
         trailHistory[base + 1] = posAttr[i3 + 1];
         trailHistory[base + 2] = posAttr[i3 + 2];
         trailIndex[i] = (idx + 1) % TRAIL_LENGTH;
       }
       particleGeometry.attributes.position.needsUpdate = true;
 
-      // Partícula principal: tamanho sutil, mas opacidade reage fortemente ao áudio + flash
       const particleOpacity = 0.3 + smoothedBass * 2.0 + beatFlash * 0.8;
-      particleMaterial.size    = 0.18 + smoothedBass * 0.25; // tamanho cresce pouco
-      particleMaterial.opacity = Math.min(2.5, particleOpacity); // brilho intenso
-      camera.position.z = 5 - smoothedBass * 0.5;
+      particleMaterial.size = 0.18 + smoothedBass * 0.25;
+      particleMaterial.opacity = Math.min(2.5, particleOpacity);
 
-      // --- Reconstrói geometria do rastro (longo, fino e com ponta brilhante) ---
+      // --- Posicionamento da câmera ---
+      const lissAmplitude = smoothedMid * 0.3;
+      const rawX = Math.sin(2 * lissTime) * lissAmplitude;
+      const rawY = Math.sin(lissTime) * lissAmplitude;
+
+      // Rotaciona o plano do 8
+      const cosR = Math.cos(lissRot);
+      const sinR = Math.sin(lissRot);
+      camera.position.x = rawX * cosR - rawY * sinR;
+      camera.position.y = rawX * sinR + rawY * cosR;
+      camera.position.z = 5 - smoothedBass * 0.5 - zoomImpact;
+
+      // --- Reconstrói rastro ---
       for (let i = 0; i < COUNT; i++) {
         const currentIdx = trailIndex[i];
         for (let j = 0; j < TRAIL_LENGTH; j++) {
@@ -242,31 +315,28 @@ export function ParticlesEffect() {
           const srcBase = i * TRAIL_LENGTH * 3 + histIdx * 3;
           const dstBase = i * TRAIL_LENGTH * 3 + j * 3;
 
-          trailPositions[dstBase]     = trailHistory[srcBase];
+          trailPositions[dstBase] = trailHistory[srcBase];
           trailPositions[dstBase + 1] = trailHistory[srcBase + 1];
           trailPositions[dstBase + 2] = trailHistory[srcBase + 2];
 
           const ageFactor = 1 - j / TRAIL_LENGTH;
-
-          // Tamanho muito pequeno e quase constante → linha fina
           trailSizes[i * TRAIL_LENGTH + j] = (0.3 + smoothedBass * 0.15) * ageFactor;
 
-          // Opacidade: ponta (j=0) recebe bônus de flash, o resto decai suavemente
           let alpha = (0.25 + smoothedBass * 0.9) * ageFactor;
-          if (j === 0) alpha += beatFlash * 0.7; // flash na ponta da cauda
+          if (j === 0) alpha += beatFlash * 0.7;
           trailAlphas[i * TRAIL_LENGTH + j] = Math.min(1.5, alpha);
         }
       }
       trailGeometry.attributes.position.needsUpdate = true;
-      trailGeometry.attributes.aSize.needsUpdate    = true;
-      trailGeometry.attributes.aAlpha.needsUpdate   = true;
+      trailGeometry.attributes.aSize.needsUpdate = true;
+      trailGeometry.attributes.aAlpha.needsUpdate = true;
 
       renderer.render(scene, camera);
 
-      // ========== OVERLAY 2D ==========
+      // ========== OVERLAY 2D (independente da câmera) ==========
       const w = overlayCanvas.width;
       const h = overlayCanvas.height;
-      const centerX = w / 2;
+      const centerX = w / 2;   // fixo no centro da tela
       const centerY = h / 2;
       const circleBaseRadius = Math.min(w, h) * 0.17;
 
@@ -275,7 +345,7 @@ export function ParticlesEffect() {
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = "source-over";
 
-      // --- Spawn de ondas nas batidas ---
+      // --- Spawn de ondas ---
       const now = performance.now();
       if (isBeat) {
         const beatStrength = Math.min(0.8, midDiff * 1.5);
@@ -291,47 +361,44 @@ export function ParticlesEffect() {
         }
       }
 
-      // --- Ondas ---
-      ctx.globalCompositeOperation = "lighter";
+      // --- Ondas (expansão infinita com fade) ---
       for (let i = waves.length - 1; i >= 0; i--) {
         const wave = waves[i];
-        wave.r       += wave.speed;
+        wave.r += wave.speed;
         wave.opacity *= 0.94;
 
-        if (wave.opacity < 0.015) { waves.splice(i, 1); continue; }
+        if (wave.opacity < 0.015) {
+          waves.splice(i, 1);
+          continue;
+        }
 
-        const maxR     = circleBaseRadius * 4;
-        const progress = (wave.r - circleBaseRadius) / (maxR - circleBaseRadius);
-        const alpha    = wave.opacity * (1 - progress * 0.5);
+        const noiseDecay = Math.max(0, 1 - (wave.r - circleBaseRadius) / (circleBaseRadius * 8));
 
         ctx.beginPath();
         const points = 80;
         for (let j = 0; j <= points; j++) {
           const angle = (j / points) * Math.PI * 2;
           const noise =
-            Math.sin(angle * 7 + time * 4 + wave.seed) * (18 * wave.bass) +
-            Math.cos(angle * 4 - time * 2 + wave.seed) * (8 * (1 - progress));
+            Math.sin(angle * 7 + time * 4 + wave.seed) * (18 * wave.bass * noiseDecay) +
+            Math.cos(angle * 4 - time * 2 + wave.seed) * (8 * noiseDecay);
           const r = wave.r + noise;
           const x = centerX + Math.cos(angle) * r;
           const y = centerY + Math.sin(angle) * r;
-          if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          if (j === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
         ctx.closePath();
 
-        ctx.lineWidth   = (25 + wave.bass * 40) * (1 - progress);
-        ctx.strokeStyle = `rgba(100, 150, 255, ${alpha * 0.15})`;
-        ctx.shadowBlur  = 40;
-        ctx.shadowColor = `rgba(140, 200, 255, ${alpha})`;
+        ctx.strokeStyle = accent1High;
+        ctx.shadowBlur = 2;
+        ctx.shadowColor = accent2High;
         ctx.stroke();
 
-        ctx.lineWidth   = 2 + wave.bass * 6;
-        ctx.strokeStyle = `rgba(220, 240, 255, ${alpha * 0.8})`;
-        ctx.shadowBlur  = 15;
-        ctx.shadowColor = "#ffffff";
+        ctx.strokeStyle = accent2High;
+        ctx.shadowBlur = 2;
+        ctx.shadowColor = accent2High;
         ctx.stroke();
       }
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowBlur = 0;
 
       // --- Anéis decorativos ---
       for (let j = 0; j < 4; j++) {
@@ -345,31 +412,35 @@ export function ParticlesEffect() {
           const radius = circleBaseRadius * (0.55 + j * 0.12) + noise + smoothedBass * 18;
           const x = centerX + Math.cos(a) * radius;
           const y = centerY + Math.sin(a) * radius;
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
         ctx.closePath();
-        ctx.strokeStyle = `rgba(255,255,255,${0.15 - j * 0.03})`;
-        ctx.lineWidth   = 3 + smoothedBass * 4;
-        ctx.shadowBlur  = 30 + smoothedBass * 40;
-        ctx.shadowColor = "rgba(180,220,255,0.8)";
+        ctx.strokeStyle = `rgba(${r2}, ${g2}, ${b2}, ${0.15 - j * 0.03})`;
+        ctx.lineWidth = 3 + smoothedBass * 4;
+        ctx.shadowBlur = 20 + smoothedBass * 40;
+        ctx.shadowColor = accent2High;
         ctx.stroke();
       }
 
       // --- Esfera central ---
-      const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, circleBaseRadius);
-      coreGradient.addColorStop(0,    "rgba(255,255,255,1)");
-      coreGradient.addColorStop(0.1,  "rgba(255,255,255,0.95)");
-      coreGradient.addColorStop(0.25, "rgba(180,220,255,0.9)");
-      coreGradient.addColorStop(0.5,  "rgba(100,140,255,0.3)");
-      coreGradient.addColorStop(1,    "rgba(0,0,0,0)");
+      const coreGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, circleBaseRadius,
+      );
+      coreGradient.addColorStop(0, "rgba(255,255,255,1)");
+      coreGradient.addColorStop(0.04, "rgba(255,255,255,0.95)");
+      coreGradient.addColorStop(0.3, accent1High);
+      coreGradient.addColorStop(0.6, accent2High);
+      coreGradient.addColorStop(1, "rgba(0,0,0,0)");
+
       ctx.beginPath();
       ctx.arc(centerX, centerY, circleBaseRadius * 0.7, 0, Math.PI * 2);
       ctx.fillStyle = coreGradient;
       ctx.fill();
 
       // --- Barras radiais ---
-      ctx.shadowBlur  = 2;
-      ctx.shadowColor = "#ffffff83";
+      ctx.shadowBlur = 0;
       for (let i = 0; i < BAR_COUNT; i++) {
         let targetHeight = 0;
         if (dataArray) {
@@ -379,7 +450,7 @@ export function ParticlesEffect() {
         smoothedHeights[i] = smoothedHeights[i] * smoothing + targetHeight * (1 - smoothing);
         const barHeight = Math.max(4, smoothedHeights[i]);
 
-        const angle  = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
+        const angle = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
         const innerR = circleBaseRadius + 10;
         const outerR = innerR + barHeight;
         const x1 = centerX + Math.cos(angle) * innerR;
@@ -388,21 +459,20 @@ export function ParticlesEffect() {
         const y2 = centerY + Math.sin(angle) * outerR;
 
         ctx.beginPath();
-        ctx.lineWidth   = Math.max(2, (w / BAR_COUNT) * 0.8);
-        ctx.lineCap     = "butt";
-        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = Math.max(2, (w / BAR_COUNT) * 0.8);
+        ctx.lineCap = "butt";
+        ctx.strokeStyle = accent2High;
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
       }
-      ctx.shadowBlur = 0;
     };
 
     animate();
 
     // ========== 5. RESIZE E CLEANUP ==========
     const handleResize = () => {
-      const width  = container.clientWidth;
+      const width = container.clientWidth;
       const height = container.clientHeight;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();

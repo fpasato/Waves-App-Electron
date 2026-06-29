@@ -113,13 +113,11 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   setActiveTheme: (theme) => {
-    localStorage.setItem("active-theme-id", theme.id);
-    document.documentElement.style.setProperty("--accent", theme.accent);
-    document.documentElement.style.setProperty("--player-bg", theme.gradient);
-    document.documentElement.style.setProperty(
-      "--glass-bg",
-      theme.glassBg ?? "",
-    ); // <-- adicionar
+    // aplica no elemento que tem a classe .dark/.light
+    const root = document.querySelector(".dark") ?? document.documentElement;
+    root.style.setProperty("--accent1", theme.accent1);
+    root.style.setProperty("--accent2", theme.accent2);
+
     set({ activeTheme: theme });
   },
 

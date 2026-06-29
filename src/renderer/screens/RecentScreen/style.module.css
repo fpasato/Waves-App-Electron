@@ -44,8 +44,8 @@
 
 .actionButton:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--accent1);
+  color: var(--accent1);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -68,7 +68,7 @@
 }
 
 .timeline::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--accent1);
   border-radius: 4px;
 }
 
@@ -88,7 +88,7 @@
 /* Ajuste do ícone de expansão */
 .expandIcon {
   font-size: 0.8rem;
-  color: var(--accent);
+  color: var(--accent1);
   transition: transform 0.2s ease;
   margin-left: 0.5rem;
 }
@@ -97,8 +97,8 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  background: var(--accent1);
+  box-shadow: 0 0 8px var(--accent1);
   flex-shrink: 0;
 }
 
@@ -131,7 +131,7 @@
   height: 10px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent1);
   flex-shrink: 0;
   margin-left: -1.5rem;
   margin-right: -0.5rem;
