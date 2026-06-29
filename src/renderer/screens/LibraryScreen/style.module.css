@@ -1,350 +1,295 @@
-/* ===== RESET E BASE ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ============================================
+   Variáveis locais (complementam as globais)
+   ============================================ */
 .libraryContainer {
-  width: 100%;
-  min-height: 100vh;
-  background: #0a0a0a;
-  background-image:
-    linear-gradient(rgba(255, 0, 212, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
-  color: #f0f0f0;
-  font-family: 'Space Grotesk', 'Inter', monospace;
-  position: relative;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-dim: rgba(255, 255, 255, 0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* garante altura total */
+  background-color: var(--background); /* fundo escuro */
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
 }
 
-/* ===== CABEÇALHO FORA DO PADRÃO ===== */
-.libraryHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto 3rem auto;
-  align-items: start;
+/* Conteúdo rolável */
+.libraryContentContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.libraryContentContainer::-webkit-scrollbar {
+  width: 5px;
+}
+.libraryContentContainer::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
 
+/* Cabeçalho com informações e busca */
+.libraryHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
 }
 
 .libraryinfo {
-  display: contents;
-  /* permite que os filhos diretos se comportem como grid items */
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .libraryinfoItem {
-  background: #111;
-  padding: 1.8rem 1.5rem;
-  border-left: 6px solid #ff00cc;
-  transform: skewX(-2deg);
-  transition: all 0.25s ease;
-  box-shadow: 8px 8px 0 rgba(255, 0, 200, 0.2);
-  padding: 1rem;
-}
-
-.libraryinfoItem:first-child {
-  grid-column: 1 / 2;
-  border-left-color: #00ffff;
-  box-shadow: 8px 8px 0 rgba(0, 255, 255, 0.2);
-}
-
-.libraryinfoItem:last-child {
-  grid-column: 2 / 3;
-  text-align: right;
-  border-left-color: #00ffb7;
-  transform: skewX(2deg);
-  box-shadow: -8px 8px 0 rgba(0, 255, 195, 0.2);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .libraryinfoItem h2 {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  font-weight: 400;
-  color: #aaa;
-  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .libraryinfoItem p {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #fff, #aaa);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: -1px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
 }
 
-/* ===== CONTAINER PRINCIPAL (NÃO É MAIS UMA LISTA) ===== */
-.libraryContentContainer {
-  max-width: 1400px;
-  margin: 0 auto;
-  background: transparent;
+/* Campo de busca */
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.searchInput:focus {
+  border-color: var(--accent);
+}
+.searchInput::placeholder {
+  color: var(--text-dim);
+}
+
+/* Ações do cabeçalho */
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.headerActions button {
+  background: var(--accent);
   border: none;
-  backdrop-filter: none;
-  padding: 1rem;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter var(--transition), opacity var(--transition);
+}
+.headerActions button:hover {
+  filter: brightness(1.1);
 }
 
-/* ===== GRID ASSIMÉTRICO DE MÚSICAS ===== */
-.libraryContent {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  list-style: none;
-  padding: 0;
-}
-
-/* Cada música como um card inclinado/recortado */
-.libraryItem {
-  background: #0c0c0c;
-  border: 1px solid #2a2a2a;
-  padding: 1.2rem;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
-  clip-path: polygon(0% 0%, 100% 0%, 96% 100%, 4% 100%);
+/* Spinner de carregamento */
+.center {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary);
 }
 
-.libraryItem::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), #00ffff, #00ffb7);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
+/* ============================================
+   GRADE DE MÚSICAS
+   ============================================ */
+.libraryContent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+/* Card de música */
+.libraryItem {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
+  cursor: pointer;
+  position: relative;
+}
 .libraryItem:hover {
-  transform: translateY(-8px) rotate(0.5deg);
-  border-color: var(--accent);
-  box-shadow: 0 20px 30px -15px rgba(255, 0, 204, 0.3);
+  background: var(--surface-hover);
+  border-color: var(--border);
 }
 
-.libraryItem:hover::before {
-  transform: scaleX(1);
-}
-
-/* Informações da capa + texto */
+/* Container da imagem/placeholder */
 .libraryItemInfo {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
   align-items: center;
+  gap: 10px;
 }
 
-.libraryItemInfo img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 2px;
-  filter: grayscale(0.3) contrast(1.1);
-  transition: 0.2s;
+/* Placeholder da inicial */
+.songInitial {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  user-select: none;
+  transition: background var(--transition), transform var(--transition);
+}
+.libraryItem:hover .songInitial {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.03);
 }
 
-.libraryItem:hover img {
-  filter: grayscale(0) contrast(1.2);
-  transform: scale(1.02);
+/* Texto do card */
+.libraryItemInfoText {
+  text-align: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .libraryItemInfoText h3 {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  line-height: 1.3;
-  margin-bottom: 0.25rem;
-  color: #fff;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .libraryItemInfoText p {
-  font-size: 0.8rem;
-  color: #999;
-  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Ações com botões inclinados */
-.libraryItemActions {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-top: 0.5rem;
+/* Botão "Adicionar à fila" – aparece no hover */
+.libraryItem .libraryItemActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity var(--transition), transform var(--transition);
+}
+.libraryItem:hover .libraryItemActions {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.libraryItemActions button {
-  flex: 1;
-  background: transparent;
-  border: 1px solid #00ffb7;
-  padding: 0.6rem 0;
+.libraryItem .libraryItemActions button {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 14px;
   font-size: 0.7rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #00ffb7;
   cursor: pointer;
-  transition: all 0.2s;
-  clip-path: polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
-  background: #111;
+  transition: filter var(--transition);
+}
+.libraryItem .libraryItemActions button:hover {
+  filter: brightness(1.15);
 }
 
-.libraryItemActions button:first-child {
-  border-color: #00ffff;
-  color: #00ffff;
-  clip-path: polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%);
-}
-
-.libraryItemActions button:hover {
-  background: #00ffb7;
-  color: #000;
-  transform: skewX(-5deg);
-}
-
-.libraryItemActions button:first-child:hover {
-  background: #00ffff;
-  color: #000;
-  transform: skewX(5deg);
-}
-
-/* Botão Voltar (fora do padrão) */
-.itemActionBack {
-  border-color: #ff0000 !important;
-  color: #ff0000 !important;
-  clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%) !important;
-}
-
-.itemActionBack:hover {
-  background: #ff0000 !important;
-  color: #fff !important;
-  transform: translateX(6px) skewX(-8deg) !important;
-  box-shadow: -4px 4px 0 rgba(255, 0, 0, 0.5) !important;
-}
-
-/* Botões do cabeçalho também customizados */
-.libraryHeader button {
-  background: transparent;
-  border: 1px solid #ff00cc;
-  padding: 0.7rem 1.5rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #ff00cc;
-  clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
-}
-
-.libraryHeader button:hover {
-  background: #ff00cc;
-  color: #0a0a0a;
-  transform: scale(1.02);
-}
-
-/* Estado vazio (estilizado) */
-.libraryItem:has(p:only-child) {
-  clip-path: none;
-  text-align: center;
-  background: rgba(255, 0, 204, 0.05);
-  border: 1px dashed #ff00cc;
+/* Estado vazio */
+.emptyState {
+  display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 3rem;
+  padding: 40px 0;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
-.libraryItem p:only-child {
-  font-family: monospace;
-  font-size: 0.9rem;
-  color: #ff00cc;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-/* ===== SCROLLBAR FORA DO PADRÃO ===== */
-.libraryContent::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.libraryContent::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 0;
-}
-
-.libraryContent::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ff00cc, #00ffff);
-  border-radius: 0;
-  clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
-}
-
-/* ===== RESPONSIVIDADE (mantendo a quebra) ===== */
-@media (max-width: 800px) {
-  .libraryContainer {
-    padding: 1rem;
-  }
-
-  .libraryHeader {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .libraryinfoItem:first-child,
-  .libraryinfoItem:last-child {
-    grid-column: 1 / 2;
-    transform: skewX(0deg);
-    text-align: left;
-  }
-
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+@media (max-width: 900px) {
   .libraryContent {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
   }
+}
 
-  .libraryItemActions {
+@media (max-width: 600px) {
+  .libraryHeader {
     flex-direction: column;
+    align-items: stretch;
   }
-
-  .libraryItemActions button {
-    clip-path: none;
-    border-radius: 0;
+  .searchInput {
+    width: 100%;
   }
-}
-
-/* ===== CAMPO DE BUSCA (SEM DIAGONAIS, LARGURA NATURAL) ===== */
-.searchInput {
-  background: #0f0f0f;
-  border: 1px solid #2a2a2a;
-  padding: 0.7rem 1rem;
-  font-family: 'Space Grotesk', 'Inter', monospace;
-  border-radius: 0.4rem;
-  font-size: 0.85rem;
-  color: #f0f0f0;
-  transition: all 0.2s ease;
-  width: auto;
-  /* não força largura total */
-  min-width: 240px;
-  /* largura mínima confortável */
-  flex: 0 1 auto;
-  /* permite encolher se necessário */
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: #00ffff;
-  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.15);
-  background: #111;
-}
-
-.searchInput::placeholder {
-  color: #666;
-  font-family: monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
-}
-
-.searchInput:hover {
-  border-color: #ff00cc;
-  background: #121212;
+  .libraryContent {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .songInitial {
+    width: 56px;
+    height: 56px;
+    font-size: 1.5rem;
+  }
+  .libraryItemInfoText h3 {
+    font-size: 0.8rem;
+  }
+  .libraryItem .libraryItemActions {
+    opacity: 1; /* sempre visível em touch */
+    transform: scale(1);
+  }
 }

@@ -53,7 +53,7 @@ export const ProgressBar = memo(function ProgressBar() {
     const half = totalBars / 2;
     const maxIndex = 70;
     let smoothedHeights = new Array(totalBars).fill(0);
-    const smoothing = 0.7;
+    const smoothing = 0.2;
 
     const resizeCanvas = () => {
       canvas.width = canvas.clientWidth;

@@ -47,7 +47,7 @@
   border-color: var(--accent);
   color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Timeline container */
@@ -58,9 +58,19 @@
 }
 
 /* Scrollbar timeline */
-.timeline::-webkit-scrollbar { width: 6px; }
-.timeline::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
-.timeline::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+.timeline::-webkit-scrollbar {
+  width: 6px;
+}
+
+.timeline::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
 
 /* Day group */
 .dayGroup {
@@ -70,8 +80,17 @@
 .dayHeader {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1.2rem;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Ajuste do ícone de expansão */
+.expandIcon {
+  font-size: 0.8rem;
+  color: var(--accent);
+  transition: transform 0.2s ease;
+  margin-left: 0.5rem;
 }
 
 .dayDot {
@@ -87,7 +106,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: capitalize;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
   letter-spacing: 0.05em;
 }
@@ -95,7 +114,7 @@
 /* Songs list */
 .songs {
   margin-left: 6px;
-  border-left: 2px solid rgba(255,255,255,0.08);
+  border-left: 2px solid rgba(255, 255, 255, 0.08);
   padding-left: 1.5rem;
 }
 
@@ -111,7 +130,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border: 2px solid var(--accent);
   flex-shrink: 0;
   margin-left: -1.5rem;
@@ -128,26 +147,26 @@
   padding: 0.8rem 1rem;
   background: rgba(20, 20, 20, 0.7);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 1rem;
   transition: 0.2s ease;
 }
 
 .songCard:hover {
   background: rgba(30, 30, 30, 0.8);
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateX(4px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .timeBadge {
   font-size: 0.65rem;
   font-weight: 600;
   font-family: monospace;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   padding: 0.2rem 0.6rem;
   border-radius: 0.5rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   flex-shrink: 0;
   letter-spacing: 0.5px;
 }
@@ -198,8 +217,8 @@
   padding: 3rem;
   margin: 1rem 1.5rem;
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.5);
-  background: rgba(0,0,0,0.3);
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 1rem;
   backdrop-filter: blur(8px);
   font-family: monospace;

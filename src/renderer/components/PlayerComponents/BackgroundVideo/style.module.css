@@ -60,10 +60,5 @@
   align-items: center;
   justify-content: center;
   padding-bottom: 12px;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0) 100%
-  );
   pointer-events: none;
 }

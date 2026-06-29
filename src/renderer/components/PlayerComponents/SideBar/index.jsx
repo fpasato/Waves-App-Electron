@@ -1,11 +1,11 @@
 import styles from "./style.module.css";
-import { PlaylistScreen } from "../PlaylistScreen";
 
 import { IoOptionsSharp } from "react-icons/io5";
 import { IoLibrarySharp } from "react-icons/io5";
 import { FaYoutube, FaHistory } from "react-icons/fa";
-import { FaRadio, FaDownload  } from "react-icons/fa6";
+import { FaRadio, FaDownload } from "react-icons/fa6";
 import { FaPhotoVideo } from "react-icons/fa";
+import { TbPlaylist } from "react-icons/tb";
 
 export function SideBar({ setScreen }) {
   return (
@@ -32,6 +32,13 @@ export function SideBar({ setScreen }) {
           >
             <IoLibrarySharp size={18} />
             <span>Biblioteca</span>
+          </button>{" "}
+          <button
+            className={styles.sidebarButton}
+            onClick={() => setScreen("playlist")}
+          >
+            <TbPlaylist size={18} />
+            <span>Playlist</span>
           </button>{" "}
           <button
             className={styles.sidebarButton}
@@ -69,7 +76,6 @@ export function SideBar({ setScreen }) {
           </button>
         </div>
       </div>
-      <PlaylistScreen />
     </div>
   );
 }

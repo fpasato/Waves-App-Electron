@@ -14,9 +14,11 @@ import { randomCover } from "../../utils/randomCover";
 import { usePlayerStore } from "../../store/playerStore"; 
 import { useAnalyser } from "../../hooks/useAnalyser";
 import { useLyrics } from "../../hooks/useLyrics";
+import { useShortkeys } from "../../hooks/useShortkeys";
 
 export function PlayerScreen({ setScreen, file }) {
   useAnalyser();
+  useShortkeys();
 
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentRadio = usePlayerStore((state) => state.currentRadio);

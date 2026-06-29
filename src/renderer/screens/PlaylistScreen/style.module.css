@@ -1,0 +1,416 @@
+/* Variáveis locais */
+.playlistScreen {
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-dim: rgba(255, 255, 255, 0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--background);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ========== GERAL ========== */
+.input {
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.input:focus {
+  border-color: var(--accent);
+}
+.input::placeholder {
+  color: var(--text-dim);
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 24px;
+  font-style: italic;
+}
+
+/* ========== BUSCA ========== */
+.searchBar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.searchBar .input {
+  width: 100%;
+}
+
+/* ========== LAYOUT DIVIDIDO (60/40) ========== */
+.splitLayout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.leftPanel {
+  flex: 6;
+  overflow-y: auto;
+  padding: 16px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.leftPanel::-webkit-scrollbar { width: 5px; }
+.leftPanel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.rightPanel {
+  flex: 4;
+  overflow-y: auto;
+  padding: 16px 20px;
+  border-left: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.rightPanel::-webkit-scrollbar { width: 5px; }
+.rightPanel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.sectionTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+/* ========== GRID DE MÚSICAS (painel esquerdo) ========== */
+.musicGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.musicCard {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  border: 1px solid transparent;
+}
+.musicCard:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.musicInitial {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.06);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  user-select: none;
+  transition: transform var(--transition), background var(--transition);
+}
+.musicCard:hover .musicInitial {
+  background: rgba(255,255,255,0.1);
+  transform: scale(1.03);
+}
+
+.musicInfo {
+  text-align: center;
+  width: 100%;
+}
+.musicTitle {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.musicArtist {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toggleBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--transition);
+}
+.musicCard:hover .toggleBtn {
+  opacity: 1;
+  transform: scale(1);
+}
+.removeBtn {
+  border-color: #e53935;
+  color: #e53935;
+}
+.removeBtn:hover {
+  background: rgba(229, 57, 53, 0.15);
+}
+.addBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,85,0,0.1);
+}
+
+/* ========== LISTA DE MÚSICAS (painel direito) ========== */
+.songList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.songRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+.songRow:hover {
+  background: var(--surface);
+}
+.songRowInfo {
+  min-width: 0;
+  flex: 1;
+}
+.songRowTitle {
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.songRowArtist {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.addBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.addBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,85,0,0.1);
+}
+
+/* ========== PLAYLISTS (cards) ========== */
+.playlistsGrid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.playlistsGrid::-webkit-scrollbar { width: 5px; }
+.playlistsGrid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.playlistCard {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.playlistCard:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.playlistInitial {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  transition: transform var(--transition);
+}
+.playlistCard:hover .playlistInitial {
+  transform: scale(1.04);
+}
+
+.playlistName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.renameInput {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  text-align: center;
+  outline: none;
+}
+
+.playlistActions {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all var(--transition);
+}
+.playlistCard:hover .playlistActions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.actionBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.actionBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,85,0,0.1);
+}
+.dangerBtn:hover {
+  border-color: #e53935;
+  color: #e53935;
+  background: rgba(229,57,53,0.15);
+}
+
+/* ========== CRIAÇÃO DE PLAYLIST ========== */
+.createForm {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.confirmBtn {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter var(--transition);
+}
+.confirmBtn:hover {
+  filter: brightness(1.1);
+}
+
+/* ========== BOTÕES DO HEADER ========== */
+.playAllBtn,
+.createPlaylistBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter var(--transition);
+}
+.playAllBtn:hover,
+.createPlaylistBtn:hover {
+  filter: brightness(1.1);
+}
+
+/* ========== RESPONSIVO ========== */
+@media (max-width: 750px) {
+  .splitLayout {
+    flex-direction: column;
+  }
+  .leftPanel, .rightPanel {
+    flex: none;
+    height: 50%;
+  }
+  .musicGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}

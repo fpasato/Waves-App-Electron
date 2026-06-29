@@ -7,6 +7,7 @@ import { LibraryScreen } from "./screens/LibraryScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 import { RadioScreen } from "./screens/RadioScreen";
 import { VideoPlayerScreen } from "./screens/VideoPlayerScreen";
+import { PlaylistScreen } from "./screens/PlaylistScreen";
 import { RecentScreen } from "./screens/RecentScreen";
 import { useAudio } from "./hooks/useAudio";
 import { usePlayerStore } from "./store/playerStore";
@@ -115,6 +116,7 @@ function PlayerApp() {
       )}
       {screen === "library" && <LibraryScreen setScreen={setScreen} />}
       {screen === "videoplayer" && <VideoPlayerScreen setScreen={setScreen} video={screenData?.video} />}
+      {screen === "playlist" && <PlaylistScreen setScreen={setScreen} />}
       {screen === "recents" && <RecentScreen setScreen={setScreen} />}
       {screen === "downloads" && (
         <DownloadScreen setScreen={setScreen} downloadQueue={downloadQueue} />

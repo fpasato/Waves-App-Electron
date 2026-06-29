@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&family=Comme:wght@100..900&family=Funnel+Display:wght@300..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Varela+Round&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
 * {
   margin: 0;
   padding: 0;
@@ -11,15 +11,17 @@
 
 :root {
   --fontsize: 1rem;
-  --glass-bg: rgba(20, 20, 30, 0.4);
+  --glass-bg: rgb(9, 9, 255);
 }
 
 .dark {
-  --background: #000000;
+  --background: #0c0c0c;
   --text: #ffffff;
+  --border: #3d3c3c;
 }
 
 .light {
   --background: #ffffff;
   --text: #121212;
+  --border: #000000;
 }

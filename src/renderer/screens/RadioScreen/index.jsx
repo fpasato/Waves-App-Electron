@@ -1,9 +1,9 @@
+// RadioScreen/index.jsx
 import { Header } from "../../Components/Header";
 import styles from "./style.module.css";
 import { useRadio } from "../../hooks/useRadio";
 import { useState } from "react";
 import { usePlayerStore } from "../../store/playerStore";
-
 
 function WaveIcon() {
   return (
@@ -66,69 +66,37 @@ function RadioCard({
       onPause();
       return;
     }
-
     onPlay(radio);
   };
 
   return (
     <article
-      className={`${styles.radioCard} ${
-        isActive ? styles.radioCardActive : ""
-      }`}
+      className={`${styles.radioCard} ${isActive ? styles.radioCardActive : ""}`}
     >
       <button
         className={styles.cardMain}
         onClick={handlePlay}
         aria-label={`${isActive ? "Pausar" : "Tocar"} ${radio.name}`}
       >
-        <RadioThumb
-          radio={radio}
-          isActive={isActive}
-          isBuffering={isBuffering}
-        />
-
+        <RadioThumb radio={radio} isActive={isActive} isBuffering={isBuffering} />
         <div className={styles.cardInfo}>
           <p className={styles.cardName}>{radio.name}</p>
-
           <p className={styles.cardMeta}>
-            {[radio.country, radio.state].filter(Boolean).join(" • ") ||
-              "Rádio online"}
+            {[radio.country, radio.state].filter(Boolean).join(" • ") || "Rádio online"}
           </p>
-
           <div className={styles.cardTags}>
             {firstTag && <span className={styles.cardTag}>{firstTag}</span>}
-
-            {radio.bitrate > 0 && (
-              <span className={styles.cardTag}>{radio.bitrate}kbps</span>
-            )}
-
-            {radio.codec && (
-              <span className={styles.cardTag}>{radio.codec}</span>
-            )}
+            {radio.bitrate > 0 && <span className={styles.cardTag}>{radio.bitrate}kbps</span>}
+            {radio.codec && <span className={styles.cardTag}>{radio.codec}</span>}
           </div>
         </div>
       </button>
 
       <div className={styles.cardActions}>
         <button
-          className={styles.playBtn}
-          onClick={handlePlay}
-          aria-label={isActive ? "Pausar rádio" : "Tocar rádio"}
-          title={isActive ? "Pausar" : "Tocar"}
-        >
-          {isBuffering ? <Spinner /> : isActive ? "⏸" : "▶"}
-        </button>
-
-        <button
-          className={`${styles.favBtn} ${
-            isFavorite ? styles.favBtnActive : ""
-          }`}
+          className={`${styles.favBtn} ${isFavorite ? styles.favBtnActive : ""}`}
           onClick={() => onFavorite(radio)}
-          aria-label={
-            isFavorite
-              ? `Remover ${radio.name} dos favoritos`
-              : `Favoritar ${radio.name}`
-          }
+          aria-label={isFavorite ? `Remover ${radio.name} dos favoritos` : `Favoritar ${radio.name}`}
           title={isFavorite ? "Remover favorito" : "Favoritar"}
         >
           {isFavorite ? "♥" : "♡"}
@@ -185,37 +153,24 @@ function Player({ currentRadio, isPlaying, isBuffering, onPlay, onPause }) {
           <img
             src={currentRadio.favicon}
             alt={currentRadio.name}
-            onError={(e) => {
-              e.currentTarget.src = "/radio-default.png";
-            }}
+            onError={(e) => { e.currentTarget.src = "/radio-default.png"; }}
           />
         ) : null}
-
         <span
           className={styles.cardInitial}
-          style={{
-            display: currentRadio.favicon ? "none" : "flex",
-          }}
+          style={{ display: currentRadio.favicon ? "none" : "flex" }}
         >
           {currentRadio.name?.[0]?.toUpperCase() ?? "R"}
         </span>
       </div>
-
       <div className={styles.playerInfo}>
         <p className={styles.playerName}>{currentRadio.name}</p>
-
         <p className={styles.playerMeta}>
-          {isBuffering
-            ? "Carregando..."
-            : isPlaying
-              ? currentRadio.country || currentRadio.state || "Ao vivo"
-              : "Pausado"}
+          {isBuffering ? "Carregando..." : isPlaying ? currentRadio.country || currentRadio.state || "Ao vivo" : "Pausado"}
         </p>
       </div>
-
       {isBuffering && <Spinner />}
       {isPlaying && !isBuffering && <WaveIcon />}
-
       <button
         className={styles.playerBtn}
         onClick={() => (isPlaying ? onPause() : onPlay(currentRadio))}
@@ -228,9 +183,8 @@ function Player({ currentRadio, isPlaying, isBuffering, onPlay, onPause }) {
   );
 }
 
-
 export function RadioScreen({ setScreen }) {
-  const [activeTab, setActiveTab] = useState("search"); // ← adicionar
+  const [activeTab, setActiveTab] = useState("search");
 
   const {
     query,
@@ -252,59 +206,45 @@ export function RadioScreen({ setScreen }) {
   const playRadio = usePlayerStore((state) => state.playRadio);
   const pauseRadio = usePlayerStore((state) => state.pauseRadio);
 
-  // ← adicionar handlers faltando
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSearch();
-  };
-
-  const handleSearch = () => {
-    searchRadios(query);
+    if (e.key === "Enter") searchRadios(query);
   };
 
   const handlePlayRadio = (radio) => {
     playRadio(radio);
-    setScreen("player"); // ← navega para o player
+    setScreen("player"); // após iniciar o rádio, volta ao player principal
   };
 
-  // ← mapear para os nomes que RadioList espera
   const isPlaying = radioPlaying;
   const isBuffering = radioBuffering;
 
   return (
     <div className={styles.radioScreen}>
-      <Header title="Rádio" />
+      <Header
+        title="Rádio"
+        onBack={() => setScreen("player")}  // Botão de voltar no header
+      />
 
       <div className={styles.radioContent}>
         <div className={styles.tabs} role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === "search"}
-            className={`${styles.tab} ${
-              activeTab === "search" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tab} ${activeTab === "search" ? styles.tabActive : ""}`}
             onClick={() => setActiveTab("search")}
           >
             Buscar
           </button>
-
           <button
             role="tab"
             aria-selected={activeTab === "favorites"}
-            className={`${styles.tab} ${
-              activeTab === "favorites" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tab} ${activeTab === "favorites" ? styles.tabActive : ""}`}
             onClick={() => setActiveTab("favorites")}
           >
             Favoritas
             {favorites.length > 0 && (
               <span className={styles.badge}>{favorites.length}</span>
             )}
-          </button>
-          <button
-            onClick={() => setScreen("player")}
-            className={`${styles.tab} ${styles.backButton}`}
-          >
-            Voltar
           </button>
         </div>
 
@@ -319,7 +259,6 @@ export function RadioScreen({ setScreen }) {
               autoComplete="off"
               aria-label="Buscar rádio"
             />
-
             {query && (
               <button
                 className={styles.clearBtn}
@@ -329,10 +268,9 @@ export function RadioScreen({ setScreen }) {
                 ✕
               </button>
             )}
-
             <button
               className={styles.searchBtn}
-              onClick={handleSearch}
+              onClick={() => searchRadios(query)}
               disabled={!query.trim() || loading}
               aria-label="Buscar rádio"
             >
@@ -357,7 +295,6 @@ export function RadioScreen({ setScreen }) {
         {activeTab === "search" && !query && !loading && (
           <section className={styles.popularSection}>
             <h2 className={styles.sectionTitle}>Em alta</h2>
-
             {loadingPopular ? (
               <div className={styles.loadingRow}>
                 <Spinner />

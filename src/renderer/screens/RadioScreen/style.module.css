@@ -1,273 +1,259 @@
-/* ===== RESET & BASE ===== */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* style.module.css */
 
+/* Variáveis locais (limpas, sem vermelho) */
 .radioScreen {
-  width: 100%;
-  min-height: 100vh;
-  background: #0a0a0a;
-  background-image: 
-    linear-gradient(rgba(255, 0, 212, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
-  color: #f0f0f0;
-  font-family: 'Space Grotesk', 'Inter', monospace;
-  position: relative;
-  overflow-x: hidden;
-}
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-dim: rgba(255, 255, 255, 0.35);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
 
-/* ===== CONTEÚDO PRINCIPAL ===== */
-.radioContent {
-  max-width: 1400px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  padding-bottom: 7rem; 
+  height: 100%;
+  background: var(--background);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100dvh;
 }
 
-/* ===== TABS ===== */
+/* Barra de rolagem */
+.radioContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.radioContent::-webkit-scrollbar {
+  width: 5px;
+}
+
+.radioContent::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* ========== TABS ========== */
 .tabs {
   display: flex;
-  gap: 0.8rem;
-  margin-bottom: 0.5rem;
+  gap: 6px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 10;
 }
 
 .tab {
   background: transparent;
-  border: 1px solid #00ffb7;
-  padding: 0.6rem 1.8rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #00ffb7;
+  border: none;
+  color: var(--text-secondary);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #111;
-}
-
-.tabActive {
-  background: #00ffb7;
-  color: #0a0a0a;
-  border-color: #00ffb7;
+  transition: background var(--transition), color var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tab:hover {
-  background: #00ffb7;
-  color: #000;
-  transform: scale(1.02);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.tabActive {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tabActive:hover {
+  background: var(--accent);
+  filter: brightness(1.05);
 }
 
 .badge {
-  margin-left: 0.4rem;
-  background: #00ffff;
-  color: #000;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
   font-size: 0.7rem;
-  padding: 0.1rem 0.5rem;
-  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
-/* ===== ÁREA DE BUSCA ===== */
+/* ========== BUSCA ========== */
 .searchArea {
   display: flex;
-  gap: 0.8rem;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+  position: sticky;
+  top: 70px;
+  background: var(--background);
+  z-index: 5;
+  padding: 8px 0;
 }
 
 .searchArea input[type="search"] {
   flex: 1;
-  background: #111;
-  border: 1px solid #00ffff;
-  padding: 0.7rem 1rem;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
   font-size: 0.9rem;
-  color: #fff;
-  font-family: monospace;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.searchArea input[type="search"]::placeholder {
-  color: #666;
+  transition: border-color var(--transition);
 }
 
 .searchArea input[type="search"]:focus {
-  border-color: #ffcc00;
-  background: #1a1a1a;
+  border-color: var(--accent);
+}
+
+.searchArea input[type="search"]::placeholder {
+  color: var(--text-dim);
 }
 
 .clearBtn {
   background: none;
-  border: 1px solid #00ffb7;
-  color: #00ffb7;
+  border: none;
+  color: var(--text-secondary);
   font-size: 1.1rem;
-  width: 2.2rem;
-  height: 2.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  transition: 0.2s;
+  padding: 6px;
+  border-radius: 50%;
+  transition: color var(--transition), background var(--transition);
 }
 
 .clearBtn:hover {
-  background: #00ffb7;
-  color: #000;
+  color: var(--text);
+  background: var(--surface);
 }
 
 .searchBtn {
-  background: transparent;
-  border: 1px solid #00ffff;
-  padding: 0.7rem 1.5rem;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 24px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #00ffff;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: filter var(--transition);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 6px;
+}
+
+.searchBtn:hover:not(:disabled) {
+  filter: brightness(1.1);
 }
 
 .searchBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.searchBtn:not(:disabled):hover {
-  background: #00ffff;
-  color: #000;
-}
-
-/* ===== SEÇÃO POPULARES ===== */
-.popularSection {
-  margin-top: 0.5rem;
-}
-
+/* ========== TÍTULO ========== */
 .sectionTitle {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  color: #ffcc00;
-  margin-bottom: 1rem;
-  padding-left: 0.3rem;
-  border-left: 3px solid #ffcc00;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: var(--text);
 }
 
-/* ===== LISTA DE RÁDIOS (GRID ASSIMÉTRICO) ===== */
+/* ========== LISTA DE RÁDIOS ========== */
 .radioList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  list-style: none;
-  padding: 1rem;
-  overflow: hidden;
-
-}
-
-/* ===== CARD DE RÁDIO ===== */
-.radioCard {
-  background: #0c0c0c;
-  border: 1px solid #2a2a2a;
-  padding: 1.2rem;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  cursor: pointer;
+  gap: 6px;
 }
 
-.radioCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), #00ffff, #00ffb7);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
+/* ========== CARD ========== */
+.radioCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: transparent;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
 }
 
 .radioCard:hover {
-  transform: translateY(-8px) rotate(0.5deg);
-  border-color: #00ffb7;
-  box-shadow: 0 20px 30px -15px rgba(0, 255, 187, 0.3);
-}
-
-.radioCard:hover::before {
-  transform: scaleX(1);
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 .radioCardActive {
-  border-color: #ffcc00;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+  background: var(--surface);
+  border-color: var(--accent);
 }
 
-/* Layout interno do card */
 .cardMain {
   display: flex;
-  gap: 1rem;
   align-items: center;
+  gap: 12px;
+  flex: 1;
   min-width: 0;
-  background: transparent;
+  background: none;
   border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
 }
 
-/* ===== MINIATURA ===== */
+/* Thumb */
 .cardThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  width: 60px;
-  height: 60px;
-  overflow: hidden;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .cardThumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(0.3) contrast(1.1);
-  transition: 0.2s;
-}
-
-.radioCard:hover .cardThumb img {
-  filter: grayscale(0) contrast(1.2);
-  transform: scale(1.02);
+  border-radius: inherit;
 }
 
 .cardInitial {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #00ffb7, #00ffff);
-  color: #000;
+  color: var(--accent);
+  text-transform: uppercase;
 }
 
 .cardActiveOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: inherit;
 }
 
-/* ===== INFORMAÇÕES ===== */
+/* Info */
 .cardInfo {
   flex: 1;
   min-width: 0;
@@ -275,106 +261,205 @@
 
 .cardName {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  margin: 0 0 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.3rem;
-  color: #fff;
 }
 
 .cardMeta {
   font-size: 0.75rem;
-  font-family: monospace;
-  color: #999;
-  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cardTags {
   display: flex;
-  gap: 0.5rem;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .cardTag {
-  background: #1a1a1a;
-  border: 1px solid #444;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  background: var(--surface-hover);
+  border-radius: 12px;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #aaa;
+  letter-spacing: 0.03em;
 }
 
-/* ===== AÇÕES DO CARD ===== */
+/* Ações */
 .cardActions {
   display: flex;
-  gap: 0.8rem;
-  margin-top: 0.3rem;
-}
-
-.playBtn, .favBtn {
-  flex: 1;
-  background: transparent;
-  border: 1px solid;
-  padding: 0.5rem 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #111;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
 }
 
 .playBtn {
-  border-color: #00ffff;
-  color: #00ffff;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter var(--transition), transform 0.1s;
 }
 
 .playBtn:hover {
-  background: #00ffff;
-  color: #000;
-  transform: skewX(5deg);
+  filter: brightness(1.1);
+  transform: scale(1.05);
 }
 
 .favBtn {
-  border-color: #00ffb7;
-  color: #00ffb7;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
 }
 
 .favBtn:hover {
-  background: #00ffb7;
-  color: #000;
-  transform: skewX(-5deg);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .favBtnActive {
-  background: #00ffb7;
-  color: #000;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 85, 0, 0.1);
 }
 
-/* ===== PLAYER FIXO ===== */
-.player {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  width: calc(100% - 2rem);
-  max-width: 700px;
-  background: #0c0c0c;
-  border: 1px solid #ffcc00;
-  padding: 0.8rem 1.5rem;
+.favBtnActive:hover {
+  background: rgba(255, 85, 0, 0.2);
+}
+
+/* ========== WAVE ========== */
+.waveIcon {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.waveIcon span {
+  width: 2.5px;
+  background: var(--accent);
+  border-radius: 1px;
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.waveIcon span:nth-child(1) {
+  height: 6px;
+  animation-delay: 0s;
+}
+
+.waveIcon span:nth-child(2) {
+  height: 12px;
+  animation-delay: 0.2s;
+}
+
+.waveIcon span:nth-child(3) {
+  height: 8px;
+  animation-delay: 0.4s;
+}
+
+.waveIcon span:nth-child(4) {
+  height: 14px;
+  animation-delay: 0.6s;
+}
+
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(0.3);
+  }
+}
+
+/* ========== SPINNER ========== */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========== MENSAGENS ========== */
+.errorMsg {
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.loadingRow {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+  gap: 10px;
+  padding: 12px;
+  color: var(--text-secondary);
+}
+
+.emptyMsg {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 0;
+  font-style: italic;
+}
+
+/* ========== PLAYER FIXO ========== */
+.player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 100px;
 }
 
 .playerThumb {
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -382,7 +467,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(0.5);
 }
 
 .playerInfo {
@@ -392,6 +476,8 @@
 
 .playerName {
   font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0 0 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -399,107 +485,70 @@
 
 .playerMeta {
   font-size: 0.7rem;
-  font-family: monospace;
-  color: #ffcc00;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .playerBtn {
-  background: transparent;
-  border: 1px solid #ffcc00;
-  color: #ffcc00;
-  font-size: 1.3rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: 0.2s;
+  transition: filter var(--transition), transform 0.1s;
 }
 
-.playerBtn:hover {
-  background: #ffcc00;
-  color: #000;
+.playerBtn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: scale(1.05);
 }
 
-/* ===== ESTADOS DE FEEDBACK ===== */
-.loadingRow, .errorMsg, .emptyMsg {
-  font-family: monospace;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  padding: 1rem;
-  text-align: center;
+.playerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.loadingRow {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  color: #00ffff;
-}
+/* ========== RESPONSIVO ========== */
+@media (max-width: 600px) {
+  .radioContent {
+    padding: 0 12px 16px;
+  }
 
-.errorMsg {
-  background: rgba(255,0,0,0.1);
-  border: 1px dashed #ff0000;
-  color: #ff4444;
-}
+  .tabs {
+    padding: 12px 0;
+    gap: 4px;
+  }
 
-.emptyMsg {
-  color: #555;
-  border: 1px dashed #333;
-}
+  .tab {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
 
-/* ===== ANIMAÇÕES (WAVE E SPINNER) ===== */
-.waveIcon {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 18px;
-}
+  .radioCard {
+    padding: 8px 10px;
+  }
 
-.waveIcon span {
-  display: block;
-  width: 3px;
-  height: 100%;
-  background: #00ffff;
-  border-radius: 2px;
-  animation: wave 1.2s ease-in-out infinite;
-}
+  .cardThumb {
+    width: 40px;
+    height: 40px;
+  }
 
-.waveIcon span:nth-child(1) { animation-delay: 0s; }
-.waveIcon span:nth-child(2) { animation-delay: 0.15s; }
-.waveIcon span:nth-child(3) { animation-delay: 0.3s; }
-.waveIcon span:nth-child(4) { animation-delay: 0.45s; }
+  .playBtn,
+  .favBtn {
+    width: 30px;
+    height: 30px;
+  }
 
-@keyframes wave {
-  0%, 100% { height: 20%; }
-  50% { height: 100%; }
+  .searchBtn {
+    padding: 8px 14px;
+  }
 }
-
-.spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(0,255,255,0.2);
-  border-top-color: #00ffff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===== SCROLLBAR CUSTOMIZADA ===== */
-.radioContent::-webkit-scrollbar {
-  width: 8px;
-}
-.radioContent::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-.radioContent::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #00ffb7, #00ffff);
-}
-

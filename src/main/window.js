@@ -9,7 +9,7 @@ export async function createWindow(userAgent) {
     height: 670,
     minWidth: 900,
     minHeight: 670,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     show: false,
     icon: join(__dirname, "../../build/icon.ico"),
     webPreferences: {

@@ -1,10 +1,23 @@
-import styles from './style.module.css'
+import { IoArrowBack } from "react-icons/io5";
+import styles from "./style.module.css";
 
+export function Header({ title, onBack, children }) {
+  return (
+    <header className={styles.header}>
+      <div className={styles.left}>
+        {onBack && (
+          <button className={styles.backButton} onClick={onBack}>
+            <IoArrowBack size={14} />
+            <span>Voltar</span>
+          </button>
+        )}
+      </div>
 
-export function Header({ title }) {
-    return (
-        <header className={styles.header} >
-            <h1>{title}</h1>
-        </header>
-    )
+      <h1 className={styles.title}>{title}</h1>
+
+      <div className={styles.actions}>
+        {children}
+      </div>
+    </header>
+  );
 }

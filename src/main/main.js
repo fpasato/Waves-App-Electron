@@ -73,7 +73,7 @@ let mainWindow = null;
 
 async function bootstrap() {
   electronApp.setAppUserModelId("com.electron");
-  Menu.setApplicationMenu(null);
+  // Menu.setApplicationMenu(null);
   await ensureYtDlp();
   await setupAdBlocker(YOUTUBE_PARTITION);
 

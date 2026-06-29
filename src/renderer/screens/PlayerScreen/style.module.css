@@ -13,18 +13,12 @@
 /* camada blur neural */
 .playerScreen::before {
   content: "";
-
   position: absolute;
   inset: -20%;
-
   z-index: 0;
-
   filter: blur(120px);
-
   opacity: 0.8;
-
-  background: var(--player-bg);
-
+  background: var(--background);
   animation: neuralMove 18s ease-in-out infinite alternate;
 }
 
@@ -70,7 +64,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border);
 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 

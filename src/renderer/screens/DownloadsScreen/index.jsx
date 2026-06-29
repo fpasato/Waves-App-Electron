@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useDownloads } from "../../hooks/useDownloads";
+import { Header } from "../../components/Header";
 import styles from "./style.module.css";
 
-import { GiExitDoor, GiClapperboard } from "react-icons/gi";
+import { GiClapperboard } from "react-icons/gi";
 import {
   FaMusic,
   FaTrashAlt,
@@ -314,26 +315,11 @@ export function DownloadScreen({ setScreen, downloadQueue }) {
   return (
     <div className={styles.wrap}>
       {/* ── Header ── */}
+      <Header
+        title="Downloads"
+        onBack={() => setScreen("player")}
+      />
       <div className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.title}>Downloads</h1>
-          <div className={styles.actions}>
-            <button
-              className={styles.refreshBtn}
-              onClick={loadFiles}
-              title="Atualizar"
-            >
-              <IoReload />
-            </button>
-            <button
-              onClick={() => setScreen("player")}
-              className={styles.exitBtn}
-            >
-              <GiExitDoor />
-            </button>
-          </div>
-        </div>
-
         <div className={styles.statsRow}>
           <span className={styles.chip}>
             <GiClapperboard /> {totalVideo} vídeo{totalVideo !== 1 ? "s" : ""}

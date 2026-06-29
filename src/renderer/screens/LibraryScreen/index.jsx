@@ -1,9 +1,15 @@
+// LibraryScreen/index.jsx
 import { useEffect, useState, useCallback } from "react";
 import { usePlayerStore } from "../../store/playerStore";
 import { Header } from "../../Components/Header";
 import { Button } from "../../Components/Button";
-import { randomCover } from "../../utils/randomCover";
 import styles from "./style.module.css";
+
+// Componente placeholder com a inicial da música
+function SongPlaceholder({ title }) {
+  const initial = title?.trim()?.charAt(0)?.toUpperCase() || "?";
+  return <span className={styles.songInitial}>{initial}</span>;
+}
 
 export function LibraryScreen({ setScreen }) {
   const {
@@ -56,7 +62,8 @@ export function LibraryScreen({ setScreen }) {
 
   return (
     <div className={styles.libraryContainer}>
-      <Header title="Biblioteca" />
+      <Header title="Biblioteca" onBack={() => setScreen("player")} />
+
       <div className={styles.libraryContentContainer}>
         <div className={styles.libraryHeader}>
           <div className={styles.libraryinfo}>
@@ -78,21 +85,17 @@ export function LibraryScreen({ setScreen }) {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <div className={styles.libraryItemActions}>
+          <div className={styles.headerActions}>
             <Button
               title="Tocar Todas"
               onClick={() => {
                 if (filteredLibrary.length === 0) return;
                 clearRadio();
-                setQueue(filteredLibrary); 
+                setQueue(filteredLibrary);
                 setScreen("player");
               }}
             />
-            <Button
-              title="Voltar"
-              className={styles.itemActionBack}
-              onClick={() => setScreen("player")}
-            />
+            {/* Botão Voltar removido daqui – agora está no Header */}
           </div>
         </div>
 
@@ -104,9 +107,18 @@ export function LibraryScreen({ setScreen }) {
         ) : filteredLibrary.length > 0 ? (
           <ul className={styles.libraryContent}>
             {filteredLibrary.map((song) => (
-              <li className={styles.libraryItem} key={song.id}>
+              <li
+                className={styles.libraryItem}
+                key={song.id}
+                onClick={() => {
+                  clearRadio();
+                  addToQueue(song);
+                  playSong(song, [song]);
+                  setScreen("player");
+                }}
+              >
                 <div className={styles.libraryItemInfo}>
-                  <img src={randomCover(song.title)} alt={song.title} />
+                  <SongPlaceholder title={song.title} />
                   <div className={styles.libraryItemInfoText}>
                     <h3>{song.title}</h3>
                     <p>{song.artist}</p>
@@ -114,24 +126,18 @@ export function LibraryScreen({ setScreen }) {
                 </div>
                 <div className={styles.libraryItemActions}>
                   <Button
-                    title="Tocar"
-                    onClick={() => {
-                      clearRadio();
-                      addToQueue(song);
-                      playSong(song, [song]);
-                      setScreen("player");
-                    }}
-                  />
-                  <Button
                     title="Adicionar à fila"
-                    onClick={() => addToQueue(song)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToQueue(song);
+                    }}
                   />
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <div className={styles.libraryItem}>
+          <div className={styles.emptyState}>
             <p>
               {search
                 ? "Nenhum resultado para sua busca"

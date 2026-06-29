@@ -1,19 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Righteous&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
 
 .header {
-  background-color: var(--background);
-  color: var(--accent);
-  width: 100%;
-  padding: 0.2rem;
-  text-align: center;
-
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  flex-shrink: 0;
   position: relative;
-  z-index: 10;
-
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background-color: var(--background);
 }
 
-.header h1 {
-  font-family: "Righteous", sans-serif;
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.title {
+  font-family: 'Righteous', sans-serif;
+  font-size: 1.8rem;
   font-weight: 400;
-  font-style: normal;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  z-index: 1;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
 }
