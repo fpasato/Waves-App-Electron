@@ -58,7 +58,7 @@ export function registerYoutubeHandlers({ ytDlp, ffmpegPath, baseFlags, searchYo
 
       return { video, audio };
     } catch (err) {
-      console.error('❌ getVideoFormats erro:', err);
+      console.error('getVideoFormats erro:', err);
       return { video: [], audio: [] };
     }
   });

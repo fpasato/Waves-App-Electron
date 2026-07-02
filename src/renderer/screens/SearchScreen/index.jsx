@@ -16,8 +16,6 @@ import { GrFormNext } from "react-icons/gr";
 import { IoReload } from "react-icons/io5";
 import { FaHome, FaDownload, FaMusic } from "react-icons/fa";
 import { BsSearch } from "react-icons/bs";
-import { ImExit } from "react-icons/im";
-import { LuLogIn } from "react-icons/lu";
 import { usePlayerStore } from "../../store/playerStore";
 
 import { TbCookieOff, TbCookie } from "react-icons/tb";
@@ -130,6 +128,7 @@ export function SearchScreen({ setScreen, searchUrl, setSearchUrl, onClose }) {
     };
   }, []);
 
+  
   return (
     <div className={styles.searchScreen}>
       <div className={styles.searchHeader}>

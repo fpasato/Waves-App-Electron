@@ -6,7 +6,9 @@ export function Interface() {
   const activeTheme = usePlayerStore((state) => state.activeTheme);
   const setActiveTheme = usePlayerStore((state) => state.setActiveTheme);
   const particlesEnabled = usePlayerStore((state) => state.particlesEnabled);
-  const setParticlesEnabled = usePlayerStore((state) => state.setParticlesEnabled);
+  const setParticlesEnabled = usePlayerStore(
+    (state) => state.setParticlesEnabled,
+  );
 
   return (
     <div className={styles.panel}>
@@ -23,10 +25,14 @@ export function Interface() {
               aria-pressed={isActive}
             >
               <div
-                className={styles.swatch}
-                style={{
-                  background: `linear-gradient(135deg, ${t.accent1}, ${t.accent2})`,
-                }}
+                className={`${styles.swatch} ${t.id === "rgb" ? styles.rgbSwatch : ""}`}
+                style={
+                  t.id === "rgb"
+                    ? undefined
+                    : {
+                        background: `linear-gradient(135deg, ${t.accent1}, ${t.accent2})`,
+                      }
+                }
               />
               <span className={styles.name}>{t.name}</span>
               {isActive && <span className={styles.check}>✓</span>}

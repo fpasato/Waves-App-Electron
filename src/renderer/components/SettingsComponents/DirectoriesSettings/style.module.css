@@ -1,57 +1,43 @@
-/* Variáveis (caso não estejam definidas globalmente) */
-:root {
-  --glass-bg: rgba(20, 20, 30, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-light: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  --accent: #6c5ce7;
-  --accent-hover: #8273e8;
-  --text: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --warning-bg: rgba(255, 193, 7, 0.15);
-  --warning-border: rgba(255, 193, 7, 0.3);
-  --status-bg: rgba(108, 92, 231, 0.15);
-}
+/* ===================================================
+   DIRECTÓRIOS SETTINGS – CSS REFATORADO COM VARIÁVEIS:
+   --background, --accent1, --accent2, --border
+   =================================================== */
 
 .DirectoriesContainer {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  height: 90%;
+  height: 100%;
+  width: 80%;
   overflow-y: auto;
   padding: 1rem;
-  color: var(--text);
+  color: #fff;
   border-radius: 1.2rem;
-  background: var(--glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0 0 10px black);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Cabeçalho com glass */
+/* Cabeçalho com efeito de vidro simples */
 .headerSection {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--background);
   border-radius: 1.2rem;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--border);
   padding: 1.2rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-}
-
-.headerContent {
-  flex: 1;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .headerContent h2 {
   font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.3rem 0;
-  background: linear-gradient(120deg, #fff, var(--accent));
+  background: linear-gradient(120deg, var(--accent1), var(--accent2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -60,7 +46,7 @@
 
 .headerContent p {
   font-size: 0.85rem;
-  color: var(--text);
+  color: #ddd;
   margin: 0;
 }
 
@@ -70,23 +56,29 @@
   flex-wrap: wrap;
 }
 
-/* Botões com glass – reutilizando padrão do sistema */
-.headerActions button {
-  padding: 0.5rem;
+/* Botões primários – usa accent1 com hover em accent2 */
+.headerActions button,
+.dirActions button {
+  padding: 0.5rem 1rem;
   font-size: 0.85rem;
   font-weight: 500;
   color: white;
+  border: none;
+  border-radius: 0.6rem;
+  background: var(--accent1);
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
+  transition: background 0.2s ease;
 }
 
-/* Aviso com glass diferenciado */
+.headerActions button:hover,
+.dirActions button:hover {
+  background: var(--accent2);
+}
+
+/* Aviso */
 .warning {
-  display: block;
-  background: var(--warning-bg);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--warning-border);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
   border-radius: 0.8rem;
   padding: 0.6rem 1rem;
   font-size: 0.75rem;
@@ -94,19 +86,18 @@
   text-align: center;
 }
 
-/* Status message */
+/* Status */
 .status {
-  background: var(--status-bg);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(108, 92, 231, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
   border-radius: 0.8rem;
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
-  color: var(--text);
+  color: #fff;
   margin: 0;
 }
 
-/* Lista de diretórios */
+/* Lista */
 .list {
   list-style: none;
   margin: 0;
@@ -116,11 +107,10 @@
   gap: 0.8rem;
 }
 
-/* Cada item da lista com glass */
+/* Item da lista */
 .dirItem {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
   border-radius: 1rem;
   padding: 0.8rem 1rem;
   display: flex;
@@ -132,15 +122,15 @@
 }
 
 .dirItem:hover {
-  background: rgba(108, 92, 231, 0.1);
-  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent1);
   transform: translateX(4px);
 }
 
 .dirItem span {
   font-size: 0.9rem;
   word-break: break-all;
-  color: var(--text);
+  color: #ddd;
   flex: 1;
 }
 
@@ -150,22 +140,19 @@
 }
 
 .dirActions button {
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 0.8rem;
   font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
+  border-radius: 0.4rem;
 }
 
 /* Estado vazio / carregando */
 .empty {
   text-align: center;
   padding: 2rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
   border-radius: 1rem;
-  color: var(--text-muted);
+  color: #aaa;
   font-size: 0.9rem;
 }
 
@@ -180,11 +167,11 @@
 }
 
 .DirectoriesContainer::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--accent1);
   border-radius: 4px;
 }
 
-/* Responsividade */
+/* Responsivo */
 @media (max-width: 640px) {
   .headerSection {
     flex-direction: column;

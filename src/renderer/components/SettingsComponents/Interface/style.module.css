@@ -3,29 +3,38 @@
   background: color-mix(in srgb, var(--background, #0a0a0f) 80%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid color-mix(in srgb, var(--accent1, #666) 20%, transparent);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
   border-radius: 24px;
-  padding: 24px;
-  width: 100%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: clamp(16px, 4vw, 24px);
+  width: 80%;
+  max-width: 80%;
+  margin: 0 auto; /* centraliza horizontalmente */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.08);
   color: rgba(255, 255, 255, 0.9);
   font-family: 'Inter', system-ui, sans-serif;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
 }
 
+/* ========== TÍTULO ========== */
 .title {
   margin: 0 0 20px 0;
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 4vw, 1.3rem);
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: var(--accent2, #fff);
-  text-shadow: 0 0 15px color-mix(in srgb, var(--accent2), transparent 50%);
+  background: linear-gradient(120deg, var(--accent1), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none; 
 }
 
 /* ========== GRID DE TEMAS ========== */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  gap: 8px;
   margin-bottom: 16px;
 }
 
@@ -34,8 +43,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px 8px;
+  gap: 6px;
+  padding: 8px 4px;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid transparent;
   border-radius: 16px;
@@ -52,52 +61,54 @@
 }
 
 .active {
-  border-color: var(--accent1, #0f97ff);
-  background: color-mix(in srgb, var(--accent1, #0f97ff) 15%, transparent);
+  border-color: var(--accent1);
+  background: color-mix(in srgb, var(--accent1) 15%, transparent);
   box-shadow: 0 0 20px color-mix(in srgb, var(--accent1), transparent 60%);
 }
 
+/* Swatch responsivo */
 .swatch {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 12vw, 48px);
+  height: clamp(36px, 12vw, 48px);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
+  transition: all 0.2s;
 }
 
 .name {
-  font-size: 0.75rem;
+  font-size: clamp(0.6rem, 2.5vw, 0.75rem);
   font-weight: 500;
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text, rgba(255,255,255,0.8));
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .check {
   position: absolute;
   top: -6px;
   right: -6px;
-  background: var(--accent2, #411bfe);
+  background: var(--accent2);
   color: #fff;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   font-weight: bold;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* ========== DIVISOR ========== */
 .divider {
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--accent1), transparent 70%),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      color-mix(in srgb, var(--accent1), transparent 70%),
+      transparent);
   margin: 20px 0;
 }
 
@@ -106,6 +117,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .toggleText {
@@ -117,14 +129,16 @@
 .toggleLabel {
   font-size: 0.9rem;
   font-weight: 500;
+  color: var(--text, #fff);
 }
 
 .toggleHint {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text, rgba(255,255,255,0.5));
+  opacity: 0.7;
 }
 
-/* ===== SWITCH (checkbox customizado) ===== */
+/* ===== SWITCH ===== */
 .switch {
   position: relative;
   display: inline-block;
@@ -149,7 +163,7 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 26px;
   transition: 0.3s;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border, rgba(255,255,255,0.15));
 }
 
 .slider::before {
@@ -166,10 +180,58 @@
 }
 
 input:checked + .slider {
-  background: var(--accent2, #411bfe);
+  background: var(--accent2);
   border-color: var(--accent2);
 }
 
 input:checked + .slider::before {
   transform: translateX(22px);
+}
+
+/* ========== RGB SWATCH ========== */
+.rgbSwatch {
+  background: linear-gradient(135deg,
+      #ff0000, #ff8800, #ffff00, #88ff00, #00ff00, #00ff88,
+      #00ffff, #0088ff, #0000ff, #8800ff, #ff00ff, #ff0088, #ff0000);
+  background-size: 300% 300%;
+  animation: rgbCycle 4s linear infinite;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.rgbSwatch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes rgbCycle {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ========== RESPONSIVO ========== */
+@media (max-width: 640px) {
+  .panel {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+
+  .swatch {
+    width: clamp(30px, 15vw, 44px);
+    height: clamp(30px, 15vw, 44px);
+  }
 }

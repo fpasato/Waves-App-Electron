@@ -30,11 +30,11 @@ export function DirectoriesSettings() {
       });
       await reloadLibraryFromDatabase();
       setStatus(
-        `✅ ${report.renamed.length} renomeados · ${report.skipped.length} já ok · ${report.errors.length} erros`,
+        `${report.renamed.length} renomeados · ${report.skipped.length} já ok · ${report.errors.length} erros`,
       );
     } catch (err) {
       console.error(err);
-      setStatus("❌ Erro ao normalizar");
+      setStatus("Erro ao normalizar");
     } finally {
       setNormalizing(false);
       setNormalizeProgress(null);
@@ -48,7 +48,7 @@ export function DirectoriesSettings() {
         const dirs = await listDirectories();
         setDirectories(dirs);
       } catch {
-        setStatus("❌ Erro ao carregar diretórios");
+        setStatus("Erro ao carregar diretórios");
       } finally {
         setLoading(false);
       }
@@ -61,7 +61,7 @@ export function DirectoriesSettings() {
     if (!folder) return;
 
     if (directories.some((d) => d.path === folder)) {
-      setStatus("⚠️ Pasta já adicionada");
+      setStatus("Pasta já adicionada");
       return;
     }
 

@@ -272,7 +272,7 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
         if (mix && mixRes) {
           setMixInfo({
             playlistId: mix.playlistId,
-            isPrivate: mix.isPrivate,  
+            isPrivate: mix.isPrivate,
             title: mixRes.title ?? "Mix",
             count: mix.playlistId.startsWith("RD")
               ? null
@@ -365,30 +365,31 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
               setMixInfo((prev) => ({ ...prev, count: extracted.length }));
             } else {
               toast?.({
-                message: "Não foi possível carregar os vídeos. Abra a playlist no YouTube primeiro.",
+                message:
+                  "Não foi possível carregar os vídeos. Abra a playlist no YouTube primeiro.",
                 type: "error",
               });
             }
           } else {
-          // Playlist pública normal: usa yt-dlp via IPC
-          const res = await window.electronAPI.youtube.getMixVideos({
-            videoId: currentVideoId,
-            playlistId: mixInfo.playlistId,
-          });
-          if (res.success) {
-            setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
+            // Playlist pública normal: usa yt-dlp via IPC
+            const res = await window.electronAPI.youtube.getMixVideos({
+              videoId: currentVideoId,
+              playlistId: mixInfo.playlistId,
+            });
+            if (res.success) {
+              setMixVideos(res.videos.map((v) => ({ ...v, selected: true })));
+            }
           }
+        } catch (err) {
+          console.error("Erro ao buscar vídeos da mix:", err);
+          toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
+        } finally {
+          setLoadingMixVideos(false);
         }
-      } catch (err) {
-        console.error("Erro ao buscar vídeos da mix:", err);
-        toast?.({ message: "Erro ao carregar vídeos.", type: "error" });
-      } finally {
-        setLoadingMixVideos(false);
       }
-    }
-  },
-  [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
-);
+    },
+    [mixInfo, mixVideos.length, currentVideoId, webviewRef, toast],
+  );
 
   /**
    * Alterna seleção de um vídeo individual na mix
@@ -408,10 +409,9 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
 
   const handleStartDownload = useCallback(async () => {
     if (!currentVideoId) return;
-    setDownloading(true);
 
     try {
-      let result;
+      let invokePromise;
       const isMixDownload = mixInfo && mixMode === "mix";
 
       if (isMixDownload) {
@@ -424,11 +424,10 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
             message: "Selecione pelo menos um vídeo da mix.",
             type: "error",
           });
-          setDownloading(false);
           return;
         }
 
-        result = await window.electronAPI.youtube.downloadMix({
+        invokePromise = window.electronAPI.youtube.downloadMix({
           videoId: currentVideoId,
           playlistId: mixInfo.playlistId,
           title: mixInfo.title,
@@ -439,35 +438,30 @@ export function useSearchHandlers({ setSearchUrl, setScreen, toast } = {}) {
           videoTitles: selectedTitles,
         });
       } else if (downloadType === DOWNLOAD_TYPES.AUDIO) {
-        // --- Áudio individual ---
-        result = await window.electronAPI.youtube.downloadAudio({
+        invokePromise = window.electronAPI.youtube.downloadAudio({
           videoId: currentVideoId,
           title: currentVideoTitle,
           formatId: selectedFormatId,
         });
       } else {
-        // --- Vídeo individual ---
         if (!selectedFormatId) return;
-        result = await window.electronAPI.youtube.downloadVideo({
+        invokePromise = window.electronAPI.youtube.downloadVideo({
           videoId: currentVideoId,
           title: currentVideoTitle,
           formatId: selectedFormatId,
         });
       }
 
-      if (result.success) {
-        closeDownloadModal();
-      } else {
-        toast?.({
-          message:
-            "Falha no download: " + (result.error || "Erro desconhecido"),
-          type: "error",
-        });
-      }
+      // Não espera o download terminar — só confirma que foi disparado.
+      // Erros de "falha ao iniciar" ainda aparecem; falhas durante o
+      // download em si chegam pelo evento download:error (useDownloadQueue).
+      invokePromise.catch((err) => {
+        toast?.({ message: "Erro ao baixar: " + err.message, type: "error" });
+      });
+
+      closeDownloadModal(); // fecha na hora, libera a UI pro próximo download
     } catch (err) {
       toast?.({ message: "Erro ao baixar: " + err.message, type: "error" });
-    } finally {
-      setDownloading(false);
     }
   }, [
     downloadType,

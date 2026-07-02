@@ -9,7 +9,7 @@
 
     outline: none;
     border: none;
-    border-bottom: 1px solid var(--accent);
+    border-bottom: 1px solid var(--accent1);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transition: 0.3s;
 }
@@ -18,7 +18,7 @@
 .buttonpattern:hover {
     filter: brightness(0.9);
     border-radius: 0 0.6rem 0 0.6rem ;
-    background-color: var(--accent);
+    background-color: var(--accent2);
     color: #000;
     transform: scale(1.03);
     cursor: pointer;

@@ -118,22 +118,23 @@ export const usePlayerStore = create((set, get) => ({
     root.style.setProperty("--accent1", theme.accent1);
     root.style.setProperty("--accent2", theme.accent2);
 
+    localStorage.setItem("active-theme-id", theme.id);
     set({ activeTheme: theme });
   },
 
   setFadeEnabled: (fadeEnabled) => {
-    logWithTime(`⚙️ setFadeEnabled: ${fadeEnabled}`);
+    logWithTime(`setFadeEnabled: ${fadeEnabled}`);
     set({ fadeEnabled });
   },
 
   setFadeDuration: (value) => {
     const newVal = Math.min(15, Math.max(1, Number(value) || 3));
-    logWithTime(`⚙️ setFadeDuration: ${value} -> ${newVal}`);
+    logWithTime(`setFadeDuration: ${value} -> ${newVal}`);
     set({ fadeDuration: newVal });
   },
 
   loadPlaybackSettings: async () => {
-    logWithTime(`⚙️ loadPlaybackSettings iniciado`);
+    logWithTime(`loadPlaybackSettings iniciado`);
     if (typeof window === "undefined" || !window.api?.settings) return;
     try {
       const en = await window.api.settings.get("fadeEnabled");
@@ -145,36 +146,36 @@ export const usePlayerStore = create((set, get) => ({
         Math.max(1, Number.isFinite(parsed) ? parsed : 3),
       );
       logWithTime(
-        `⚙️ loadPlaybackSettings: fadeEnabled=${newFadeEnabled}, fadeDuration=${newFadeDuration}`,
+        `loadPlaybackSettings: fadeEnabled=${newFadeEnabled}, fadeDuration=${newFadeDuration}`,
       );
       set({
         fadeEnabled: newFadeEnabled,
         fadeDuration: newFadeDuration,
       });
     } catch (e) {
-      logWithTime(`⚙️ loadPlaybackSettings erro:`, e);
+      logWithTime(`loadPlaybackSettings erro:`, e);
     }
   },
 
   // ────────── Biblioteca ──────────
   setLibrary: (library) => {
-    logWithTime(`📚 setLibrary: ${library.length} músicas`);
+    logWithTime(`setLibrary: ${library.length} músicas`);
     set({ library });
   },
   syncLibraryWithDatabase: async () => {
-    logWithTime(`🔄 syncLibraryWithDatabase iniciado`);
+    logWithTime(`syncLibraryWithDatabase iniciado`);
     const songs = await refreshLibraryFromDisk();
     logWithTime(
-      `🔄 syncLibraryWithDatabase finalizado: ${songs.length} músicas`,
+      `syncLibraryWithDatabase finalizado: ${songs.length} músicas`,
     );
     set({ library: songs });
     return songs;
   },
   reloadLibraryFromDatabase: async () => {
-    logWithTime(`🔄 reloadLibraryFromDatabase iniciado`);
+    logWithTime(`reloadLibraryFromDatabase iniciado`);
     const songs = await reloadLibraryFromDb();
     logWithTime(
-      `🔄 reloadLibraryFromDatabase finalizado: ${songs.length} músicas`,
+      `reloadLibraryFromDatabase finalizado: ${songs.length} músicas`,
     );
     set({ library: songs });
     return songs;
@@ -194,7 +195,7 @@ export const usePlayerStore = create((set, get) => ({
 
   // ────────── Controle de reprodução (básico) ──────────
   setVolume: (value) => {
-    logWithTime(`🔊 setVolume: ${value}`);
+    logWithTime(`setVolume: ${value}`);
     const state = get();
     set({ volume: value });
     // Sincronizar volume com o rádio se estiver ativo
@@ -205,15 +206,15 @@ export const usePlayerStore = create((set, get) => ({
   setProgress: (value) => set({ progress: value }),
   setCurrentTime: (value) => set({ currentTime: value }),
   setDuration: (value) => {
-    logWithTime(`⏱️ setDuration: ${value}s`);
+    logWithTime(`setDuration: ${value}s`);
     set({ duration: value });
   },
   setPlaying: (value) => {
-    logWithTime(`🔊 setPlaying: ${value}`);
+    logWithTime(`setPlaying: ${value}`);
     set({ isPlaying: value });
   },
   stop: () => {
-    logWithTime(`⏹️ stop chamado`);
+    logWithTime(`stop chamado`);
     set({
       currentSong: null,
       isPlaying: false,
@@ -223,16 +224,16 @@ export const usePlayerStore = create((set, get) => ({
     });
   },
   togglePlay: () => {
-    logWithTime(`⏯️ togglePlay`);
+    logWithTime(`togglePlay`);
     const { currentSong, queue, queueIndex, isPlaying } = get();
     if (!currentSong && queue.length > 0) {
       logWithTime(
-        `⏯️ togglePlay: sem currentSong, iniciando primeira música da fila`,
+        `togglePlay: sem currentSong, iniciando primeira música da fila`,
       );
       return set({ currentSong: queue[queueIndex], isPlaying: true });
     }
     logWithTime(
-      `⏯️ togglePlay: isPlaying passará de ${isPlaying} para ${!isPlaying}`,
+      `togglePlay: isPlaying passará de ${isPlaying} para ${!isPlaying}`,
     );
     set({ isPlaying: !isPlaying });
   },
@@ -273,7 +274,7 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   clearQueue: () => {
-    logWithTime(`🗑️ clearQueue chamado`);
+    logWithTime(`clearQueue chamado`);
     set({
       queue: [],
       queueIndex: 0,
@@ -289,7 +290,7 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   addToQueue: (song) => {
-    logWithTime(`➕ addToQueue: ${song.title}`);
+    logWithTime(`addToQueue: ${song.title}`);
     const { queue, shuffle, shuffleQueue, shufflePos } = get();
     const newQueue = [...queue, song];
     const newIndex = newQueue.length - 1;
@@ -302,12 +303,12 @@ export const usePlayerStore = create((set, get) => ({
       const newShuffle = [...shuffleQueue];
       newShuffle.splice(insertPos, 0, newIndex);
       logWithTime(
-        `➕ addToQueue (shuffle): insertPos=${insertPos}, nova shuffleQueue length=${newShuffle.length}`,
+        `addToQueue (shuffle): insertPos=${insertPos}, nova shuffleQueue length=${newShuffle.length}`,
       );
       set({ queue: newQueue, shuffleQueue: newShuffle });
     } else {
       logWithTime(
-        `➕ addToQueue (normal): nova fila length=${newQueue.length}`,
+        `addToQueue (normal): nova fila length=${newQueue.length}`,
       );
       set({ queue: newQueue });
     }
@@ -316,7 +317,7 @@ export const usePlayerStore = create((set, get) => ({
   removeFromQueue: (index) =>
     set((state) => {
       logWithTime(
-        `➖ removeFromQueue: removendo índice ${index} (${state.queue[index]?.title})`,
+        `removeFromQueue: removendo índice ${index} (${state.queue[index]?.title})`,
       );
       if (index < 0 || index >= state.queue.length) return state;
       const queue = state.queue.filter((_, i) => i !== index);
@@ -327,7 +328,7 @@ export const usePlayerStore = create((set, get) => ({
       queueIndex = Math.max(0, queueIndex);
 
       if (queue.length === 0) {
-        logWithTime(`➖ removeFromQueue: fila ficou vazia, resetando tudo`);
+        logWithTime(`removeFromQueue: fila ficou vazia, resetando tudo`);
         return {
           queue: [],
           queueIndex: 0,
@@ -347,7 +348,7 @@ export const usePlayerStore = create((set, get) => ({
       if (state.shuffle && shuffleQueue.length) {
         const removedPos = shuffleQueue.indexOf(index);
         logWithTime(
-          `➖ removeFromQueue (shuffle): removedPos=${removedPos}, shufflePos atual=${shufflePos}`,
+          `removeFromQueue (shuffle): removedPos=${removedPos}, shufflePos atual=${shufflePos}`,
         );
         shuffleQueue = shuffleQueue
           .filter((i) => i !== index)
@@ -356,19 +357,19 @@ export const usePlayerStore = create((set, get) => ({
           if (removedPos < state.shufflePos) {
             shufflePos = state.shufflePos - 1;
             logWithTime(
-              `➖ removeFromQueue: removedPos antes do shufflePos, novo shufflePos=${shufflePos}`,
+              `removeFromQueue: removedPos antes do shufflePos, novo shufflePos=${shufflePos}`,
             );
           } else if (removedPos === state.shufflePos) {
             if (shuffleQueue.length > 0) {
               shufflePos = Math.min(shufflePos, shuffleQueue.length - 1);
               queueIndex = shuffleQueue[shufflePos];
               logWithTime(
-                `➖ removeFromQueue: música atual removida, novo queueIndex=${queueIndex} via shuffleQueue[${shufflePos}]`,
+                `removeFromQueue: música atual removida, novo queueIndex=${queueIndex} via shuffleQueue[${shufflePos}]`,
               );
             } else {
               shufflePos = 0;
               logWithTime(
-                `➖ removeFromQueue: shuffleQueue vazia após remoção, shufflePos=0`,
+                `removeFromQueue: shuffleQueue vazia após remoção, shufflePos=0`,
               );
             }
           } // else: nada muda na shufflePos
@@ -377,14 +378,14 @@ export const usePlayerStore = create((set, get) => ({
           shuffleQueue = [queueIndex, ...shuffleQueue];
           shufflePos = 0;
           logWithTime(
-            `➖ removeFromQueue: queueIndex não estava na shuffleQueue, reinserido no início`,
+            `removeFromQueue: queueIndex não estava na shuffleQueue, reinserido no início`,
           );
         }
       }
 
       const currentSong = queue[queueIndex] ?? queue[0];
       logWithTime(
-        `➖ removeFromQueue final: novo queueIndex=${queueIndex}, nova currentSong=${currentSong?.title}, shufflePos=${shufflePos}`,
+        `removeFromQueue final: novo queueIndex=${queueIndex}, nova currentSong=${currentSong?.title}, shufflePos=${shufflePos}`,
       );
       return { queue, queueIndex, currentSong, shuffleQueue, shufflePos };
     }),
@@ -392,7 +393,7 @@ export const usePlayerStore = create((set, get) => ({
   // ────────── Navegação na fila ──────────
   playSong: (song, queueArg) => {
     logWithTime(
-      `▶️ playSong: ${song.title} | queueArg fornecido? ${!!queueArg}`,
+      `playSong: ${song.title} | queueArg fornecido? ${!!queueArg}`,
     );
     const state = get();
     const finalQueue = queueArg?.length ? queueArg : [song];
@@ -419,12 +420,12 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   setSong: (song) => {
-    logWithTime(`🎵 setSong: ${song.title}`);
+    logWithTime(`setSong: ${song.title}`);
     const { queue, shuffle, shuffleQueue, playSong } = get();
     const index = queue.findIndex((s) => s.id === song.id);
 
     if (index < 0) {
-      logWithTime(`🎵 setSong: música não está na fila, chamando playSong`);
+      logWithTime(`setSong: música não está na fila, chamando playSong`);
       playSong(song, [...queue, song]);
       return;
     }
@@ -432,7 +433,7 @@ export const usePlayerStore = create((set, get) => ({
     if (shuffle && shuffleQueue.length) {
       const pos = shuffleQueue.indexOf(index);
       if (pos !== -1) {
-        logWithTime(`🎵 setSong: shuffle ativo, shufflePos=${pos}`);
+        logWithTime(`setSong: shuffle ativo, shufflePos=${pos}`);
         set({
           currentSong: song,
           isPlaying: true,
@@ -442,7 +443,7 @@ export const usePlayerStore = create((set, get) => ({
         window.api.db.recents.add(song.id);
         return;
       }
-      logWithTime(`🎵 setSong: índice não está na shuffleQueue, recriando`);
+      logWithTime(`setSong: índice não está na shuffleQueue, recriando`);
       set({
         currentSong: song,
         isPlaying: true,
@@ -454,7 +455,7 @@ export const usePlayerStore = create((set, get) => ({
       return;
     }
 
-    logWithTime(`🎵 setSong final: queueIndex=${index}`);
+    logWithTime(`setSong final: queueIndex=${index}`);
     set({
       currentSong: song,
       isPlaying: true,
@@ -487,18 +488,18 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   nextSong: () => {
-    logWithTime(`⏩ nextSong chamado`);
+    logWithTime(`nextSong chamado`);
     const { queue, queueIndex, shuffle, repeat, shuffleQueue, shufflePos } =
       get();
     if (queue.length === 0) {
-      logWithTime(`⏩ nextSong: fila vazia -> parando`);
+      logWithTime(`nextSong: fila vazia -> parando`);
       return set({ currentSong: null, isPlaying: false });
     }
 
     if (shuffle) {
       const nextPos = shufflePos + 1;
       logWithTime(
-        `⏩ nextSong (shuffle): shufflePos atual=${shufflePos}, nextPos=${nextPos}, shuffleQueue.length=${shuffleQueue.length}`,
+        `nextSong (shuffle): shufflePos atual=${shufflePos}, nextPos=${nextPos}, shuffleQueue.length=${shuffleQueue.length}`,
       );
 
       if (nextPos >= shuffleQueue.length) {
@@ -538,7 +539,7 @@ export const usePlayerStore = create((set, get) => ({
     // Modo normal
     const nextIndex = queueIndex + 1;
     logWithTime(
-      `⏩ nextSong (normal): queueIndex atual=${queueIndex}, próximo índice=${nextIndex}`,
+      `nextSong (normal): queueIndex atual=${queueIndex}, próximo índice=${nextIndex}`,
     );
 
     if (nextIndex >= queue.length) {
@@ -569,27 +570,27 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   previousSong: () => {
-    logWithTime(`⏪ previousSong chamado`);
+    logWithTime(`previousSong chamado`);
     const { queue, shuffle, shuffleQueue, shufflePos } = get();
     if (queue.length === 0) {
-      logWithTime(`⏪ previousSong: fila vazia -> ignorando`);
+      logWithTime(`previousSong: fila vazia -> ignorando`);
       return;
     }
 
     if (shuffle) {
       const prevPos = shufflePos - 1;
       logWithTime(
-        `⏪ previousSong (shuffle): shufflePos atual=${shufflePos}, prevPos=${prevPos}`,
+        `previousSong (shuffle): shufflePos atual=${shufflePos}, prevPos=${prevPos}`,
       );
       if (prevPos < 0) {
         logWithTime(
-          `⏪ previousSong (shuffle): já no início da shuffleQueue -> ignorando`,
+          `previousSong (shuffle): já no início da shuffleQueue -> ignorando`,
         );
         return;
       }
       const prevIndex = shuffleQueue[prevPos];
       logWithTime(
-        `⏪ previousSong (shuffle): retrocedendo para shufflePos=${prevPos}, queueIndex=${prevIndex} (${queue[prevIndex]?.title})`,
+        `previousSong (shuffle): retrocedendo para shufflePos=${prevPos}, queueIndex=${prevIndex} (${queue[prevIndex]?.title})`,
       );
       return set({
         shufflePos: prevPos,
@@ -602,16 +603,16 @@ export const usePlayerStore = create((set, get) => ({
     const { queueIndex } = get();
     const prevIndex = queueIndex - 1;
     logWithTime(
-      `⏪ previousSong (normal): queueIndex atual=${queueIndex}, prevIndex=${prevIndex}`,
+      `previousSong (normal): queueIndex atual=${queueIndex}, prevIndex=${prevIndex}`,
     );
     if (prevIndex < 0) {
       logWithTime(
-        `⏪ previousSong (normal): já no início da fila -> ignorando`,
+        `previousSong (normal): já no início da fila -> ignorando`,
       );
       return;
     }
     logWithTime(
-      `⏪ previousSong (normal): nova música: ${queue[prevIndex]?.title}`,
+      `previousSong (normal): nova música: ${queue[prevIndex]?.title}`,
     );
     set({
       queueIndex: prevIndex,
@@ -623,12 +624,12 @@ export const usePlayerStore = create((set, get) => ({
   // ────────── Controles de shuffle / repeat ──────────
   toggleRepeat: () => {
     const { repeat } = get();
-    logWithTime(`🔁 toggleRepeat: ${repeat} -> ${!repeat}`);
+    logWithTime(`toggleRepeat: ${repeat} -> ${!repeat}`);
     set({ repeat: !repeat });
   },
 
   shuffleRemaining: () => {
-    logWithTime(`🔀 shuffleRemaining`);
+    logWithTime(`shuffleRemaining`);
     const { queue, queueIndex } = get();
     if (queue.length === 0) return;
 
@@ -639,7 +640,7 @@ export const usePlayerStore = create((set, get) => ({
     const newQueue = [...past, current, ...shuffled];
 
     logWithTime(
-      `🔀 shuffleRemaining: ${remaining.length} músicas embaralhadas a partir de queueIndex=${queueIndex}`,
+      `shuffleRemaining: ${remaining.length} músicas embaralhadas a partir de queueIndex=${queueIndex}`,
     );
 
     set({
@@ -794,9 +795,9 @@ export const usePlayerStore = create((set, get) => ({
           arrayBuffer,
           radioName,
         );
-        console.log("✅ Gravação salva em:", savedPath);
+        console.log("Gravação salva em:", savedPath);
       } catch (e) {
-        console.error("❌ Erro ao salvar gravação:", e);
+        console.error("Erro ao salvar gravação:", e);
       }
       set({ isRecording: false, _mediaRecorder: null, _recordingChunks: [] });
     };

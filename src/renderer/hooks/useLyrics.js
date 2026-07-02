@@ -153,7 +153,7 @@ async function fetchLyrics(rawTitle, rawArtist, filePath, duration, signal) {
     if (!parsed.length) return null;
 
     console.log(
-      `[fetchLyrics] ✅ (get) ${data.trackName} – ${data.artistName}`,
+      `[fetchLyrics] (get) ${data.trackName} – ${data.artistName}`,
     );
     return parsed;
   };
@@ -190,7 +190,7 @@ async function fetchLyrics(rawTitle, rawArtist, filePath, duration, signal) {
     if (!parsed.length) return null;
 
     console.log(
-      `[fetchLyrics] ✅ (search) ${best.trackName} – ${best.artistName} (diff: ${diff}s)`,
+      `[fetchLyrics] (search) ${best.trackName} – ${best.artistName} (diff: ${diff}s)`,
     );
     return { parsed, diff };
   };

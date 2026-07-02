@@ -80,7 +80,7 @@ export function registerDownloadHandlers({
       lastCookieExport = now;
       return ["--cookies", cookiePath];
     } catch (err) {
-      console.error("❌ getCookieFlags erro:", err);
+      console.error("getCookieFlags erro:", err);
       return [];
     }
   }
@@ -110,21 +110,20 @@ export function registerDownloadHandlers({
     }
   }
 
-  function sendCancelled(id) {
+  function sendCancelled(id, title, type) {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("download:cancelled", { id });
+      mainWindow.webContents.send("download:cancelled", { id, title, type });
     }
   }
 
   // downloads.js — função runWithProgress
 
-  function runWithProgress({ args, id, title, type, cwd }) {
+  function runWithProgress({ args, id, title, type, cwd, onCancel }) {
     return new Promise((resolve, reject) => {
       const proc = spawn(ytDlpPath, args, {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: cwd ?? app.getPath("temp"),
         windowsHide: true,
-        // NÃO use detached:true — queremos matar a árvore junto
       });
 
       let cancelled = false;
@@ -150,6 +149,7 @@ export function registerDownloadHandlers({
 
       const killProc = () => {
         cancelled = true;
+        if (onCancel) onCancel();
         if (process.platform === "win32") {
           try {
             execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: "ignore" });
@@ -161,8 +161,6 @@ export function registerDownloadHandlers({
             proc.kill("SIGKILL");
           }
         }
-
-        // aguarda o processo soltar o arquivo antes de deletar
         setTimeout(() => deletePartFiles(cwd ?? app.getPath("temp")), 1000);
       };
 
@@ -189,13 +187,15 @@ export function registerDownloadHandlers({
 
       proc.on("close", (code) => {
         activeProcesses.delete(id);
-        cancelledIds.delete(id);
         if (cancelled) {
-          sendCancelled(id);
-          return resolve();
+          cancelledIds.delete(id);
+          sendCancelled(id, title, type); // ← já temos title e type
+          return resolve({ cancelled: true });
         }
-        if (code === 0 || code === null) resolve();
-        else {
+        cancelledIds.delete(id);
+        if (code === 0 || code === null) {
+          resolve({ cancelled: false }); // ← sucesso
+        } else {
           reject(
             new Error(
               `yt-dlp saiu com código ${code}\n${stderrBuffer.slice(-500)}`,
@@ -208,8 +208,8 @@ export function registerDownloadHandlers({
         activeProcesses.delete(id);
         cancelledIds.delete(id);
         if (cancelled) {
-          sendCancelled(id);
-          return resolve();
+          sendCancelled(id, title, type);
+          return resolve({ cancelled: true });
         }
         reject(err);
       });
@@ -298,7 +298,6 @@ export function registerDownloadHandlers({
     const id = `video-${videoId}-${randomUUID()}`;
     sendQueued(id, title, "video");
 
-    // aguarda um tick pra permitir cancel chegar antes do spawn
     await new Promise((r) => setTimeout(r, 0));
     if (cancelledIds.has(id)) {
       cancelledIds.delete(id);
@@ -314,7 +313,7 @@ export function registerDownloadHandlers({
 
       sendProgress({ id, title, type: "video", percent: 0 });
 
-      await runWithProgress({
+      const result = await runWithProgress({
         id,
         title,
         type: "video",
@@ -328,18 +327,19 @@ export function registerDownloadHandlers({
           "--ffmpeg-location",
           ffmpegPath,
           "--newline",
+          "--force-overwrites",
           "-o",
           filePath,
           ...baseFlags(),
         ],
       });
 
-      if (!cancelledIds.has(id)) {
+      if (!result.cancelled) {
         sendDone(id);
       }
       return { success: true, path: filePath };
     } catch (err) {
-      console.error("❌ download:video erro:", err);
+      console.error("download:video erro:", err);
       sendError(id, err.message);
       return { success: false, error: err.message };
     }
@@ -348,9 +348,8 @@ export function registerDownloadHandlers({
   // ── download:audio ──────────────────────────────────────
   ipcMain.handle("download:audio", async (_, { videoId, title, formatId }) => {
     const id = `audio-${videoId}-${randomUUID()}`;
-    sendQueued(id, title, "video");
+    sendQueued(id, title, "audio");
 
-    // aguarda um tick pra permitir cancel chegar antes do spawn
     await new Promise((r) => setTimeout(r, 0));
     if (cancelledIds.has(id)) {
       cancelledIds.delete(id);
@@ -362,12 +361,11 @@ export function registerDownloadHandlers({
       const savePath = DOWNLOAD_DIRS.audio;
       fs.mkdirSync(savePath, { recursive: true });
       const safeTitle = (title ?? "audio").replace(/[<>:"/\\|?*]/g, "").trim();
-
       const filePath = path.join(savePath, `${safeTitle}.%(ext)s`);
 
       sendProgress({ id, title, type: "audio", percent: 0 });
 
-      await runWithProgress({
+      const result = await runWithProgress({
         id,
         title,
         type: "audio",
@@ -377,18 +375,19 @@ export function registerDownloadHandlers({
           "-f",
           formatId,
           "--newline",
+          "--force-overwrites",
           "-o",
           filePath,
           ...baseFlags(),
         ],
       });
 
-      if (!cancelledIds.has(id)) {
+      if (!result.cancelled) {
         sendDone(id);
       }
       return { success: true, path: filePath };
     } catch (err) {
-      console.error("❌ download:audio erro:", err);
+      console.error("download:audio erro:", err);
       sendError(id, err.message);
       return { success: false, error: err.message };
     }
@@ -426,8 +425,9 @@ export function registerDownloadHandlers({
               ffmpegPath,
             ];
 
+        // downloadOne agora retorna o resultado de runWithProgress
         const downloadOne = async (id, vid, childTitle) => {
-          await runWithProgress({
+          return runWithProgress({
             id,
             title: childTitle,
             type,
@@ -437,57 +437,44 @@ export function registerDownloadHandlers({
               ...formatArgs,
               "--no-playlist",
               "--newline",
+              "--force-overwrites",
               "-o",
               path.join(savePath, "%(title)s.%(ext)s"),
               ...(await getCookieFlags()),
               ...baseFlagsPlaylist(),
             ],
           });
-          if (!cancelledIds.has(id)) {
-            sendDone(id);
-          }
         };
 
         if (videoIds && videoIds.length > 0) {
-          // Monta os items de forma síncrona (sem await no map)
           const items = videoIds.map((vid, i) => {
             const childId = `mix-${playlistId}-${vid}-${randomUUID()}`;
             const childTitle =
               videoTitles?.[i] ?? `${title} (${i + 1}/${videoIds.length})`;
-            sendQueued(childId, childTitle, type); // ← childId e childTitle, não id/title
+            sendQueued(childId, childTitle, type);
             return { id: childId, vid, childTitle };
           });
 
           for (const item of items) {
-            // cancela tudo se o pai foi cancelado
             if (cancelledIds.has(parentId)) {
               sendCancelled(item.id);
               continue;
             }
-
-            // pula item individual cancelado, continua os outros
             if (cancelledIds.has(item.id)) {
               sendCancelled(item.id);
               continue;
             }
 
-            await downloadOne(item.id, item.vid, item.childTitle);
-          }
-          for (const item of items) {
-            // cancela tudo se o pai foi cancelado
-            if (cancelledIds.has(parentId)) {
-              sendCancelled(item.id);
-              continue;
+            const result = await downloadOne(
+              item.id,
+              item.vid,
+              item.childTitle,
+            );
+            if (!result.cancelled) {
+              sendDone(item.id); // só envia 'done' se NÃO foi cancelado
             }
-
-            // pula item individual cancelado, continua os outros
-            if (cancelledIds.has(item.id)) {
-              sendCancelled(item.id);
-              continue;
-            }
-
-            await downloadOne(item.id, item.vid, item.childTitle);
           }
+          // REMOVIDO o segundo loop duplicado que existia aqui
         } else {
           // Playlist/mix inteira
           const url =
@@ -499,7 +486,7 @@ export function registerDownloadHandlers({
 
           sendQueued(parentId, title ?? "Playlist", type);
 
-          await runWithProgress({
+          const result = await runWithProgress({
             id: parentId,
             title: title ?? "Playlist",
             type,
@@ -511,23 +498,27 @@ export function registerDownloadHandlers({
               "--ignore-errors",
               "--no-abort-on-error",
               "--newline",
+              "--force-overwrites",
               "-o",
               path.join(savePath, "%(playlist_index)s - %(title)s.%(ext)s"),
               ...baseFlags(),
             ],
           });
 
-          sendDone(parentId);
+          if (!result.cancelled) {
+            sendDone(parentId);
+          }
         }
 
         return { success: true };
       } catch (err) {
-        console.error("❌ download:mix erro:", err);
+        console.error("download:mix erro:", err);
         sendError(parentId, err.message);
         return { success: false, error: err.message };
       }
     },
   );
+
   // ── youtube:getMixInfo ───────────────────────────────────
   ipcMain.handle("youtube:getMixInfo", async (_, { videoId, playlistId }) => {
     try {
@@ -584,7 +575,7 @@ export function registerDownloadHandlers({
         });
       });
     } catch (err) {
-      console.error("❌ getMixInfo erro:", err);
+      console.error("getMixInfo erro:", err);
       return { title: "Mix", count: null };
     }
   });
@@ -687,7 +678,7 @@ export function registerDownloadHandlers({
       entry.cancel();
       activeProcesses.delete(id);
     } else {
-      sendCancelled(id); // pending ou já terminou
+      sendCancelled(id); 
     }
   });
 }

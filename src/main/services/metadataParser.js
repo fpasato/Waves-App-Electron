@@ -17,7 +17,7 @@ export async function extractTitleArtist(filePath) {
     const duration = metadata.format.duration || 0;
     return { ...parseFromFilename(fileName), duration };
   } catch (err) {
-    console.warn(`⚠️ Falha ao ler metadados de ${filePath}:`, err.message);
+    console.warn(`Falha ao ler metadados de ${filePath}:`, err.message);
     return { ...parseFromFilename(fileName), duration: 0 };
   }
 }

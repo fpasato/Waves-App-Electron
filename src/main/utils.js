@@ -46,12 +46,12 @@ export function getAuthFlags() {
   try {
     const stat = fs.statSync(cookiesPath);
     if (stat.size > 100) {
-      console.log("🍪 Usando cookies:", cookiesPath);
+      console.log("Usando cookies:", cookiesPath);
       return ["--cookies", cookiesPath];
     }
-    console.warn("🍪 cookies.txt vazio ou muito pequeno");
+    console.warn("cookies.txt vazio ou muito pequeno");
   } catch {
-    console.warn("🍪 cookies.txt não encontrado em:", cookiesPath);
+    console.warn("cookies.txt não encontrado em:", cookiesPath);
   }
   return []; // sem fallback — deixa o yt-dlp falhar com mensagem clara
 }
@@ -68,20 +68,20 @@ export function baseFlagsPlaylist() {
 // ─── Download/verificação do yt-dlp ─────────────────────────
 export async function ensureYtDlp() {
   if (fs.existsSync(ytDlpPath)) {
-    console.log("✅ yt-dlp encontrado:", ytDlpPath);
+    console.log("yt-dlp encontrado:", ytDlpPath);
     return ytDlpPath;
   }
 
   if (app.isPackaged) {
-    console.error("❌ yt-dlp não encontrado em resources!");
+    console.error("yt-dlp não encontrado em resources!");
     return ytDlpPath;
   }
 
   try {
     await YTDlpWrap.downloadFromGithub(ytDlpPath);
-    console.log("✅ yt-dlp baixado:", ytDlpPath);
+    console.log("yt-dlp baixado:", ytDlpPath);
   } catch (err) {
-    console.warn("❌ Erro ao baixar yt-dlp:", err);
+    console.warn("Erro ao baixar yt-dlp:", err);
   }
 
   return ytDlpPath;

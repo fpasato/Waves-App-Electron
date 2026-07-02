@@ -9,7 +9,7 @@ export async function createWindow(userAgent) {
     height: 670,
     minWidth: 900,
     minHeight: 670,
-    autoHideMenuBar: false,
+    autoHideMenuBar: true,
     show: false,
     icon: join(__dirname, "../../build/icon.ico"),
     webPreferences: {
@@ -24,7 +24,7 @@ export async function createWindow(userAgent) {
   });
 
   mainWindow.webContents.setUserAgent(userAgent);
-  // Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(null);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.includes("youtube.com")) return { action: "allow" };
     shell.openExternal(url);

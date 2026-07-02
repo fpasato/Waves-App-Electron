@@ -2,25 +2,22 @@
   width: 10px;
   height: 10px;
 
-  background: var(--mid);
+  background: var(--border);
 }
 
 ::-webkit-scrollbar-track {
   background: var(--background);
-
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
-
+  background: var(--accent2);
   border-radius: 999px;
-
-  border: 2px solid var(--background);
+  border: 2px solid var(--accent1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--accent) 80%, white);
+  background: color-mix(in srgb, var(--accent1) 80%, white);
 }
 
 ::-webkit-scrollbar-corner {

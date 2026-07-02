@@ -139,4 +139,11 @@ export const themes = [
     accent1: "#A3E4D7",
     accent2: "#D4E6F1",
   },
+
+  {
+    id: "rgb",
+    name: "RGB",
+    accent1: "rgba(15, 151, 255, 1)",
+    accent2: "rgba(65, 27, 254, 1)",
+  },
 ];

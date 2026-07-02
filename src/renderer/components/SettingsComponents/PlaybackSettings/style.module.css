@@ -1,44 +1,49 @@
-/* === Glassmorphism Base === */
+/* ===================================================
+   CROSSFADE SETTINGS – CSS REFATORADO COM VARIÁVEIS:
+   --background, --accent1, --accent2, --border
+   =================================================== */
+
 .container {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-
-  height: 90%;
-
-  color: var(--text);
+  height: 100%;
+  min-height: 480px;
+  color: #fff;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 1.2rem;
-  background: var(--glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0 0 10px black);
-  padding: 1.5rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
   transition: all 0.2s ease;
+  width: 80%;
 }
 
 /* === Cabeçalho === */
 .header {
-  border-bottom: 1px solid rgba(108, 92, 231, 0.3);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.75rem;
 }
 
 .header h2 {
-  margin: 0 0 0.35rem;
-  font-size: 1.4rem;
+  margin: 0 0 20px 0;
+  font-size: clamp(1rem, 4vw, 1.3rem);
   font-weight: 600;
-  background: linear-gradient(90deg, #fff 0%, var(--accent) 20%);
+  letter-spacing: 0.5px;
+  background: linear-gradient(120deg, var(--accent1), var(--accent2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -0.3px;
+  text-shadow: none; 
 }
 
 .header p {
   margin: 0;
   font-size: 0.85rem;
   opacity: 0.8;
-  color: var(--text, rgb(255, 255, 255));
+  color: #ddd;
 }
 
 /* === Opções / Cards === */
@@ -48,14 +53,14 @@
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 1rem;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   transition: all 0.2s;
 }
 
 .option:not(.disabled):hover {
-  border-color: var(--accent);
+  border-color: var(--accent1);
   background: rgba(0, 0, 0, 0.3);
 }
 
@@ -72,6 +77,7 @@
   align-items: center;
   width: 100%;
   cursor: pointer;
+  color: #fff;
 }
 
 /* === Switch personalizado (toggle) === */
@@ -102,7 +108,7 @@
 }
 
 .toggleRow:checked {
-  background: var(--accent, #6c5ce7);
+  background: var(--accent1);
 }
 
 .toggleRow:checked::before {
@@ -110,7 +116,7 @@
 }
 
 .toggleRow:focus-visible {
-  outline: 2px solid var(--accent, #6c5ce7);
+  outline: 2px solid var(--accent1);
   outline-offset: 2px;
 }
 
@@ -120,7 +126,7 @@
   font-size: 0.85rem;
   opacity: 0.8;
   line-height: 1.5;
-  color: var(--text, rgb(255, 255, 255));
+  color: #ddd;
 }
 
 /* === Slider Wrapper === */
@@ -137,7 +143,6 @@
   height: 4px;
   -webkit-appearance: none;
   background: transparent;
-  /* remove fundo padrão */
   border-radius: 4px;
   outline: none;
   margin: 0.5rem 0;
@@ -157,13 +162,12 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--accent, #6c5ce7);
+  background: var(--accent1);
   cursor: pointer;
-  box-shadow: 0 0 6px var(--accent);
+  box-shadow: 0 0 6px var(--accent1);
   border: none;
   transition: transform 0.1s;
   margin-top: -6px;
-  /* centraliza verticalmente */
   position: relative;
   z-index: 2;
 }
@@ -174,11 +178,13 @@
 
 /* Preenchimento da trilha (progresso) usando gradiente dinâmico */
 .slider {
-  background: linear-gradient(to right,
-      var(--accent, #6c5ce7) 0%,
-      var(--accent, #6c5ce7) var(--fill-percent, 0%),
-      rgba(255, 255, 255, 0.2) var(--fill-percent, 0%),
-      rgba(255, 255, 255, 0.2) 100%);
+  background: linear-gradient(
+    to right,
+    var(--accent1) 0%,
+    var(--accent1) var(--fill-percent, 0%),
+    rgba(255, 255, 255, 0.2) var(--fill-percent, 0%),
+    rgba(255, 255, 255, 0.2) 100%
+  );
   background-size: 100% 4px;
   background-repeat: no-repeat;
   background-position: center;
@@ -196,14 +202,14 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--accent, #6c5ce7);
+  background: var(--accent1);
   cursor: pointer;
   border: none;
 }
 
 .slider::-moz-range-progress {
   height: 4px;
-  background: var(--accent, #6c5ce7);
+  background: var(--accent1);
   border-radius: 4px;
 }
 
@@ -221,9 +227,7 @@
   background: #888;
 }
 
-
-
-/* Medidor de faixas (Rápido, Ideal, Longo) */
+/* Medidor de faixas (Rápido, Ideal, Longo) – cores fixas */
 .rangeMeter {
   width: 100%;
   height: 8px;
@@ -256,7 +260,7 @@
   font-size: 0.7rem;
   opacity: 0.6;
   text-align: center;
-  color: var(--text);
+  color: #fff;
 }
 
 .ticks span {
@@ -280,12 +284,12 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 0.8rem;
   padding: 0.4rem 0.2rem;
+  color: #ddd;
 }
 
 .rangeLabels span {
   font-weight: 600;
   font-size: 0.8rem;
-  color: var(--text);
 }
 
 .rangeLabels small {
@@ -293,19 +297,24 @@
   opacity: 0.7;
 }
 
-/* === Botão Salvar (glass + gradiente) === */
+/* === Botão Salvar === */
 .saveButton {
   align-self: flex-start;
   padding: 0.6rem 1.5rem;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;
-
-  backdrop-filter: blur(4px);
+  background: var(--accent1);
+  border: none;
+  border-radius: 0.6rem;
   color: white;
   transition: all 0.2s ease;
 }
 
+.saveButton:hover {
+  background: var(--accent2);
+  color: var(--accent1);
+}
 
 /* === Responsividade === */
 @media (max-width: 640px) {

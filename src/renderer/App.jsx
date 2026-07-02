@@ -49,6 +49,14 @@ function PlayerApp() {
     downloadListenersRef.current = { handleDone, handleError };
   }, [toast]);
 
+  useEffect(() => {
+    const handleCancelled = () => {
+      toast({ message: "Download cancelado", type: "warning" });
+    };
+
+    window.electronAPI.downloads.onCancelled(handleCancelled);
+  }, [toast]);
+
   // Função que substitui setScreen, agora aceita (name, data)
   const setScreen = (name, data) => {
     setScreenState(name);
@@ -60,7 +68,7 @@ function PlayerApp() {
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
-  
+
   useEffect(() => {
     const root = document.querySelector(".dark") ?? document.documentElement;
     root.style.setProperty("--accent1", activeTheme.accent1);

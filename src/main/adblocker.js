@@ -129,7 +129,7 @@ export async function setupAdBlocker(partition) {
   const targetSession = session.fromPartition(partition);
   await engine.enableBlockingInSession(targetSession);
 
-  // ✅ Camada extra: bloqueia domínios de ad na rede antes de baixar
+  // Camada extra: bloqueia domínios de ad na rede antes de baixar
   targetSession.webRequest.onBeforeRequest(
     {
       urls: [

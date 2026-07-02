@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Header } from "../../components/Header";
-import { PlaybackSettings } from "../../components/SettingsComponents/PlaybackSettings";
 import { DirectoriesSettings } from "../../components/SettingsComponents/DirectoriesSettings";
-import { HelpSettings } from "../../components/SettingsComponents/HelpSettings";
+import { PlaybackSettings } from "../../components/SettingsComponents/PlaybackSettings";
 import { Interface } from "../../components/SettingsComponents/Interface";
-import { Button } from "../../components/Button";
-
+import { HelpSettings } from "../../components/SettingsComponents/HelpSettings";
 import styles from "./style.module.css";
 
 export function SettingsScreen({ setScreen, setTheme }) {
@@ -13,46 +11,45 @@ export function SettingsScreen({ setScreen, setTheme }) {
 
   return (
     <div className={styles.settingsScreen}>
-      <Header title="Configurações" />
+      <Header
+        title="Configurações"
+        onBack={() => setScreen("player")}
+      />
 
-      <div className={styles.container}>
-        <nav className={styles.sidebar}>
-          <div className={styles.topOptions}>
-            <Button
-              title="Diretórios"
-              onClick={() => setTab("directories")}
-              className={`${styles.tab} ${tab === "directories" ? styles.active : ""}`}
-            />
-            <Button
-              title="Crossfade"
-              onClick={() => setTab("crossfade")}
-              className={`${styles.tab} ${tab === "crossfade" ? styles.active : ""}`}
-            />{" "}
-            <Button
-              title="Interface"
-              onClick={() => setTab("interface")}
-              className={`${styles.tab} ${tab === "interface" ? styles.active : ""}`}
-            />{" "}
-            <Button
-              title="Ajuda"
-              onClick={() => setTab("ajuda")}
-              className={`${styles.tab} ${tab === "ajuda" ? styles.active : ""}`}
-            />
-          </div>
+      {/* Topbar de abas */}
+      <nav className={styles.topbar}>
+        <button
+          className={`${styles.tab} ${tab === "directories" ? styles.active : ""}`}
+          onClick={() => setTab("directories")}
+        >
+          Diretórios
+        </button>
+        <button
+          className={`${styles.tab} ${tab === "crossfade" ? styles.active : ""}`}
+          onClick={() => setTab("crossfade")}
+        >
+          Crossfade
+        </button>
+        <button
+          className={`${styles.tab} ${tab === "interface" ? styles.active : ""}`}
+          onClick={() => setTab("interface")}
+        >
+          Interface
+        </button>
+        <button
+          className={`${styles.tab} ${tab === "ajuda" ? styles.active : ""}`}
+          onClick={() => setTab("ajuda")}
+        >
+          Ajuda
+        </button>
+      </nav>
 
-          <Button
-            title="Voltar"
-            onClick={() => setScreen("player")}
-            className={styles.backButton}
-          />
-        </nav>
-
-        <div className={styles.content}>
-          {tab === "directories" && <DirectoriesSettings />}
-          {tab === "crossfade" && <PlaybackSettings />}
-          {tab === "interface" && <Interface setTheme={setTheme} />}
-          {tab === "ajuda" && <HelpSettings setTheme={setTheme} />}
-        </div>
+      {/* Conteúdo da aba ativa */}
+      <div className={styles.content}>
+        {tab === "directories" && <DirectoriesSettings />}
+        {tab === "crossfade" && <PlaybackSettings />}
+        {tab === "interface" && <Interface setTheme={setTheme} />}
+        {tab === "ajuda" && <HelpSettings setTheme={setTheme} />}
       </div>
     </div>
   );

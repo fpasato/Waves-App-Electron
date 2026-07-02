@@ -1,6 +1,8 @@
 // src/main/main.js
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
+import path from "path";
+import fs from "fs";
 
 import {
   ensureYtDlp,
@@ -17,6 +19,7 @@ import { createWindow } from "./window.js";
 import { registerMiscHandlers } from "./handlers/misc.js";
 import { registerDownloadHandlers } from "./handlers/downloads.js";
 import { initDatabase, closeDatabase } from "./database/database.js";
+import { seedDefaultDirectories } from "./database/seedDefaultDirectories.js";
 import { registerDbHandlers } from "./handlers/dbHandlers.js";
 import { registerYoutubeHandlers } from "./handlers/youtubeHandlers.js";
 import { registerAuthHandlers } from "./handlers/authHandlers.js";
@@ -73,11 +76,12 @@ let mainWindow = null;
 
 async function bootstrap() {
   electronApp.setAppUserModelId("com.electron");
-  // Menu.setApplicationMenu(null);
+
   await ensureYtDlp();
   await setupAdBlocker(YOUTUBE_PARTITION);
 
   const db = initDatabase();
+  seedDefaultDirectories(db);
   registerDbHandlers(db);
   registerYoutubeHandlers({ ytDlp, ffmpegPath, baseFlags, searchYoutube });
   registerAuthHandlers();

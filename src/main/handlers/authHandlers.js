@@ -54,10 +54,10 @@ function exportCookiesToFile(cookies) {
     fs.mkdirSync(path.dirname(cookiesPath), { recursive: true });
     fs.writeFileSync(cookiesPath, content, "utf-8");
     console.log(
-      `✅ cookies.txt exportado: ${cookiesPath} (${lines.length - 3} cookies)`,
+      `cookies.txt exportado: ${cookiesPath} (${lines.length - 3} cookies)`,
     );
   } catch (err) {
-    console.error("❌ Erro ao exportar cookies.txt:", err);
+    console.error("Erro ao exportar cookies.txt:", err);
   }
 }
 
@@ -126,7 +126,7 @@ export function registerAuthHandlers() {
 
     for (const domain of domains) {
       const cookies = await loginSession.cookies.get({ domain });
-      console.log(`🍪 [${domain}] encontrados: ${cookies.length} cookies`);
+      console.log(`[${domain}] encontrados: ${cookies.length} cookies`);
 
       for (const cookie of cookies) {
         if (
@@ -148,7 +148,7 @@ export function registerAuthHandlers() {
           });
           allCookies.push(cookie);
         } catch (err) {
-          console.warn(`⚠️ Cookie ignorado [${cookie.name}]:`, err.message);
+          console.warn(`Cookie ignorado [${cookie.name}]:`, err.message);
         }
       }
     }
@@ -156,7 +156,7 @@ export function registerAuthHandlers() {
     // Exporta para cookies.txt no formato Netscape (usado pelo yt-dlp)
     exportCookiesToFile(allCookies);
 
-    console.log(`✅ Total de cookies copiados: ${allCookies.length}`);
+    console.log(`Total de cookies copiados: ${allCookies.length}`);
     return true;
   });
 
